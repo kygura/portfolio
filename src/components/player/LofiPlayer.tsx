@@ -1,9 +1,11 @@
 /**
  * Tape deck: a small lofi player fixed to the bottom-right corner. Collapsed
- * it is a cassette outline; open, it plays the site's own CC0 tapes or tunes into a curated
- * Spotify / YouTube embed. It sits outside the routes, so playback carries
- * across page changes. `m` plays and pauses the tapes. Colours are the theme
- * tokens, so it follows the 1–6 accent switch with no code of its own.
+ * it is a cassette outline; open, the cassette itself is the interface (press
+ * it to play, wind a reel to scrub) and whatever it holds plays through one
+ * <audio> element: the site's own tapes or a SomaFM stream. It sits outside
+ * the routes, so playback carries across page changes. `m` plays and pauses.
+ * Colours are the theme tokens, so it follows the 1–6 accent switch with no
+ * code of its own.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isTyping } from "@/theme/keymap";
@@ -32,6 +34,9 @@ function loadSaved(): Saved {
 const clock = (s: number) =>
   Number.isFinite(s) ? `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}` : "–:––";
 
+// The label is a strip of monospace; past this many characters it's cut.
+const labelOf = (s: string) => (s.length > 30 ? `${s.slice(0, 29)}…` : s);
+
 export default function LofiPlayer() {
   const saved = useRef(loadSaved()).current;
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -47,6 +52,7 @@ export default function LofiPlayer() {
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(NaN);
   const [volume, setVolume] = useState(saved.volume);
+  // The station in the deck, or null when it holds a tape.
   const [station, setStation] = useState<Station | null>(null);
 
   const tracks = useMemo(() => playlist?.tracks ?? [], [playlist]);
@@ -84,42 +90,68 @@ export default function LofiPlayer() {
     if (audioRef.current) audioRef.current.volume = volume;
   }, [volume]);
 
-  const play = useCallback(async () => {
+  const load = (src: string) => {
+    const audio = audioRef.current!;
+    audio.src = src;
+    setTime(0);
+    setDuration(NaN);
+  };
+
+  // A paused stream would keep buffering and come back minutes behind, so
+  // pausing the radio hangs up; playing again redials and is live.
+  const hangUp = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.pause();
+    audio.removeAttribute("src");
+    audio.load();
+  };
+
+  const playTape = useCallback(async () => {
     const list = await loadPlaylist();
     const audio = audioRef.current;
     if (!audio || !list?.tracks.length) return;
-    setStation(null); // one source at a time
-    if (!audio.src) audio.src = list.tracks[index % list.tracks.length].src;
+    if (station || !audio.getAttribute("src")) {
+      setStation(null);
+      load(list.tracks[index % list.tracks.length].src);
+    }
     audio.play().catch(() => setPlaying(false));
-  }, [loadPlaylist, index]);
+  }, [loadPlaylist, index, station]);
+
+  const tuneIn = useCallback((s: Station) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    setStation(s);
+    load(s.stream);
+    audio.play().catch(() => setPlaying(false));
+  }, []);
 
   const toggle = useCallback(() => {
     const audio = audioRef.current;
-    if (audio && !audio.paused) audio.pause();
-    else void play();
-  }, [play]);
+    if (!audio) return;
+    if (!audio.paused) {
+      if (station) hangUp();
+      else audio.pause();
+    } else if (station) tuneIn(station);
+    else void playTape();
+  }, [station, tuneIn, playTape]);
 
   const go = useCallback(
-    (step: number) => {
+    (step: number, andPlay = false) => {
       if (!tracks.length) return;
       const next = (index + step + tracks.length) % tracks.length;
       setIndex(next);
       const audio = audioRef.current;
       if (!audio) return;
-      const resume = !audio.paused || audio.ended;
-      audio.src = tracks[next].src;
-      setTime(0);
+      const resume = andPlay || station !== null || !audio.paused || audio.ended;
+      setStation(null);
+      load(tracks[next].src);
       if (resume) audio.play().catch(() => setPlaying(false));
     },
-    [tracks, index],
+    [tracks, index, station],
   );
 
-  const tuneIn = (s: Station) => {
-    audioRef.current?.pause();
-    setStation(s);
-  };
-
-  // `m` plays / pauses the tapes, with the same guards as the site's other keys.
+  // `m` plays / pauses whatever is in the deck, with the site's usual key guards.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented || isTyping(e.target)) return;
@@ -151,16 +183,24 @@ export default function LofiPlayer() {
     return () => document.removeEventListener("pointerdown", onDown);
   }, [open]);
 
-  const live = playing || station !== null;
-  const progress = duration > 0 ? time / duration : 0;
+  const seekable = !station && duration > 0;
+  const progress = station ? 0.5 : duration > 0 ? time / duration : 0;
 
   const seekBy = (dt: number) => {
     const audio = audioRef.current;
-    if (audio && duration > 0) audio.currentTime = Math.min(duration, Math.max(0, audio.currentTime + dt));
+    if (audio && seekable) audio.currentTime = Math.min(duration, Math.max(0, audio.currentTime + dt));
   };
 
+  const label = station
+    ? `${station.name} · live`
+    : track
+      ? track.title
+      : playlist
+        ? "no tapes yet"
+        : "loading…";
+
   return (
-    <div className="deck" data-open={open || undefined} data-live={live || undefined}>
+    <div className="deck" data-open={open || undefined} data-live={playing || undefined}>
       <audio
         ref={audioRef}
         preload="none"
@@ -172,140 +212,155 @@ export default function LofiPlayer() {
         onError={() => setPlaying(false)}
       />
 
-      {/* Kept mounted while closed so a radio iframe keeps playing. */}
       <div ref={panelRef} className="deck__panel" role="dialog" aria-label="Music player">
-        <div className="deck__source" role="tablist" aria-label="Source">
+        <Cassette
+          progress={progress}
+          label={labelOf(label)}
+          playing={playing}
+          onToggle={toggle}
+          onScrub={seekable ? seekBy : undefined}
+        />
+
+        <p className="deck__now" aria-live="polite">
+          {station ? (
+            <>
+              <span className="deck__title">{station.name}</span>
+              <span className="deck__meta">
+                {station.by} ·{" "}
+                <a href={station.home} target="_blank" rel="noreferrer">
+                  somafm.com
+                </a>
+              </span>
+            </>
+          ) : track ? (
+            <>
+              <span className="deck__title">{track.title}</span>
+              <span className="deck__meta">
+                {track.artist}, {track.license}
+                {track.source && (
+                  <>
+                    {" · "}
+                    <a href={track.source} target="_blank" rel="noreferrer">
+                      source
+                    </a>
+                  </>
+                )}
+              </span>
+            </>
+          ) : (
+            <span className="deck__meta">
+              {failed || playlist ? "No tapes on the shelf yet. Try the radio." : <>Loading tapes<span className="deck__dots" /></>}
+            </span>
+          )}
+        </p>
+
+        {/* The seek line is a road; the square is how far along it you are. */}
+        <div
+          className="deck__road"
+          data-live-stream={station ? "" : undefined}
+          role="slider"
+          tabIndex={seekable ? 0 : -1}
+          aria-label="Seek"
+          aria-disabled={!seekable}
+          aria-valuemin={0}
+          aria-valuemax={Math.round(duration) || 0}
+          aria-valuenow={Math.round(time)}
+          aria-valuetext={station ? "live" : `${clock(time)} of ${clock(duration)}`}
+          onPointerDown={(e) => {
+            const audio = audioRef.current;
+            if (!audio || !seekable) return;
+            const r = e.currentTarget.getBoundingClientRect();
+            audio.currentTime = ((e.clientX - r.left) / r.width) * duration;
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowRight") seekBy(10);
+            else if (e.key === "ArrowLeft") seekBy(-10);
+            else return;
+            e.preventDefault();
+          }}
+        >
+          <span style={{ left: `${progress * 100}%` }} />
+        </div>
+        <div className="deck__clock">
+          <span>{clock(time)}</span>
+          <span>{station ? "on air" : tracks.length ? `${(index % tracks.length) + 1} / ${tracks.length}` : ""}</span>
+          <span>{station ? "live" : clock(duration)}</span>
+        </div>
+
+        {/* Piano keys, centred under the cassette. */}
+        <div className="deck__keys">
+          <button type="button" onClick={() => go(-1)} disabled={!tracks.length} aria-label="Previous tape">
+            rew
+          </button>
+          <button
+            type="button"
+            className="deck__key--play"
+            aria-pressed={playing}
+            onClick={toggle}
+            aria-label={playing ? "Pause" : "Play"}
+            aria-keyshortcuts="m"
+          >
+            {playing ? "pause" : "play"}
+          </button>
+          <button type="button" onClick={() => go(1)} disabled={!tracks.length} aria-label="Next tape">
+            ff
+          </button>
+        </div>
+        <label className="deck__vol">
+          <span aria-hidden="true">vol</span>
+          <span className="sr-only">Volume</span>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.05}
+            value={volume}
+            onChange={(e) => setVolume(Number(e.target.value))}
+          />
+        </label>
+
+        <div className="deck__source" role="tablist" aria-label="Shelf">
           {(["tapes", "radio"] as const).map((m) => (
             <button key={m} type="button" role="tab" aria-selected={mode === m} onClick={() => setMode(m)}>
-              {m}
+              {m === "tapes" ? "side a · tapes" : "side b · radio"}
             </button>
           ))}
         </div>
 
-        {mode === "tapes" && (
-          <div className="deck__body">
-            {track ? (
-              <>
-                <Cassette progress={progress} />
-
-                <p className="deck__now">
-                  <span className="deck__title">{track.title}</span>
-                  <span className="deck__meta">
-                    {track.artist}, {track.license}
-                    {track.source && (
-                      <>
-                        {" · "}
-                        <a href={track.source} target="_blank" rel="noreferrer">
-                          source
-                        </a>
-                      </>
-                    )}
-                  </span>
-                </p>
-
-                {/* The seek line is a road; the square is how far along it you are. */}
-                <div
-                  className="deck__road"
-                  role="slider"
-                  tabIndex={0}
-                  aria-label="Seek"
-                  aria-valuemin={0}
-                  aria-valuemax={Math.round(duration) || 0}
-                  aria-valuenow={Math.round(time)}
-                  aria-valuetext={`${clock(time)} of ${clock(duration)}`}
-                  onPointerDown={(e) => {
-                    const audio = audioRef.current;
-                    if (!audio || !(duration > 0)) return;
-                    const r = e.currentTarget.getBoundingClientRect();
-                    audio.currentTime = ((e.clientX - r.left) / r.width) * duration;
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "ArrowRight") seekBy(10);
-                    else if (e.key === "ArrowLeft") seekBy(-10);
-                    else return;
-                    e.preventDefault();
-                  }}
-                >
-                  <span style={{ left: `${progress * 100}%` }} />
-                </div>
-                <div className="deck__clock">
-                  <span>{clock(time)}</span>
-                  <span>
-                    {(index % tracks.length) + 1} / {tracks.length}
-                  </span>
-                  <span>{clock(duration)}</span>
-                </div>
-
-                <div className="deck__keys">
-                  <button type="button" onClick={() => go(-1)} aria-label="Previous tape">
-                    rew
-                  </button>
+        {/* The shelf: what can go in the deck. Choices read as dialogue options. */}
+        <ol className="deck__choices">
+          {mode === "tapes"
+            ? tracks.map((t, i) => (
+                <li key={t.src}>
                   <button
                     type="button"
-                    aria-pressed={playing}
-                    onClick={toggle}
-                    aria-label={playing ? "Pause" : "Play"}
-                    aria-keyshortcuts="m"
+                    aria-pressed={!station && i === index % tracks.length}
+                    onClick={() => go(i - index, true)}
                   >
-                    {playing ? "pause" : "play"}
+                    <span className="deck__choice-no">{i + 1}.</span>
+                    <span>
+                      {t.title}
+                      <span className="deck__meta">{t.artist}</span>
+                    </span>
                   </button>
-                  <button type="button" onClick={() => go(1)} aria-label="Next tape">
-                    ff
+                </li>
+              ))
+            : STATIONS.map((s, i) => (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    aria-pressed={station?.id === s.id}
+                    onClick={() => (station?.id === s.id && playing ? hangUp() : tuneIn(s))}
+                  >
+                    <span className="deck__choice-no">{i + 1}.</span>
+                    <span>
+                      {s.name}
+                      <span className="deck__meta">{s.by}</span>
+                    </span>
                   </button>
-                  <label className="deck__vol">
-                    <span className="sr-only">Volume</span>
-                    <input
-                      type="range"
-                      min={0}
-                      max={1}
-                      step={0.05}
-                      value={volume}
-                      onChange={(e) => setVolume(Number(e.target.value))}
-                    />
-                  </label>
-                </div>
-              </>
-            ) : (
-              <p className="deck__empty">
-                {failed || playlist ? "The shelf is empty. Try the radio." : <>Loading tapes<span className="deck__dots" /></>}
-              </p>
-            )}
-          </div>
-        )}
-
-        <div className="deck__body" hidden={mode !== "radio"}>
-          {/* Stations read as a list of dialogue choices. */}
-          <ol className="deck__choices">
-            {STATIONS.map((s, i) => (
-              <li key={s.id}>
-                <button
-                  type="button"
-                  aria-pressed={station?.id === s.id}
-                  onClick={() => (station?.id === s.id ? setStation(null) : tuneIn(s))}
-                >
-                  <span className="deck__choice-no">{i + 1}.</span>
-                  <span>
-                    {s.name}
-                    <span className="deck__meta">{s.by}</span>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ol>
-          {station ? (
-            <iframe
-              key={station.id}
-              className="deck__embed"
-              title={`${station.name}, ${station.by}`}
-              src={station.embed}
-              height={station.height}
-              allow="autoplay; clipboard-write; encrypted-media; picture-in-picture"
-              loading="lazy"
-            />
-          ) : (
-            <p className="deck__meta deck__note">Tuning in loads that service's own player.</p>
-          )}
-        </div>
+                </li>
+              ))}
+        </ol>
       </div>
 
       <button

@@ -2252,33 +2252,44 @@ kbd {
 @keyframes deckSpin { to { transform: rotate(-360deg); } }
 
 /* ── Open: the black box ── */
-/* Hidden, not unmounted, when closed, so a playing radio iframe keeps going. */
+/* Hidden, not unmounted, when closed, so playback state stays put. The
+   panel unfolds out of the corner cassette. */
 .deck__panel {
   position: absolute;
   right: 0;
   bottom: calc(30px + 0.5rem);
-  width: min(17rem, calc(100vw - 2 * var(--deck-edge)));
+  width: min(19rem, calc(100vw - 2 * var(--deck-edge)));
+  max-height: calc(100vh - 30px - 0.5rem - 2 * var(--deck-edge));
+  overflow-y: auto;
   padding: 1rem 1.1rem 0.9rem;
   background: var(--deck-night);
-  transition: opacity 0.4s ease, visibility 0s linear 0.4s;
+  transform-origin: bottom right;
+  transform: translateY(6px) scale(0.92);
+  transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s linear 0.35s;
   opacity: 0;
   visibility: hidden;
 }
-.deck[data-open] .deck__panel { opacity: 1; visibility: visible; transition: opacity 0.4s ease; }
+.deck[data-open] .deck__panel {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
 
-.deck__source { display: flex; gap: 1.1rem; margin-bottom: 0.9rem; }
-.deck__source button { color: var(--ink-3); transition: color 0.2s; }
-.deck__source button:hover { color: var(--ink-2); }
-.deck__source button[aria-selected="true"] { color: var(--ink); }
-.deck__source button[aria-selected="true"]::before { content: "> "; color: var(--accent); }
-
-.deck__body[hidden] { display: none; }
 .deck button:focus-visible,
-.deck a:focus-visible { outline: 1px solid var(--ink-3); outline-offset: 2px; }
+.deck a:focus-visible,
+.deck__road:focus-visible { outline: 1px solid var(--ink-3); outline-offset: 2px; }
+.deck button:disabled { opacity: 0.4; cursor: default; }
 
-/* The cassette: hairlines in the dark, the window the only light. */
-.cassette { display: block; width: 100%; height: auto; overflow: visible; }
-.cassette__shell { fill: none; stroke: var(--ink-3); stroke-width: 1; vector-effect: non-scaling-stroke; }
+/* The cassette: hairlines in the dark, the window the only light. The whole
+   thing is a button; the reels are handles. */
+.cassette { display: block; width: 100%; padding: 0; cursor: pointer; touch-action: none; }
+.cassette svg { display: block; width: 100%; height: auto; overflow: visible; }
+.cassette:active svg { transform: translateY(1px); }
+.cassette__shell { fill: none; stroke: var(--ink-3); stroke-width: 1; vector-effect: non-scaling-stroke; transition: stroke 0.2s; }
+.cassette:hover .cassette__shell { stroke: var(--ink-2); }
+.cassette__label { fill: none; stroke: var(--ink-3); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.cassette__text { fill: var(--ink-2); font-family: var(--f-mono); font-size: 8px; letter-spacing: 0.02em; }
 .cassette__window {
   fill: color-mix(in srgb, var(--accent) 8%, transparent);
   stroke: var(--ink-3);
@@ -2292,20 +2303,31 @@ kbd {
   filter: drop-shadow(0 0 10px var(--deck-glow));
 }
 .cassette__pack { fill: var(--deck-night); stroke: var(--ink-3); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.cassette__grip { fill: transparent; }
+.cassette__reel[data-grab] { cursor: grab; }
+.cassette[data-wound] .cassette__reel { cursor: grabbing; }
+.cassette__reel[data-grab]:hover .cassette__pack { stroke: var(--ink-2); }
 .cassette__hub circle { fill: none; }
 .cassette__hub circle,
 .cassette__hub path { stroke: var(--ink); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .cassette__hub { transform-box: view-box; }
 .deck[data-live] .cassette__hub { animation: deckSpin 3s linear infinite; }
+/* While a hand holds the reel, the hand turns it. */
+.deck .cassette[data-wound] .cassette__hub { animation: none; }
+.cassette__glyph path { fill: none; stroke: var(--ink-3); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.cassette:hover .cassette__glyph path,
+.deck[data-live] .cassette__glyph path { stroke: var(--accent); }
 
-.deck__now { display: flex; flex-direction: column; margin-top: 0.9rem; min-width: 0; }
-.deck__title { color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.deck__meta { display: block; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.deck__now { display: flex; flex-direction: column; align-items: center; margin-top: 0.9rem; min-width: 0; text-align: center; }
+.deck__title { max-width: 100%; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.deck__meta { display: block; max-width: 100%; color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .deck__meta a { color: var(--ink-3); text-decoration: underline; text-underline-offset: 2px; }
 .deck__meta a:hover { color: var(--ink); }
 
-/* Seek: a road, and a square travelling along it. */
+/* Seek: a road, and a square travelling along it. A live stream has no end,
+   so its square stands still in the middle and pulses. */
 .deck__road { position: relative; height: 14px; margin-top: 0.75rem; cursor: pointer; outline: none; }
+.deck__road[aria-disabled="true"] { cursor: default; }
 .deck__road::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--ink-3); }
 .deck__road span {
   position: absolute;
@@ -2317,29 +2339,43 @@ kbd {
   box-shadow: 0 0 8px var(--deck-glow);
   transition: left 0.25s linear;
 }
+.deck[data-live] .deck__road[data-live-stream] span { animation: deckPulse 2s ease-in-out infinite; }
+@keyframes deckPulse { 50% { opacity: 0.35; } }
 .deck__road:focus-visible::before { background: var(--ink); }
 .deck__clock { display: flex; justify-content: space-between; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 
-.deck__keys { display: flex; align-items: center; gap: 1rem; margin-top: 0.7rem; }
-.deck__keys button { color: var(--ink-2); transition: color 0.2s; }
-.deck__keys button:hover { color: var(--ink); }
-.deck__keys button[aria-pressed="true"] { color: var(--accent); }
-.deck__vol { display: flex; flex: 1; justify-content: flex-end; }
-.deck__vol input { width: 4.5rem; accent-color: var(--ink-2); height: 2px; }
+/* Transport: three keys centred under the cassette, volume on its own line. */
+.deck__keys { display: flex; justify-content: center; gap: 0.4rem; margin-top: 0.8rem; }
+.deck__keys button {
+  min-width: 3.6rem;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--ink-3);
+  color: var(--ink-2);
+  text-align: center;
+  transition: color 0.2s, border-color 0.2s, transform 0.1s;
+}
+.deck__keys button:not(:disabled):hover { color: var(--ink); border-color: var(--ink-2); }
+.deck__keys button:not(:disabled):active { transform: translateY(1px); }
+.deck__keys button[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+.deck__vol { display: flex; justify-content: center; align-items: center; gap: 0.6rem; margin-top: 0.7rem; color: var(--ink-3); }
+.deck__vol input { width: 7rem; accent-color: var(--ink-2); height: 2px; }
 
-.deck__empty { padding: 1.5rem 0; color: var(--ink-3); }
 /* Ellipses that arrive one dot at a time. */
 .deck__dots::after { content: ""; animation: deckDots 1.8s steps(1, end) infinite; }
 @keyframes deckDots { 25% { content: "."; } 50% { content: ".."; } 75%, 100% { content: "..."; } }
 
-/* Radio: stations as numbered dialogue choices. */
+/* The shelf: two sides, and their contents as numbered dialogue choices. */
+.deck__source { display: flex; justify-content: center; gap: 1.1rem; margin: 1rem 0 0.6rem; padding-top: 0.8rem; border-top: 1px solid color-mix(in srgb, var(--ink-3) 40%, transparent); }
+.deck__source button { color: var(--ink-3); transition: color 0.2s; }
+.deck__source button:hover { color: var(--ink-2); }
+.deck__source button[aria-selected="true"] { color: var(--ink); }
+.deck__source button[aria-selected="true"]::before { content: "> "; color: var(--accent); }
 .deck__choices { display: flex; flex-direction: column; gap: 0.55rem; }
-.deck__choices button { display: flex; gap: 0.6rem; width: 100%; text-align: left; color: var(--ink-2); transition: color 0.2s; }
+.deck__choices button { display: flex; gap: 0.6rem; width: 100%; min-width: 0; text-align: left; color: var(--ink-2); transition: color 0.2s; }
+.deck__choices button > span:last-child { min-width: 0; }
 .deck__choices button:hover { color: var(--ink); }
 .deck__choices button[aria-pressed="true"] { color: var(--accent); }
 .deck__choice-no { color: var(--ink-3); }
-.deck__embed { display: block; width: 100%; margin-top: 0.9rem; border: 0; background: black; }
-.deck__note { margin-top: 0.9rem; white-space: normal; }
 
 /* The hero strip's scroll cue would sit under the deck; it steps left. */
 .hero__strip { padding-right: calc(clamp(0.75rem, 2vw, 1.5rem) + 40px + 1rem); }
@@ -2347,6 +2383,7 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   .deck[data-live] .fab__reel,
   .deck[data-live] .cassette__hub,
+  .deck[data-live] .deck__road[data-live-stream] span,
   .deck__dots::after { animation: none; }
   .deck__dots::after { content: "..."; }
   .deck__panel, .deck[data-open] .deck__panel { transition: none; }
