@@ -445,18 +445,6 @@
   will-change: opacity;
 }
 
-.hero__cue {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  white-space: nowrap;
-}
-
-.hero__cue-arrow {
-  display: inline-block;
-  animation: cartoCueBob 1.6s ease-in-out infinite;
-}
-
 @media (max-width: 767px) {
   .hero__strip { padding-top: 32px; }
 }
@@ -2402,13 +2390,14 @@ kbd {
    dark, and one lit thing (the cassette window, in the accent).
    ───────────────────────────────────────────── */
 .deck {
-  --deck-edge: clamp(0.75rem, 2vw, 1.5rem);
-  --deck-fab: 40px;
+  --deck-edge: var(--hero-gutter);
+  --deck-fab: 54px;
+  --deck-fab-h: 40px;
   --deck-night: color-mix(in srgb, var(--bg) 55%, black);
   --deck-glow: color-mix(in srgb, var(--accent) 55%, transparent);
   position: fixed;
   right: var(--deck-edge);
-  bottom: var(--deck-edge);
+  bottom: 12px;
   z-index: 45;
   font-family: var(--f-mono);
   font-size: 0.72rem;
@@ -2421,12 +2410,12 @@ kbd {
   display: grid;
   place-items: center;
   width: var(--deck-fab);
-  height: 30px;
+  height: var(--deck-fab-h);
   background: var(--deck-night);
   color: var(--ink-3);
   transition: color 0.3s;
 }
-.deck__fab svg { width: 28px; height: 18px; overflow: visible; }
+.deck__fab svg { width: 38px; height: 24px; overflow: visible; }
 .deck__fab:hover,
 .deck__fab[aria-expanded="true"] { color: var(--ink); }
 .deck__fab:focus-visible { outline: 1px solid var(--ink); outline-offset: 2px; }
@@ -2444,9 +2433,9 @@ kbd {
 .deck__panel {
   position: absolute;
   right: 0;
-  bottom: calc(30px + 0.5rem);
+  bottom: calc(var(--deck-fab-h) + 0.5rem);
   width: min(19rem, calc(100vw - 2 * var(--deck-edge)));
-  max-height: calc(100vh - 30px - 0.5rem - 2 * var(--deck-edge));
+  max-height: calc(100vh - var(--deck-fab-h) - 0.5rem - 12px - var(--deck-edge));
   overflow-y: auto;
   padding: 1rem 1.1rem 0.9rem;
   background: var(--deck-night);
@@ -2565,7 +2554,7 @@ kbd {
 .deck__choice-no { color: var(--ink-3); }
 
 /* The hero strip's scroll cue would sit under the deck; it steps left. */
-.hero__strip { padding-right: calc(clamp(0.75rem, 2vw, 1.5rem) + 40px + 1rem); }
+.hero__strip { padding-right: calc(var(--hero-gutter) + 54px + 1rem); }
 
 @media (prefers-reduced-motion: reduce) {
   .deck[data-live] .fab__reel,
