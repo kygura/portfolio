@@ -4,6 +4,7 @@ import { componentTagger } from "lovable-tagger";
 import path from "path";
 import { buildShowcase, parseRepoList, type Showcase } from "./api/github/repos";
 import { createScripter, createSessionStore, handleTerminal } from "./api/github/terminal";
+import { createLimiter, createSpeaker, handleCompanion } from "./api/companion";
 
 /**
  * Serves /api/github/repos and /api/github/terminal under `vite dev` with the
@@ -55,13 +56,38 @@ function devGithubApi(): Plugin {
   };
 }
 
+/** Serves /api/companion under `vite dev`; without ANTHROPIC_API_KEY it answers 503 and Wick uses his own lines. */
+function devCompanionApi(): Plugin {
+  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
+  const speaker = apiKey ? createSpeaker({ apiKey }) : null;
+  const limiter = createLimiter({ limit: 12, windowMs: 60_000 });
+  return {
+    name: "dev-companion-api",
+    apply: "serve",
+    configureServer(server) {
+      server.middlewares.use("/api/companion", async (req, res) => {
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) chunks.push(chunk as Buffer);
+        const response = await handleCompanion(
+          new Request("http://localhost/api/companion", { method: "POST", body: Buffer.concat(chunks) }),
+          speaker,
+          limiter,
+        );
+        res.statusCode = response.status;
+        res.setHeader("content-type", "application/json");
+        res.end(await response.text());
+      });
+    },
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 4000,
   },
-  plugins: [react(), devGithubApi(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [react(), devGithubApi(), devCompanionApi(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

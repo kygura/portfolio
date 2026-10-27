@@ -68,6 +68,14 @@ PS1 pipeline: render to ~¼ width target, vertex snap, affine UVs, Gouraud light
 
 Colour: three's colour management is off and output is linear, matching the r128 mock. The render loop runs only while needed (stops offscreen and in hidden tabs). Reduced motion starts paused on a still frame. Everything is disposed on unmount. Without WebGL the stage shows a CSS contour sheet.
 
+## Companion
+
+Wick, a tiny black mage, stands in the bottom-left corner on every page (`src/components/companion/`). He's a 16×24 pixel map drawn as SVG rects (`Mage.tsx`) at 2 screen pixels per sprite pixel, 3 from 1024px. Straw hat, blue coat, a face in shadow. He keeps his own colours, but his eyes and spell spark take the accent, so he follows the 1–6 switch. The hero strip's scene tabs step right to clear him. Under 640px the tabs fill the strip, so he stands on top of it while it's on screen.
+
+He reads what the visitor can see (`readPage.ts`): headings, paragraphs and list items in the viewport, plus pressed toggles like the hero scene and theme. Nav, footer and the fixed widgets are left out. `POST /api/companion` (`api/companion.ts`) gets one in-character line back from Haiku, at most 25 words. He speaks once when a page opens (once per page per session), when scrolling rests on a new section (at most every 45s), and when he's poked. Unprompted lines are capped at 8 per session and pokes at 30, and the server rate-limits each address to 12 a minute. Past the budget, or with no `ANTHROPIC_API_KEY`, he uses a few lines of his own. Lines type out in a bubble (the deck's night panel with an accent hairline) with a blip per letter.
+
+Moods: idle (two-frame bob, blinks, eyes follow the cursor), think, cast (right arm up, spark), talk, poked (hop) and sleep (after 50s with nothing happening, drifting `z`). Sounds are synthesised on the theme's shared Web Audio context (`sfx.ts`): blips, a poke squeak, a sparkle cast, a sleepy fall, a startled wake. They stay silent until the page has had a gesture. The bubble has `sound` and `chatter` toggles (chatter turns off unprompted lines), stored in `localStorage["nca-wick"]`. Reduced motion stops the animations and shows lines whole.
+
 ## Keyboard
 
 Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while typing in a field or with a modifier held. Code: `src/theme/Keys.tsx`, tables in `src/theme/keymap.ts`. Nav links carry their chord in `title`/`aria-keyshortcuts`; no visible hints were added to the bar (no room without changing it), and there is no status line.

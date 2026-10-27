@@ -29,7 +29,8 @@ const LEVEL = 0.06;
 
 let ctx: AudioContext | null = null;
 
-function context(): AudioContext | null {
+/** The shared audio context, created on first use. Also used by the companion's sounds. */
+export function context(): AudioContext | null {
   if (typeof window === "undefined") return null;
   try {
     ctx ??= new (window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();

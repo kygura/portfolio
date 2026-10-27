@@ -2579,3 +2579,168 @@ kbd {
   .deck { display: none; }
   .hero__strip { padding-right: var(--hero-gutter); }
 }
+
+/* ── Wick: the little black mage in the bottom-left corner (src/components/companion/) ──
+   A pixel sprite at a whole number of screen pixels per sprite pixel. His
+   hat, coat and boots keep their own colours; the eyes and spark take the
+   accent, and the bubble is the deck's night panel with an accent hairline. */
+.wick {
+  --wick-px: 2px;
+  --wick-edge: clamp(0.75rem, 2vw, 1.5rem);
+  --wk-line: #16121c;
+  --wk-hat: #d9b36a;
+  --wk-hat-light: #f2d592;
+  --wk-hat-shade: #9f7a3d;
+  --wk-void: #07060a;
+  --wk-collar: #eee3c4;
+  --wk-collar-shade: #b9ad8c;
+  --wk-coat: #3f6fd8;
+  --wk-coat-shade: #27449a;
+  --wk-pants: #2a2236;
+  --wk-pants-stripe: #8f7fb0;
+  --wk-boot: #6b4428;
+  --wk-glove: #f3efe3;
+  position: fixed;
+  left: var(--wick-edge);
+  bottom: var(--wick-edge);
+  z-index: 44;
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+@media (min-width: 1024px) { .wick { --wick-px: 3px; } }
+
+.wick__body {
+  position: relative;
+  display: block;
+  width: calc(18 * var(--wick-px));
+  height: calc(27 * var(--wick-px));
+  padding: 0;
+  background: none;
+  border: 0;
+}
+.wick__body:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
+/* A pixel shadow that stays on the ground while he bobs. */
+.wick__body::after {
+  content: "";
+  position: absolute;
+  left: calc(3 * var(--wick-px));
+  right: calc(3 * var(--wick-px));
+  bottom: calc(-1 * var(--wick-px));
+  height: var(--wick-px);
+  background: color-mix(in srgb, black 45%, transparent);
+}
+.wick__sprite { display: block; width: 100%; height: 100%; overflow: visible; animation: wickBob 1.6s steps(1) infinite; }
+.wick[data-mood="talk"] .wick__sprite { animation-duration: 0.36s; }
+.wick[data-mood="think"] .wick__sprite { animation-duration: 0.9s; }
+.wick[data-mood="sleep"] .wick__sprite { animation: none; }
+.wick[data-mood="poked"] .wick__sprite { animation: wickHop 0.34s steps(4) 1; }
+
+.wick .wk-line { fill: var(--wk-line); }
+.wick .wk-hat { fill: var(--wk-hat); }
+.wick .wk-hat-light { fill: var(--wk-hat-light); }
+.wick .wk-hat-shade { fill: var(--wk-hat-shade); }
+.wick .wk-void { fill: var(--wk-void); }
+.wick .wk-collar { fill: var(--wk-collar); }
+.wick .wk-collar-shade { fill: var(--wk-collar-shade); }
+.wick .wk-coat { fill: var(--wk-coat); }
+.wick .wk-coat-shade { fill: var(--wk-coat-shade); }
+.wick .wk-pants { fill: var(--wk-pants); }
+.wick .wk-pants-stripe { fill: var(--wk-pants-stripe); }
+.wick .wk-boot { fill: var(--wk-boot); }
+.wick .wk-glove { fill: var(--wk-glove); }
+.wick .wk-eye { fill: var(--accent); }
+.wick__eyes { filter: drop-shadow(0 0 0.6px var(--accent)); }
+.wick[data-mood="sleep"] .wk-eye { fill: color-mix(in srgb, var(--accent) 45%, var(--wk-void)); }
+.wick .wk-spark { fill: #fff; }
+.wick .wk-spark-dim { fill: var(--accent); }
+.wick__spark { animation: wickSpark 0.24s steps(1) infinite; }
+
+.wick__z {
+  position: absolute;
+  right: calc(-1 * var(--wick-px));
+  top: calc(2 * var(--wick-px));
+  font-family: var(--f-mono);
+  font-size: 0.7rem;
+  color: var(--ink-3);
+  animation: wickZ 2.4s steps(6) infinite;
+  pointer-events: none;
+}
+
+.wick__bubble {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 0.6rem);
+  width: max-content;
+  max-width: min(17rem, calc(100vw - 2 * var(--wick-edge)));
+  padding: 0.6rem 0.75rem 0.45rem;
+  background: color-mix(in srgb, var(--bg) 55%, black);
+  border: 1px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  animation: wickPop 0.18s steps(3) 1;
+}
+/* The tail: two stepped pixels pointing down at his hat brim. */
+.wick__bubble::before,
+.wick__bubble::after {
+  content: "";
+  position: absolute;
+  background: color-mix(in srgb, var(--accent) 70%, transparent);
+}
+.wick__bubble::before { left: calc(8 * var(--wick-px)); bottom: -5px; width: 5px; height: 4px; }
+.wick__bubble::after { left: calc(8 * var(--wick-px) - 3px); bottom: -8px; width: 3px; height: 3px; }
+.wick__name { display: block; margin-bottom: 0.2rem; color: var(--accent); letter-spacing: 0.12em; text-transform: uppercase; font-size: 0.62rem; }
+.wick__line { margin: 0; min-height: 1.5em; color: var(--ink); white-space: pre-wrap; }
+.wick__dots::after { content: ""; animation: wickDots 1.2s steps(4) infinite; }
+.wick__controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  margin-top: 0.45rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid color-mix(in srgb, var(--ink-3) 30%, transparent);
+  font-size: 0.62rem;
+}
+.wick__controls button { color: var(--ink-3); background: none; border: 0; padding: 0; transition: color 0.2s; }
+.wick__controls button:hover { color: var(--ink); }
+.wick__controls button:focus-visible { outline: 1px solid var(--ink); outline-offset: 2px; }
+
+@keyframes wickBob { 0% { transform: translateY(0); } 50% { transform: translateY(calc(-1 * var(--wick-px))); } }
+@keyframes wickHop {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(calc(-4 * var(--wick-px))); }
+  70% { transform: translateY(calc(-2 * var(--wick-px))); }
+}
+@keyframes wickSpark { 50% { opacity: 0.35; } }
+@keyframes wickZ {
+  0% { transform: translate(0, 0); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translate(6px, -14px); opacity: 0; }
+}
+@keyframes wickPop { from { transform: translateY(4px); opacity: 0; } }
+@keyframes wickDots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+
+/* The strip's scene tabs step right to clear him. On phones the tabs fill the
+   strip, so he stands on top of it instead while it's on screen. */
+@media (min-width: 640px) {
+  .hero__strip { padding-left: calc(clamp(0.75rem, 2vw, 1.5rem) + 18 * 2px + 1rem); }
+}
+@media (max-width: 639px) {
+  .wick { transition: bottom 0.25s steps(4); }
+  .wick[data-lift] { bottom: calc(6.1rem + 0.5rem); }
+}
+@media (min-width: 1024px) {
+  .hero__strip { padding-left: calc(clamp(0.75rem, 2vw, 1.5rem) + 18 * 3px + 1rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wick__sprite,
+  .wick[data-mood] .wick__sprite,
+  .wick__spark,
+  .wick__z,
+  .wick__bubble { animation: none !important; }
+  .wick__dots::after { animation: none; content: "..."; }
+}
+@media print {
+  .wick { display: none; }
+  .hero__strip { padding-left: var(--hero-gutter); }
+}
