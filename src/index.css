@@ -2566,3 +2566,14 @@ kbd {
   .deck { display: none; }
   .hero__strip { padding-right: var(--hero-gutter); }
 }
+
+/* Mascot: a slow float, a quicker bob while it speaks. */
+.mascot-bob { animation: mascot-bob 2.6s steps(4, end) infinite; }
+.mascot-talk { animation: mascot-bob 0.5s steps(2, end) infinite; }
+@keyframes mascot-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mascot-bob, .mascot-talk { animation: none; }
+}

@@ -10,6 +10,7 @@ import TerminalHost from "./components/TerminalHost";
 import CommandHost from "./components/CommandHost";
 import Keys from "./theme/Keys";
 import LofiPlayer from "./components/player/LofiPlayer";
+import Mascot from "./components/mascot/Mascot";
 
 // Toast viewports render nothing until something fires a toast, and only
 // two lazily-routed pages ever do — no reason to ship them up front.
@@ -43,6 +44,7 @@ const App = () => (
         <CommandHost />
         <Keys />
         <LofiPlayer />
+        <Mascot />
         <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<Index />} />

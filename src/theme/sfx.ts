@@ -59,3 +59,43 @@ export function playAccentSfx(id: Accent["id"]) {
     osc.stop(t + v.decay + 0.02);
   });
 }
+
+function tone(ac: AudioContext, freq: number, t: number, dur: number, wave: OscillatorType, level: number, glideTo?: number) {
+  const osc = ac.createOscillator();
+  const gain = ac.createGain();
+  osc.type = wave;
+  osc.frequency.setValueAtTime(freq, t);
+  if (glideTo) osc.frequency.exponentialRampToValueAtTime(glideTo, t + dur);
+  gain.gain.setValueAtTime(0.0001, t);
+  gain.gain.exponentialRampToValueAtTime(level, t + 0.004);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  osc.connect(gain).connect(ac.destination);
+  osc.start(t);
+  osc.stop(t + dur + 0.02);
+}
+
+/** One speech blip of the mascot: a tiny square chirp, pitch jittered per letter. */
+export function playBlip(seed = 0) {
+  const ac = context();
+  if (!ac) return;
+  const base = 520 + (seed % 7) * 38;
+  tone(ac, base, ac.currentTime, 0.045, "square", 0.025);
+}
+
+type MascotCue = "wake" | "think" | "done" | "bye";
+
+const CUES: Record<MascotCue, { notes: number[]; step: number; wave: OscillatorType; dur: number }> = {
+  wake: { notes: [392, 523, 784], step: 0.06, wave: "square", dur: 0.12 },
+  think: { notes: [330, 294], step: 0.08, wave: "triangle", dur: 0.14 },
+  done: { notes: [659, 880], step: 0.07, wave: "triangle", dur: 0.18 },
+  bye: { notes: [523, 392, 262], step: 0.06, wave: "triangle", dur: 0.14 },
+};
+
+/** Short chiptune cues for the mascot waking, pondering, finishing and leaving. */
+export function playMascotCue(cue: MascotCue) {
+  const ac = context();
+  if (!ac) return;
+  const c = CUES[cue];
+  const t0 = ac.currentTime;
+  c.notes.forEach((f, i) => tone(ac, f, t0 + i * c.step, c.dur, c.wave, 0.04));
+}
