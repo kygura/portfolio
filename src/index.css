@@ -2379,7 +2379,7 @@ kbd {
 .deck__choices button[aria-pressed="true"] { color: var(--accent); }
 .deck__choice-no { color: var(--ink-3); }
 
-/* ── Mote: the pixel critter perched left of the deck ──
+/* ── Mote: the pixel critter in the bottom-left corner ──
    A 16×16 sprite at 4px a pixel (3px on phones); every slot is a theme token, so the
    critter takes each accent's body colour and the variant's warm "danger"
    for its bulb and cheeks. */
@@ -2391,7 +2391,7 @@ kbd {
   --mote-line: color-mix(in srgb, var(--accent-deep) 45%, black);
   --mote-glow: color-mix(in srgb, var(--danger) 60%, transparent);
   position: fixed;
-  right: calc(var(--mote-edge) + 40px + 0.5rem);
+  left: var(--mote-edge);
   bottom: var(--mote-edge);
   z-index: 44;
   font-family: var(--f-mono);
@@ -2440,7 +2440,7 @@ kbd {
 /* The speech box: the deck's black box, with a pixel tail down to Mote. */
 .mote__panel {
   position: absolute;
-  right: calc(-40px - 0.5rem);
+  left: 0;
   bottom: calc(var(--mote-size) + 0.75rem);
   width: min(17rem, calc(100vw - 2 * var(--mote-edge)));
   padding: 0.7rem 0.85rem;
@@ -2453,7 +2453,7 @@ kbd {
 .mote__panel::after {
   content: "";
   position: absolute;
-  right: calc(40px + 0.5rem + var(--mote-size) / 2 - 4px);
+  left: calc(var(--mote-size) / 2 - 4px);
   bottom: -6px;
   width: 6px;
   height: 6px;
@@ -2474,11 +2474,21 @@ kbd {
 .mote__ask button:hover:not(:disabled) { color: var(--accent); }
 .mote__ask button:disabled { opacity: 0.4; cursor: default; }
 .mote__ask button:focus-visible { outline: 1px solid var(--ink-3); outline-offset: 2px; }
-/* One box at a time in the corner: the deck's panel wins. */
-body:has(.deck[data-open]) .mote__panel { display: none; }
+/* Where the two boxes would meet across the bottom, the deck's panel wins. */
+@media (max-width: 720px) { body:has(.deck[data-open]) .mote__panel { display: none; } }
 
-/* The hero strip's scroll cue would sit under the deck and Mote; it steps left. */
-.hero__strip { padding-right: calc(clamp(0.75rem, 2vw, 1.5rem) + 40px + 0.5rem + 64px + 1rem); }
+/* The hero strip's ends would sit under the deck and Mote: the scroll cue
+   steps left of the deck, the scene tabs right of Mote. */
+.hero__strip {
+  padding-right: calc(clamp(0.75rem, 2vw, 1.5rem) + 40px + 1rem);
+  padding-left: calc(clamp(0.75rem, 2vw, 1.5rem) + 64px + 1rem);
+}
+@media (max-width: 640px) {
+  .hero__strip { padding-left: calc(clamp(0.75rem, 2vw, 1.5rem) + 48px + 0.75rem); }
+  /* Between the two, thirteen tabs no longer fit one row; they wrap
+     rather than spill left under Mote. */
+  .hero__sheets { flex-wrap: wrap; min-width: 0; row-gap: 4px; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .deck[data-live] .fab__reel,
@@ -2493,5 +2503,5 @@ body:has(.deck[data-open]) .mote__panel { display: none; }
 }
 @media print {
   .deck, .mote { display: none; }
-  .hero__strip { padding-right: var(--hero-gutter); }
+  .hero__strip { padding-right: var(--hero-gutter); padding-left: var(--hero-gutter); }
 }

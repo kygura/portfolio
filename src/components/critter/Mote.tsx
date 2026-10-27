@@ -1,5 +1,5 @@
 /**
- * Mote: a pixel critter perched beside the tape deck. It reads the page the
+ * Mote: a pixel critter in the bottom-left corner. It reads the page the
  * visitor is on (route, the section in view, the text on screen) and says
  * something about it through /api/critter: once when a page opens, and again
  * when the visitor stops on a new section for a while. Pressing it, or `b`,
