@@ -206,7 +206,7 @@ const CartographicHero = () => {
           <div className="hero__mark-text">C.A</div>
         </div>
 
-        {/* Hairline footer strip: scene tabs on the left, scroll cue right. */}
+        {/* Hairline footer strip: scene tabs on the left. */}
         <footer ref={footerRef} className="hero__strip">
           <div className="hero__sheets" role="group" aria-label="Hero scene">
             {SHEETS.map((s, i) => (
@@ -228,10 +228,6 @@ const CartographicHero = () => {
             <span className="hero__orbit-hint" aria-hidden="true">
               {SHEETS[sheet].hint ?? "DRAG TO ORBIT \u00b7 CTRL+WHEEL TO ZOOM \u00b7 DOUBLE-CLICK TO RESET"}
             </span>
-          </div>
-          <div className="hero__cue">
-            <span>SCROLL</span>
-            <span className="hero__cue-arrow">&darr;</span>
           </div>
         </footer>
       </div>
