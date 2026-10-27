@@ -7,7 +7,8 @@
  * Colours are the theme tokens, so it follows the 1–6 accent switch with no
  * code of its own.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { isTyping } from "@/theme/keymap";
 import { readStored } from "@/theme/accent";
 import Cassette from "./Cassette";
@@ -49,6 +50,9 @@ export default function LofiPlayer() {
   const [failed, setFailed] = useState(false);
   const [index, setIndex] = useState(saved.track);
   const [playing, setPlaying] = useState(false);
+  // Waiting on the network for the next bytes, and a source that wouldn't load.
+  const [buffering, setBuffering] = useState(false);
+  const [broken, setBroken] = useState(false);
   const [time, setTime] = useState(0);
   const [duration, setDuration] = useState(NaN);
   const [volume, setVolume] = useState(saved.volume);
@@ -93,6 +97,7 @@ export default function LofiPlayer() {
   const load = (src: string) => {
     const audio = audioRef.current!;
     audio.src = src;
+    setBroken(false);
     setTime(0);
     setDuration(NaN);
   };
@@ -168,8 +173,12 @@ export default function LofiPlayer() {
   }, [toggle, open]);
 
   // `inert` isn't in React 18's types; it keeps the closed panel out of the tab order.
+  // Opening from the keyboard lands on the cassette, so Enter plays straight away.
   useEffect(() => {
     panelRef.current?.toggleAttribute("inert", !open);
+    if (open && document.activeElement === fabRef.current) {
+      panelRef.current?.querySelector<HTMLElement>(".cassette")?.focus({ preventScroll: true });
+    }
   }, [open]);
 
   // Clicking anywhere outside closes the panel; playback keeps going.
@@ -191,6 +200,35 @@ export default function LofiPlayer() {
     if (audio && seekable) audio.currentTime = Math.min(duration, Math.max(0, audio.currentTime + dt));
   };
 
+  // Lock-screen and headset keys, and the browser's own media widget.
+  useEffect(() => {
+    if (!("mediaSession" in navigator)) return;
+    const ms = navigator.mediaSession;
+    ms.metadata = new MediaMetadata(
+      station
+        ? { title: station.name, artist: station.by, album: "SomaFM" }
+        : { title: track?.title ?? "Tape deck", artist: track?.artist ?? "", album: playlist?.name ?? "" },
+    );
+    ms.playbackState = playing ? "playing" : "paused";
+    ms.setActionHandler("play", toggle);
+    ms.setActionHandler("pause", toggle);
+    ms.setActionHandler("previoustrack", station || !tracks.length ? null : () => go(-1));
+    ms.setActionHandler("nexttrack", station || !tracks.length ? null : () => go(1));
+    return () => {
+      for (const a of ["play", "pause", "previoustrack", "nexttrack"] as const) ms.setActionHandler(a, null);
+    };
+  }, [station, track, playlist, playing, tracks.length, toggle, go]);
+
+  // Dragging along the road scrubs; a click is just a drag of zero length.
+  const seekTo = (e: ReactPointerEvent<HTMLDivElement>) => {
+    const audio = audioRef.current;
+    if (!audio || !seekable) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const t = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * duration;
+    audio.currentTime = t;
+    setTime(t);
+  };
+
   const label = station
     ? `${station.name} · live`
     : track
@@ -200,16 +238,28 @@ export default function LofiPlayer() {
         : "loading…";
 
   return (
-    <div className="deck" data-open={open || undefined} data-live={playing || undefined}>
+    <div className="deck" data-open={open || undefined} data-live={playing || undefined} data-buffering={(playing && buffering) || undefined}>
       <audio
         ref={audioRef}
         preload="none"
         onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
+        onPlaying={() => setBuffering(false)}
+        onWaiting={() => setBuffering(true)}
+        onCanPlay={() => setBuffering(false)}
+        onPause={() => {
+          setPlaying(false);
+          setBuffering(false);
+        }}
         onEnded={() => go(1)}
         onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
         onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
-        onError={() => setPlaying(false)}
+        onError={(e) => {
+          // Hanging up empties the src on purpose; that isn't a failure.
+          if (!e.currentTarget.getAttribute("src")) return;
+          setPlaying(false);
+          setBuffering(false);
+          setBroken(true);
+        }}
       />
 
       <div ref={panelRef} className="deck__panel" role="dialog" aria-label="Music player">
@@ -267,11 +317,14 @@ export default function LofiPlayer() {
           aria-valuenow={Math.round(time)}
           aria-valuetext={station ? "live" : `${clock(time)} of ${clock(duration)}`}
           onPointerDown={(e) => {
-            const audio = audioRef.current;
-            if (!audio || !seekable) return;
-            const r = e.currentTarget.getBoundingClientRect();
-            audio.currentTime = ((e.clientX - r.left) / r.width) * duration;
+            if (!seekable) return;
+            e.currentTarget.setPointerCapture(e.pointerId);
+            seekTo(e);
           }}
+          onPointerMove={(e) => {
+            if (e.currentTarget.hasPointerCapture(e.pointerId)) seekTo(e);
+          }}
+          style={{ "--p": progress } as React.CSSProperties}
           onKeyDown={(e) => {
             if (e.key === "ArrowRight") seekBy(10);
             else if (e.key === "ArrowLeft") seekBy(-10);
@@ -283,7 +336,7 @@ export default function LofiPlayer() {
         </div>
         <div className="deck__clock">
           <span>{clock(time)}</span>
-          <span>{station ? "on air" : tracks.length ? `${(index % tracks.length) + 1} / ${tracks.length}` : ""}</span>
+          <span>{broken ? "won't play" : buffering && playing ? "buffering" : station ? "on air" : tracks.length ? `${(index % tracks.length) + 1} / ${tracks.length}` : ""}</span>
           <span>{station ? "live" : clock(duration)}</span>
         </div>
 

@@ -2403,7 +2403,8 @@ kbd {
    ───────────────────────────────────────────── */
 .deck {
   --deck-edge: clamp(0.75rem, 2vw, 1.5rem);
-  --deck-fab: 40px;
+  --deck-fab: 44px;
+  --deck-fab-h: 34px;
   --deck-night: color-mix(in srgb, var(--bg) 55%, black);
   --deck-glow: color-mix(in srgb, var(--accent) 55%, transparent);
   position: fixed;
@@ -2421,14 +2422,16 @@ kbd {
   display: grid;
   place-items: center;
   width: var(--deck-fab);
-  height: 30px;
+  height: var(--deck-fab-h);
   background: var(--deck-night);
   color: var(--ink-3);
-  transition: color 0.3s;
+  cursor: pointer;
+  transition: color 0.3s, transform 0.15s;
 }
 .deck__fab svg { width: 28px; height: 18px; overflow: visible; }
 .deck__fab:hover,
 .deck__fab[aria-expanded="true"] { color: var(--ink); }
+.deck__fab:active { transform: scale(0.94); }
 .deck__fab:focus-visible { outline: 1px solid var(--ink); outline-offset: 2px; }
 .fab__shell { fill: none; stroke: currentColor; stroke-width: 1; }
 .fab__window { fill: none; stroke: currentColor; stroke-width: 1; transition: fill 0.4s, stroke 0.4s; }
@@ -2444,12 +2447,16 @@ kbd {
 .deck__panel {
   position: absolute;
   right: 0;
-  bottom: calc(30px + 0.5rem);
+  bottom: calc(var(--deck-fab-h) + 0.6rem);
   width: min(19rem, calc(100vw - 2 * var(--deck-edge)));
-  max-height: calc(100vh - 30px - 0.5rem - 2 * var(--deck-edge));
+  max-height: calc(100dvh - var(--deck-fab-h) - 0.6rem - 2 * var(--deck-edge));
   overflow-y: auto;
   padding: 1rem 1.1rem 0.9rem;
   background: var(--deck-night);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink-3) 35%, transparent), 0 12px 32px rgb(0 0 0 / 0.45);
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ink-3) transparent;
   transform-origin: bottom right;
   transform: translateY(6px) scale(0.92);
   transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s linear 0.35s;
@@ -2513,9 +2520,12 @@ kbd {
 
 /* Seek: a road, and a square travelling along it. A live stream has no end,
    so its square stands still in the middle and pulses. */
-.deck__road { position: relative; height: 14px; margin-top: 0.75rem; cursor: pointer; outline: none; }
+.deck__road { position: relative; height: 22px; margin-top: 0.5rem; cursor: pointer; outline: none; touch-action: none; }
 .deck__road[aria-disabled="true"] { cursor: default; }
 .deck__road::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--ink-3); }
+/* The stretch already travelled, drawn in the accent. */
+.deck__road::after { content: ""; position: absolute; left: 0; top: 50%; width: calc(var(--p, 0) * 100%); height: 1px; background: var(--accent); opacity: 0.7; transition: width 0.25s linear; }
+.deck__road[data-live-stream]::after { display: none; }
 .deck__road span {
   position: absolute;
   top: 50%;
@@ -2524,18 +2534,25 @@ kbd {
   margin: -3.5px 0 0 -3.5px;
   background: var(--accent);
   box-shadow: 0 0 8px var(--deck-glow);
-  transition: left 0.25s linear;
+  transition: left 0.25s linear, transform 0.15s;
+  z-index: 1;
 }
+.deck__road:not([aria-disabled="true"]):hover span,
+.deck__road:not([aria-disabled="true"]):active span { transform: scale(1.5); }
+.deck__road:active span { transition: transform 0.15s; }
+.deck[data-buffering] .deck__road span { animation: deckPulse 0.9s ease-in-out infinite; }
 .deck[data-live] .deck__road[data-live-stream] span { animation: deckPulse 2s ease-in-out infinite; }
 @keyframes deckPulse { 50% { opacity: 0.35; } }
 .deck__road:focus-visible::before { background: var(--ink); }
-.deck__clock { display: flex; justify-content: space-between; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.deck__clock { display: flex; margin-top: -0.2rem; justify-content: space-between; color: var(--ink-3); font-variant-numeric: tabular-nums; }
 
 /* Transport: three keys centred under the cassette, volume on its own line. */
 .deck__keys { display: flex; justify-content: center; gap: 0.4rem; margin-top: 0.8rem; }
 .deck__keys button {
-  min-width: 3.6rem;
+  min-width: 3.8rem;
+  min-height: 2.1rem;
   padding: 0.3rem 0.5rem;
+  cursor: pointer;
   border: 1px solid var(--ink-3);
   color: var(--ink-2);
   text-align: center;
@@ -2544,8 +2561,25 @@ kbd {
 .deck__keys button:not(:disabled):hover { color: var(--ink); border-color: var(--ink-2); }
 .deck__keys button:not(:disabled):active { transform: translateY(1px); }
 .deck__keys button[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+.deck__keys .deck__key--play { min-width: 4.6rem; color: var(--ink); border-color: var(--ink-2); }
 .deck__vol { display: flex; justify-content: center; align-items: center; gap: 0.6rem; margin-top: 0.7rem; color: var(--ink-3); }
-.deck__vol input { width: 7rem; accent-color: var(--ink-2); height: 2px; }
+.deck__vol input {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 8rem;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+}
+.deck__vol input::-webkit-slider-runnable-track { height: 1px; background: var(--ink-3); }
+.deck__vol input::-moz-range-track { height: 1px; background: var(--ink-3); }
+.deck__vol input::-webkit-slider-thumb { -webkit-appearance: none; width: 9px; height: 9px; margin-top: -4px; border: 0; border-radius: 0; background: var(--ink-2); transition: background 0.2s, transform 0.15s; }
+.deck__vol input::-moz-range-thumb { width: 9px; height: 9px; border: 0; border-radius: 0; background: var(--ink-2); }
+.deck__vol input:hover::-webkit-slider-thumb,
+.deck__vol input:focus-visible::-webkit-slider-thumb { background: var(--accent); transform: scale(1.3); }
+.deck__vol input:hover::-moz-range-thumb,
+.deck__vol input:focus-visible::-moz-range-thumb { background: var(--accent); }
+.deck__vol input:focus-visible { outline: 1px solid var(--ink-3); outline-offset: 2px; }
 
 /* Ellipses that arrive one dot at a time. */
 .deck__dots::after { content: ""; animation: deckDots 1.8s steps(1, end) infinite; }
@@ -2553,19 +2587,21 @@ kbd {
 
 /* The shelf: two sides, and their contents as numbered dialogue choices. */
 .deck__source { display: flex; justify-content: center; gap: 1.1rem; margin: 1rem 0 0.6rem; padding-top: 0.8rem; border-top: 1px solid color-mix(in srgb, var(--ink-3) 40%, transparent); }
-.deck__source button { color: var(--ink-3); transition: color 0.2s; }
+.deck__source button { padding: 0.25rem 0; color: var(--ink-3); cursor: pointer; transition: color 0.2s; }
 .deck__source button:hover { color: var(--ink-2); }
 .deck__source button[aria-selected="true"] { color: var(--ink); }
 .deck__source button[aria-selected="true"]::before { content: "> "; color: var(--accent); }
-.deck__choices { display: flex; flex-direction: column; gap: 0.55rem; }
-.deck__choices button { display: flex; gap: 0.6rem; width: 100%; min-width: 0; text-align: left; color: var(--ink-2); transition: color 0.2s; }
+.deck__choices { display: flex; flex-direction: column; gap: 0.1rem; max-height: 11rem; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--ink-3) transparent; }
+.deck__choices button { display: flex; gap: 0.6rem; width: 100%; min-width: 0; padding: 0.3rem 0; text-align: left; color: var(--ink-2); cursor: pointer; transition: color 0.2s, transform 0.2s; }
+.deck__choices button:hover { transform: translateX(2px); }
 .deck__choices button > span:last-child { min-width: 0; }
 .deck__choices button:hover { color: var(--ink); }
 .deck__choices button[aria-pressed="true"] { color: var(--accent); }
-.deck__choice-no { color: var(--ink-3); }
+.deck__choice-no { flex: none; min-width: 1.4em; color: var(--ink-3); }
+.deck__choices button[aria-pressed="true"] .deck__choice-no { color: var(--accent); }
 
 /* The hero strip's scroll cue would sit under the deck; it steps left. */
-.hero__strip { padding-right: calc(clamp(0.75rem, 2vw, 1.5rem) + 40px + 1rem); }
+.hero__strip { padding-right: calc(clamp(0.75rem, 2vw, 1.5rem) + 44px + 1rem); }
 
 @media (prefers-reduced-motion: reduce) {
   .deck[data-live] .fab__reel,
@@ -2573,6 +2609,8 @@ kbd {
   .deck[data-live] .deck__road[data-live-stream] span,
   .deck__dots::after { animation: none; }
   .deck__dots::after { content: "..."; }
+  .deck[data-buffering] .deck__road span,
+  .deck__choices button:hover { animation: none; transform: none; }
   .deck__panel, .deck[data-open] .deck__panel { transition: none; }
 }
 @media print {
