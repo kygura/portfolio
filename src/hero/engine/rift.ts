@@ -219,16 +219,6 @@ export function buildRift(kit: PsxKit): SceneDef {
     m.renderOrder = 1;
   }
 
-  // Ash coming down through the valley.
-  const NA = 160, ashPos = new Float32Array(NA * 3);
-  const ashSeed = Array.from({ length: NA }, () => [(rnd() - 0.5) * 80, rnd() * 50, between(-160, 50), rnd() * 6.28]);
-  const ashGeo = new THREE.BufferGeometry();
-  ashGeo.setAttribute("position", new THREE.BufferAttribute(ashPos, 3));
-  const moteMat = new THREE.PointsMaterial({ color: U.uAccent.value.clone(), size: 1.4, sizeAttenuation: false });
-  const ash = new THREE.Points(ashGeo, moteMat);
-  ash.frustumCulled = false;
-  scene.add(ash);
-
   /* ---- eggs ---- */
   let wedgeT = -99, riverT = -99, sunT = -99, tNow = 0;
 
@@ -247,7 +237,6 @@ export function buildRift(kit: PsxKit): SceneDef {
       { id: "rift-river", r: 40, at: (v) => { v.set(riverX(-60), 1, -60); }, fire: (t) => { riverT = t; } },
       { id: "rift-sun", r: 46, at: (v) => { v.copy(SUN); }, fire: (t) => { sunT = t; } },
     ],
-    moteMat,
     update(t) {
       tNow = t;
       hang(t);
@@ -257,14 +246,6 @@ export function buildRift(kit: PsxKit): SceneDef {
       const es = t - sunT;
       sun.scale.setScalar(1 + 0.4 * pulse(es, 1.6));
       skyU.uFlare.value = pulse(es, 2.4);
-
-      for (let i = 0; i < NA; i++) {
-        const [x, y0, z, ph] = ashSeed[i];
-        ashPos[i * 3] = x + Math.sin(t * 0.3 + ph) * 2;
-        ashPos[i * 3 + 1] = 50 - ((50 - y0 + t * 1.1) % 50);
-        ashPos[i * 3 + 2] = z + Math.cos(t * 0.2 + ph) * 2;
-      }
-      ashGeo.attributes.position.needsUpdate = true;
 
       // Above the canopy, looking down the valley toward the notch.
       const x = Math.sin(t * 0.03) * 4 + view.px * 2, z = 64 + Math.sin(t * 0.02) * 6;

@@ -417,35 +417,6 @@ export function buildAbyss(kit: PsxKit): SceneDef {
     return g;
   });
 
-  /* ---- spores: pink fuel rising from the roots, a little cyan dust ---- */
-  // Fixed pixel size: attenuated points turn into slabs when they drift past the lens.
-  const mkMotes = (n: number, color: string, size: number) => {
-    const base = new Float32Array(n * 3), pos = new Float32Array(n * 3), spd = new Float32Array(n);
-    for (let i = 0; i < n; i++) {
-      const a = rnd() * Math.PI * 2, r = 1 + Math.pow(rnd(), 0.7) * 26;
-      base[i * 3] = Math.sin(a) * r;
-      base[i * 3 + 1] = rnd() * 22;
-      base[i * 3 + 2] = Math.cos(a) * r;
-      spd[i] = 0.25 + rnd() * 0.6;
-    }
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    const pts = new THREE.Points(g, new THREE.PointsMaterial({ color, size, sizeAttenuation: false, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
-    pts.frustumCulled = false;
-    scene.add(pts);
-    return (t: number) => {
-      for (let i = 0; i < n; i++) {
-        const y = (base[i * 3 + 1] + t * spd[i]) % 22;
-        pos[i * 3] = base[i * 3] + Math.sin(t * 0.4 + i) * 0.5;
-        pos[i * 3 + 1] = y;
-        pos[i * 3 + 2] = base[i * 3 + 2] + Math.cos(t * 0.3 + i * 1.7) * 0.5;
-      }
-      g.attributes.position.needsUpdate = true;
-    };
-  };
-  const pinkMotes = mkMotes(160, P.pink, 1.5);
-  const cyanMotes = mkMotes(50, P.cyan, 1);
-
   /* ---- Judgement: a shadow with a diamond eye, behind the cell, for a moment ---- */
   const vision = new THREE.Group();
   vision.visible = false;
@@ -545,8 +516,6 @@ export function buildAbyss(kit: PsxKit): SceneDef {
       });
       ghostMat.opacity = ed * 0.35;
 
-      pinkMotes(t);
-      cyanMotes(t);
 
       const ang = t * 0.035 + view.yaw + view.px * 0.25;
       cam.position.set(Math.sin(ang) * 23, 7.5 - view.py * 2, Math.cos(ang) * 23);

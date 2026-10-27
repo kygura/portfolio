@@ -330,16 +330,6 @@ export function buildDrift(kit: PsxKit): SceneDef {
   spray.frustumCulled = false;
   scene.add(spray);
 
-  // Motes: slow, rising, drifting with the air.
-  const NM = 110, motePos = new Float32Array(NM * 3);
-  const moteSeed = Array.from({ length: NM }, () => [(rnd() - 0.5) * 150, rnd() * 22, between(-70, 20), rnd() * 6.28]);
-  const moteGeo = new THREE.BufferGeometry();
-  moteGeo.setAttribute("position", new THREE.BufferAttribute(motePos, 3));
-  const moteMat = new THREE.PointsMaterial({ color: U.uAccent.value.clone(), size: 1.5, sizeAttenuation: false });
-  const motes = new THREE.Points(moteGeo, moteMat);
-  motes.frustumCulled = false;
-  scene.add(motes);
-
   /* ---- eggs ---- */
   let hornT = -99, lightsT = -99, lanternT = -99, sunT = -99, tNow = 0;
   const lampOn = new THREE.Color(P.lamp), lampOff = new THREE.Color("#2a2638"), winTint = mWin.uniforms.uTint.value as THREE.Color;
@@ -364,7 +354,6 @@ export function buildDrift(kit: PsxKit): SceneDef {
       { name: "Sun", sub: "NOT SETTING", at: (v) => { v.copy(SUN).y += 60; } },
     ],
     eggs,
-    moteMat,
     update(t) {
       tNow = t;
       hang(t);
@@ -423,14 +412,6 @@ export function buildDrift(kit: PsxKit): SceneDef {
         sprayPos[i * 3 + 2] = TZ + side * (bow ? 0.3 + ph * (0.8 + a) : D / 2 - 0.1 + ph * (0.4 + a * 0.8));
       }
       sprayGeo.attributes.position.needsUpdate = true;
-
-      for (let i = 0; i < NM; i++) {
-        const [x0, y0, z, ph] = moteSeed[i];
-        motePos[i * 3] = x0 + Math.sin(t * 0.13 + ph) * 3;
-        motePos[i * 3 + 1] = 0.6 + ((y0 + t * 0.35) % 22);
-        motePos[i * 3 + 2] = z + Math.cos(t * 0.3 + ph) * 0.6;
-      }
-      moteGeo.attributes.position.needsUpdate = true;
 
       // Standing at the water's edge, looking out at the line; drag turns the head, zoom is the lens.
       cam.position.set(Math.sin(t * 0.05) * 2 + view.px * 1.5, 3.4 - view.py * 0.4, 34);
