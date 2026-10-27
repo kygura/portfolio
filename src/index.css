@@ -2379,17 +2379,17 @@ kbd {
 .deck__choices button[aria-pressed="true"] { color: var(--accent); }
 .deck__choice-no { color: var(--ink-3); }
 
-/* ── Mote: the pixel critter in the bottom-left corner ──
-   A 16×16 sprite at 4px a pixel (3px on phones); every slot is a theme token, so the
-   critter takes each accent's body colour and the variant's warm "danger"
-   for its bulb and cheeks. */
+/* ── Mote: the little robot in the bottom-left corner ──
+   A 16×16 sprite at 4px a pixel (3px on phones); every slot is a theme
+   token, so his plating takes each accent and his lens eyes and chest lamp
+   the variant's warm "danger". */
 .mote {
   --mote-edge: clamp(0.75rem, 2vw, 1.5rem);
   --mote-px: 4px;
   --mote-size: calc(16 * var(--mote-px));
   --mote-night: color-mix(in srgb, var(--bg) 55%, black);
   --mote-line: color-mix(in srgb, var(--accent-deep) 45%, black);
-  --mote-glow: color-mix(in srgb, var(--danger) 60%, transparent);
+  --mote-glow: color-mix(in srgb, var(--danger) 30%, transparent);
   position: fixed;
   left: var(--mote-edge);
   bottom: var(--mote-edge);
@@ -2402,29 +2402,31 @@ kbd {
 .mote__body { position: relative; display: block; width: var(--mote-size); height: var(--mote-size); padding: 0; background: none; }
 .mote__body:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
 .mote__body svg { position: relative; display: block; width: 100%; height: 100%; overflow: visible; animation: moteBob 1.6s steps(1, end) infinite; }
-/* The bulb's light, behind the sprite: SVG children can't take CSS filters everywhere. */
+/* The lenses' light, screened over the visor: SVG children can't take CSS filters everywhere. */
 .mote__body::before {
   content: "";
   position: absolute;
-  left: calc(9.5 * var(--mote-px) - 10px);
-  top: calc(2 * var(--mote-px) - 10px);
-  width: 20px;
-  height: 20px;
-  background: radial-gradient(circle, var(--mote-glow), transparent 68%);
+  z-index: 1;
+  left: calc(3 * var(--mote-px));
+  top: calc(2.5 * var(--mote-px));
+  width: calc(10 * var(--mote-px));
+  height: calc(5 * var(--mote-px));
+  background: radial-gradient(closest-side, var(--mote-glow), transparent);
+  mix-blend-mode: screen;
   animation: moteBob 1.6s steps(1, end) infinite;
   pointer-events: none;
 }
 .mote__px--o, .mote__px--e { fill: var(--mote-line); }
+.mote__px--v { fill: color-mix(in srgb, var(--bg) 45%, black); }
 .mote__px--b { fill: var(--accent); }
 .mote__px--d { fill: var(--accent-deep); }
 .mote__px--h { fill: color-mix(in srgb, var(--accent) 50%, white); }
 .mote__px--t { fill: var(--danger); }
-.mote__px--c { fill: color-mix(in srgb, var(--danger) 65%, var(--accent)); }
 .mote__px--w { fill: var(--ink); }
 @media (max-width: 640px) { .mote { --mote-px: 3px; } }
 @keyframes moteBob { 50% { transform: translateY(calc(-1 * var(--mote-px))); } }
 
-/* Thinking: the bulb flickers. Pressed: a hop. Asleep: still, with a z. */
+/* Thinking: his lamps flicker. Pressed: a hop. Asleep: lenses off, still, with a z. */
 .mote[data-busy] .mote__px--t { animation: moteBulb 0.45s steps(1, end) infinite; }
 .mote[data-busy] .mote__body::before { animation: moteGlow 0.9s ease-in-out infinite; }
 @keyframes moteBulb { 50% { fill: var(--ink); } }
@@ -2432,7 +2434,7 @@ kbd {
 .mote[data-pet] .mote__body svg, .mote[data-pet] .mote__body::before { animation: moteHop 0.6s steps(6, end); }
 @keyframes moteHop { 30% { transform: translateY(calc(-3 * var(--mote-px))); } 60% { transform: translateY(calc(-1 * var(--mote-px))); } }
 .mote[data-asleep] .mote__body svg, .mote[data-asleep] .mote__body::before { animation: none; }
-.mote[data-asleep] .mote__body::before { opacity: 0.35; }
+.mote[data-asleep] .mote__body::before { opacity: 0; }
 .mote__z { position: absolute; right: -2px; top: -6px; font-family: var(--f-pixel); font-size: 9px; color: var(--ink-2); opacity: 0; pointer-events: none; }
 .mote[data-asleep] .mote__z { animation: moteZ 2.4s steps(8, end) infinite; }
 @keyframes moteZ { 0% { opacity: 0; transform: none; } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(6px, -14px); } }
@@ -2470,10 +2472,12 @@ kbd {
 .mote__ask { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; padding-top: 0.55rem; border-top: 1px solid color-mix(in srgb, var(--ink-3) 40%, transparent); color: var(--accent); }
 .mote__ask input { flex: 1; min-width: 0; padding: 0; background: transparent; border: 0; outline: none; color: var(--ink); font: inherit; }
 .mote__ask input::placeholder { color: var(--ink-3); }
-.mote__ask button { color: var(--ink-2); transition: color 0.2s; }
-.mote__ask button:hover:not(:disabled) { color: var(--accent); }
+.mote__opts { display: flex; justify-content: flex-end; gap: 0.9rem; margin-top: 0.45rem; }
+.mote__ask button, .mote__opts button { color: var(--ink-2); transition: color 0.2s; }
+.mote__opts button { color: var(--ink-3); }
+.mote__ask button:hover:not(:disabled), .mote__opts button:hover { color: var(--accent); }
 .mote__ask button:disabled { opacity: 0.4; cursor: default; }
-.mote__ask button:focus-visible { outline: 1px solid var(--ink-3); outline-offset: 2px; }
+.mote__ask button:focus-visible, .mote__opts button:focus-visible { outline: 1px solid var(--ink-3); outline-offset: 2px; }
 /* Where the two boxes would meet across the bottom, the deck's panel wins. */
 @media (max-width: 720px) { body:has(.deck[data-open]) .mote__panel { display: none; } }
 

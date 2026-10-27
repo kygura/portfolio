@@ -1,11 +1,12 @@
 /**
- * Mote: a pixel critter in the bottom-left corner. It reads the page the
+ * Mote: a little pixel robot in the bottom-left corner. He reads the page the
  * visitor is on (route, the section in view, the text on screen) and says
  * something about it through /api/critter: once when a page opens, and again
- * when the visitor stops on a new section for a while. Pressing it, or `b`,
- * opens a line to talk back. It dozes when nobody moves, can be hushed, and
- * falls back to a few canned lines when the model can't be reached. Colours
- * are theme tokens, so it follows the 1–6 switch like the deck does.
+ * when the visitor stops on a new section for a while. Pressing him, or `b`,
+ * opens a line to talk back. He blips as he types (sfx.ts, mutable), dozes
+ * when nobody moves, can be hushed, and falls back to a few canned lines when
+ * the model can't be reached. Colours are theme tokens, so he follows the 1–6
+ * switch like the deck does.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useLocation } from "react-router-dom";
@@ -15,6 +16,7 @@ import { ask, type Mode, type Remark, type Turn } from "./api";
 import { look, where } from "./glance";
 import { BREATHER, offlineLine } from "./lines";
 import { SIZE, frame, type Face } from "./sprite";
+import { isMuted, setMuted, sfx, unlock } from "./sfx";
 
 const HUSH_KEY = "nca-mote-hush";
 const SEEN_KEY = "nca-mote-seen";
@@ -29,7 +31,7 @@ const COOLDOWN = 40_000;
 const MAX_AUTO = 12;
 const DOZE_AFTER = 90_000;
 
-const FALTER: Remark = { say: "my bulb's flickering. ask me again in a bit?", mood: "sleepy" };
+const FALTER: Remark = { say: "my lamps are flickering. ask me again in a bit?", mood: "sleepy" };
 
 const MOOD_FACE: Record<Remark["mood"], Face> = {
   curious: "idle",
@@ -75,6 +77,7 @@ export default function Mote() {
   const [pet, setPet] = useState(false);
   const [asleep, setAsleep] = useState(false);
   const [hushed, setHushed] = useState(() => readStored(HUSH_KEY) === "1");
+  const [quiet, setQuiet] = useState(isMuted);
 
   const abortRef = useRef<AbortController | null>(null);
   const historyRef = useRef<Turn[]>([]);
@@ -96,6 +99,7 @@ export default function Mote() {
     }
     lastRemark.current = Date.now();
     setBusy(true);
+    sfx.think();
     try {
       const result = await ask(
         mode,
@@ -213,6 +217,29 @@ export default function Mote() {
 
   const typing = line !== null && shown < line.say.length;
 
+  // A blip every other letter, skipping spaces, like a 16-bit text box.
+  useEffect(() => {
+    if (!line || shown === 0 || shown > line.say.length || shown % 2) return;
+    if (line.say[shown - 1] !== " ") sfx.blip(line.mood);
+  }, [line, shown]);
+
+  const wasAsleep = useRef(false);
+  useEffect(() => {
+    if (asleep !== wasAsleep.current) (asleep ? sfx.sleep : sfx.wake)();
+    wasAsleep.current = asleep;
+  }, [asleep]);
+
+  // Audio may only start after a gesture; the first press or key opens it.
+  useEffect(() => {
+    const open = () => unlock();
+    window.addEventListener("pointerdown", open, { once: true });
+    window.addEventListener("keydown", open, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", open);
+      window.removeEventListener("keydown", open);
+    };
+  }, []);
+
   useEffect(() => {
     if (!line || typing || open) return;
     const t = window.setTimeout(() => setLine(null), Math.max(6000, line.say.length * 90));
@@ -221,12 +248,16 @@ export default function Mote() {
 
   const close = useCallback(() => {
     setOpen(false);
+    sfx.close();
     bodyRef.current?.focus();
   }, []);
 
   const toggle = useCallback(() => {
+    unlock();
     setAsleep(false);
-    setOpen((o) => !o);
+    const next = !live.current.open;
+    (next ? sfx.open : sfx.close)();
+    setOpen(next);
     if (!still()) {
       setPet(true);
       window.setTimeout(() => setPet(false), 600);
@@ -258,7 +289,9 @@ export default function Mote() {
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false);
+      if (rootRef.current?.contains(e.target as Node)) return;
+      setOpen(false);
+      sfx.close();
     };
     document.addEventListener("pointerdown", onDown);
     return () => document.removeEventListener("pointerdown", onDown);
@@ -270,6 +303,7 @@ export default function Mote() {
     if (!question || busy) return;
     setDraft("");
     setHeard(question);
+    sfx.send();
     void speak("ask", question);
   };
 
@@ -279,6 +313,16 @@ export default function Mote() {
     writeStored(HUSH_KEY, next ? "1" : "0");
     if (next) setLine({ say: "okay. i'll only talk when you ask.", mood: "sleepy" });
     else setLine({ say: "oh good. i had things to say.", mood: "happy" });
+  };
+
+  const toggleSound = () => {
+    const next = !quiet;
+    setQuiet(next);
+    setMuted(next);
+    if (!next) {
+      unlock();
+      sfx.hello();
+    }
   };
 
   let face: Face;
@@ -330,10 +374,17 @@ export default function Mote() {
               onChange={(e) => setDraft(e.target.value)}
             />
             <button type="submit" disabled={busy || !draft.trim()}>say</button>
+          </form>
+        )}
+        {open && (
+          <div className="mote__opts">
             <button type="button" onClick={hush} aria-pressed={hushed} title="Only talk when asked">
               {hushed ? "wake" : "hush"}
             </button>
-          </form>
+            <button type="button" onClick={toggleSound} aria-pressed={!quiet} title="Sound effects">
+              {quiet ? "sfx off" : "sfx on"}
+            </button>
+          </div>
         )}
       </div>
       {/* Screen readers get the whole line once, not every typed letter. */}
@@ -347,7 +398,7 @@ export default function Mote() {
         className="mote__body"
         aria-expanded={open}
         aria-keyshortcuts="b"
-        aria-label={open ? "Stop talking to Mote" : "Talk to Mote, the site's critter"}
+        aria-label={open ? "Stop talking to Mote" : "Talk to Mote, the site's little robot"}
         title="Mote (b to talk)"
         onClick={toggle}
       >
