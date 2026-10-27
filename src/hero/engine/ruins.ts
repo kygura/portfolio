@@ -247,20 +247,6 @@ export function buildRuins(k: PsxKit): SceneDef {
   });
 
   /* ---- wisps ---- */
-  const NM = 140, mp = new Float32Array(NM * 3);
-  for (let i = 0; i < NM; i++) {
-    const ma = rnd() * 6.28, mr = 1 + rnd() * 16;
-    mp[i * 3] = Math.cos(ma) * mr;
-    mp[i * 3 + 1] = 0.3 + rnd() * 5;
-    mp[i * 3 + 2] = Math.sin(ma) * mr;
-  }
-  const moteGeo = new THREE.BufferGeometry();
-  moteGeo.setAttribute("position", new THREE.BufferAttribute(mp, 3));
-  const moteMat = new THREE.PointsMaterial({ color: U.uAccent.value.clone(), size: 1, sizeAttenuation: false });
-  const motes = new THREE.Points(moteGeo, moteMat);
-  motes.frustumCulled = false;
-  scene.add(motes);
-  const moteBase = mp.slice();
   const wispG = facet(new THREE.IcosahedronGeometry(0.1, 0));
   const wisps = Array.from({ length: 6 }, (_, i) => ({ m: mesh(wispG, M.glyph, scene), r: 1.7 + i * 0.4, ph: i * 1.7, sp: 0.25 + rnd() * 0.25 }));
 
@@ -284,7 +270,7 @@ export function buildRuins(k: PsxKit): SceneDef {
   const LEAF_T = 7;
 
   return {
-    scene, cam, fog: [5, 34], fov: [64, 74], limits: { pitch: [-0.02, 0.8], zoom: [0.8, 1.45] }, moteMat,
+    scene, cam, fog: [5, 34], fov: [64, 74], limits: { pitch: [-0.02, 0.8], zoom: [0.8, 1.45] },
     labels: [
       { name: "Ward stone", sub: "still lit", at: (v) => { v.copy(crystal.position).y += 1.4; } },
       { name: "Stone circle", sub: `${standing} of 12 standing`, at: (v) => { v.copy(circleTop[0]).y += 0.6; } },
@@ -342,11 +328,6 @@ export function buildRuins(k: PsxKit): SceneDef {
         }
         leafGeo.attributes.position.needsUpdate = true;
       }
-      for (let i = 0; i < NM; i++) {
-        mp[i * 3 + 1] = moteBase[i * 3 + 1] + ((t * 0.1 + i * 0.37) % 2.5);
-        mp[i * 3] = moteBase[i * 3] + Math.sin(t * 0.3 + i) * 0.35;
-      }
-      moteGeo.attributes.position.needsUpdate = true;
     },
     readout() {
       const p = cam.position;

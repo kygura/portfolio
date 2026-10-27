@@ -38,7 +38,7 @@ void main(){
 }`;
 
 export function buildDunes(kit: PsxKit): SceneDef {
-  const { U, rnd, facet, tex, view } = kit;
+  const { rnd, facet, tex, view } = kit;
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(56, 16 / 9, 0.5, 3000);
   const FOG: [number, number] = [50, 560];
@@ -154,27 +154,9 @@ export function buildDunes(kit: PsxKit): SceneDef {
     return [x, between(10, 34) + s, z];
   });
 
-  /* ---- wind: sand streaming off the ground, heat motes rising round the monument ---- */
-  const NS = 320, SPAN = 260, sandPos = new Float32Array(NS * 3);
-  const sandSeed = Array.from({ length: NS }, () => [rnd() * SPAN, rnd() * SPAN, rnd(), rnd()]);
-  const sandGeo = new THREE.BufferGeometry();
-  sandGeo.setAttribute("position", new THREE.BufferAttribute(sandPos, 3));
-  const sand = new THREE.Points(sandGeo, new THREE.PointsMaterial({ color: P.grain, size: 1.2, sizeAttenuation: false }));
-  sand.frustumCulled = false;
-  scene.add(sand);
-  const NM = 90, motePos = new Float32Array(NM * 3);
-  const moteSeed = Array.from({ length: NM }, () => [between(-40, 40), rnd() * 40, between(-40, 40), rnd() * 6.28]);
-  const moteGeo = new THREE.BufferGeometry();
-  moteGeo.setAttribute("position", new THREE.BufferAttribute(motePos, 3));
-  const moteMat = new THREE.PointsMaterial({ color: U.uAccent.value.clone(), size: 1.5, sizeAttenuation: false });
-  const motes = new THREE.Points(moteGeo, moteMat);
-  motes.frustumCulled = false;
-  scene.add(motes);
-
   /* ---- eggs ---- */
   let monT = -99, ringT = -99, sunT = -99, tNow = 0;
   const pivot = new THREE.Vector3(), tmp = new THREE.Vector3(), UP = THREE.Object3D.DEFAULT_UP;
-  const wrap = (v: number, s: number) => ((v % s) + s) % s;
 
   return {
     scene,
@@ -191,7 +173,6 @@ export function buildDunes(kit: PsxKit): SceneDef {
       { id: "dunes-ring", r: 44, at: (v) => { v.copy(ring.position); }, fire: (t) => { ringT = t; } },
       { id: "dunes-sun", r: 46, at: (v) => { v.copy(SUN); }, fire: (t) => { sunT = t; } },
     ],
-    moteMat,
     update(t) {
       tNow = t;
       hang(t);
@@ -201,24 +182,6 @@ export function buildDunes(kit: PsxKit): SceneDef {
       const es = t - sunT;
       sun.scale.setScalar(1 + 0.4 * pulse(es, 1.6));
       skyU.uFlare.value = pulse(es, 2.4);
-
-      // Grains blow downwind in a box that follows the eye, skimming the dune surface.
-      const cx = cam.position.x, cz = cam.position.z;
-      for (let i = 0; i < NS; i++) {
-        const [x0, z0, a, c] = sandSeed[i];
-        const x = cx - SPAN / 2 + wrap(x0 + t * (14 + a * 10), SPAN), z = cz - SPAN / 2 + wrap(z0 + t * 2, SPAN);
-        sandPos[i * 3] = x;
-        sandPos[i * 3 + 1] = groundH(x, z) + 0.3 + c * c * 3 + Math.sin(t * 3 + x * 0.2) * 0.3;
-        sandPos[i * 3 + 2] = z;
-      }
-      sandGeo.attributes.position.needsUpdate = true;
-      for (let i = 0; i < NM; i++) {
-        const [x, y0, z, ph] = moteSeed[i];
-        motePos[i * 3] = x + Math.sin(t * 0.4 + ph) * 1.5;
-        motePos[i * 3 + 1] = 1 + ((y0 + t * (0.8 + wake * 4)) % 40);
-        motePos[i * 3 + 2] = z + Math.cos(t * 0.3 + ph) * 1.5;
-      }
-      moteGeo.attributes.position.needsUpdate = true;
 
       // A slow walk round the monument; zooming out lifts the eye over the dune field.
       const out = THREE.MathUtils.clamp((1 - view.zoom) / 0.45, 0, 1);

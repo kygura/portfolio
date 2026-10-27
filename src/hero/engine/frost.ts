@@ -189,28 +189,10 @@ export function buildFrost(kit: PsxKit): SceneDef {
     return [x, between(8, 32) + s, z];
   });
 
-  /* ---- snow and motes ---- */
-  const NS = 360, SPAN = 160, snowPos = new Float32Array(NS * 3);
-  const snowSeed = Array.from({ length: NS }, () => [rnd() * SPAN, rnd() * 60, rnd() * SPAN, rnd() * 6.28]);
-  const snowGeo = new THREE.BufferGeometry();
-  snowGeo.setAttribute("position", new THREE.BufferAttribute(snowPos, 3));
-  const snow = new THREE.Points(snowGeo, new THREE.PointsMaterial({ color: P.snow, size: 1.3, sizeAttenuation: false }));
-  snow.frustumCulled = false;
-  scene.add(snow);
-  const NM = 70, motePos = new Float32Array(NM * 3);
-  const moteSeed = Array.from({ length: NM }, () => [between(-30, 30), rnd() * 40, between(-30, 30), rnd() * 6.28]);
-  const moteGeo = new THREE.BufferGeometry();
-  moteGeo.setAttribute("position", new THREE.BufferAttribute(motePos, 3));
-  const moteMat = new THREE.PointsMaterial({ color: U.uAccent.value.clone(), size: 1.5, sizeAttenuation: false });
-  const motes = new THREE.Points(moteGeo, moteMat);
-  motes.frustumCulled = false;
-  scene.add(motes);
-
   /* ---- eggs ---- */
   let crownT = -99, auroraT = -99, moonT = -99, tNow = 0;
   const AURORA = new THREE.Vector3(0, 230, -700);
   const pivot = new THREE.Vector3(), tmp = new THREE.Vector3(), UP = THREE.Object3D.DEFAULT_UP;
-  const wrap = (v: number, s: number) => ((v % s) + s) % s;
 
   return {
     scene,
@@ -227,7 +209,6 @@ export function buildFrost(kit: PsxKit): SceneDef {
       { id: "frost-aurora", r: 80, at: (v) => { tmp.copy(AURORA).sub(cam.position).normalize(); v.copy(cam.position).addScaledVector(tmp, 600); }, fire: (t) => { auroraT = t; } },
       { id: "frost-moon", r: 44, at: (v) => { v.copy(MOON); }, fire: (t) => { moonT = t; } },
     ],
-    moteMat,
     update(t) {
       tNow = t;
       hang(t);
@@ -235,22 +216,6 @@ export function buildFrost(kit: PsxKit): SceneDef {
       mCore.uniforms.uEmit.value = 0.6 + 0.25 * Math.sin(t * 1.1) + ec * 2.4;
       skyU.uSurge.value = pulse(t - auroraT, 5);
       moon.scale.setScalar(1 + 0.45 * pulse(t - moonT, 1.8));
-
-      const cx = cam.position.x, cz = cam.position.z;
-      for (let i = 0; i < NS; i++) {
-        const [x0, y0, z0, ph] = snowSeed[i];
-        snowPos[i * 3] = cx - SPAN / 2 + wrap(x0 + t * 1.6 + Math.sin(t * 0.5 + ph) * 2, SPAN);
-        snowPos[i * 3 + 1] = 60 - ((60 - y0 + t * 2.2) % 60);
-        snowPos[i * 3 + 2] = cz - SPAN / 2 + wrap(z0 + Math.cos(t * 0.4 + ph) * 2, SPAN);
-      }
-      snowGeo.attributes.position.needsUpdate = true;
-      for (let i = 0; i < NM; i++) {
-        const [x, y0, z, ph] = moteSeed[i];
-        motePos[i * 3] = x + Math.sin(t * 0.3 + ph) * 2;
-        motePos[i * 3 + 1] = 1 + ((y0 + t * (0.5 + ec * 3)) % 40);
-        motePos[i * 3 + 2] = z + Math.cos(t * 0.25 + ph) * 2;
-      }
-      moteGeo.attributes.position.needsUpdate = true;
 
       // A slow walk round the crown, low over the ice.
       const ang = -0.4 + Math.sin(t * 0.018) * 0.4 + view.yaw + view.px * 0.15;
