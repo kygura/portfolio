@@ -24,7 +24,8 @@
     <script>
       // Apply the saved accent before first paint (storage may be blocked).
       try {
-        var a = ["lichen", "torch", "astral", "madder", "mono", "manuscript"][parseInt(localStorage.getItem("nca-accent"), 10)];
+        var a = localStorage.getItem("nca-accent-v2") ||
+          ["lichen", "torch", "astral", "madder", "mono", "manuscript"][parseInt(localStorage.getItem("nca-accent"), 10)];
         if (a && a !== "lichen") document.documentElement.setAttribute("data-accent", a);
       } catch (e) {}
 
