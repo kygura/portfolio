@@ -4,17 +4,20 @@ import { componentTagger } from "lovable-tagger";
 import path from "path";
 import { buildShowcase, parseRepoList, type Showcase } from "./api/github/repos";
 import { createScripter, createSessionStore, handleTerminal } from "./api/github/terminal";
+import { createMemo, createSpeaker, handleCritter } from "./api/critter";
 
 /**
- * Serves /api/github/repos and /api/github/terminal under `vite dev` with the
- * same code the Vercel functions run. The index is cached for ten minutes so
- * reloads stay inside GitHub's unauthenticated rate limit; terminal sessions
- * need ANTHROPIC_API_KEY, as in production, and live in memory.
+ * Serves /api/github/repos, /api/github/terminal and /api/critter under
+ * `vite dev` with the same code the Vercel functions run. The index is cached
+ * for ten minutes so reloads stay inside GitHub's unauthenticated rate limit;
+ * terminal sessions and Mote's lines need ANTHROPIC_API_KEY, as in
+ * production, and live in memory. Without it Mote uses its canned lines.
  */
 function devGithubApi(): Plugin {
   let cached: { at: number; body: Showcase } | null = null;
   const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
   const sessions = apiKey ? createSessionStore({ script: createScripter({ apiKey }) }) : null;
+  const speaker = apiKey ? createMemo(createSpeaker({ apiKey })) : null;
   const filter = {
     include: parseRepoList(process.env.SHOWCASE_INCLUDE),
     exclude: parseRepoList(process.env.SHOWCASE_EXCLUDE),
@@ -47,6 +50,17 @@ function devGithubApi(): Plugin {
           token: process.env.GITHUB_TOKEN || null,
           filter,
         });
+        res.statusCode = response.status;
+        res.setHeader("content-type", "application/json");
+        res.end(await response.text());
+      });
+      server.middlewares.use("/api/critter", async (req, res) => {
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) chunks.push(chunk as Buffer);
+        const response = await handleCritter(
+          new Request("http://localhost/api/critter", { method: "POST", body: Buffer.concat(chunks) }),
+          speaker,
+        );
         res.statusCode = response.status;
         res.setHeader("content-type", "application/json");
         res.end(await response.text());

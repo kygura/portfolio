@@ -2379,8 +2379,106 @@ kbd {
 .deck__choices button[aria-pressed="true"] { color: var(--accent); }
 .deck__choice-no { color: var(--ink-3); }
 
-/* The hero strip's scroll cue would sit under the deck; it steps left. */
-.hero__strip { padding-right: calc(clamp(0.75rem, 2vw, 1.5rem) + 40px + 1rem); }
+/* ── Mote: the pixel critter perched left of the deck ──
+   A 16×16 sprite at 4px a pixel (3px on phones); every slot is a theme token, so the
+   critter takes each accent's body colour and the variant's warm "danger"
+   for its bulb and cheeks. */
+.mote {
+  --mote-edge: clamp(0.75rem, 2vw, 1.5rem);
+  --mote-px: 4px;
+  --mote-size: calc(16 * var(--mote-px));
+  --mote-night: color-mix(in srgb, var(--bg) 55%, black);
+  --mote-line: color-mix(in srgb, var(--accent-deep) 45%, black);
+  --mote-glow: color-mix(in srgb, var(--danger) 60%, transparent);
+  position: fixed;
+  right: calc(var(--mote-edge) + 40px + 0.5rem);
+  bottom: var(--mote-edge);
+  z-index: 44;
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.mote__body { position: relative; display: block; width: var(--mote-size); height: var(--mote-size); padding: 0; background: none; }
+.mote__body:focus-visible { outline: 1px solid var(--ink); outline-offset: 3px; }
+.mote__body svg { position: relative; display: block; width: 100%; height: 100%; overflow: visible; animation: moteBob 1.6s steps(1, end) infinite; }
+/* The bulb's light, behind the sprite: SVG children can't take CSS filters everywhere. */
+.mote__body::before {
+  content: "";
+  position: absolute;
+  left: calc(9.5 * var(--mote-px) - 10px);
+  top: calc(2 * var(--mote-px) - 10px);
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(circle, var(--mote-glow), transparent 68%);
+  animation: moteBob 1.6s steps(1, end) infinite;
+  pointer-events: none;
+}
+.mote__px--o, .mote__px--e { fill: var(--mote-line); }
+.mote__px--b { fill: var(--accent); }
+.mote__px--d { fill: var(--accent-deep); }
+.mote__px--h { fill: color-mix(in srgb, var(--accent) 50%, white); }
+.mote__px--t { fill: var(--danger); }
+.mote__px--c { fill: color-mix(in srgb, var(--danger) 65%, var(--accent)); }
+.mote__px--w { fill: var(--ink); }
+@media (max-width: 640px) { .mote { --mote-px: 3px; } }
+@keyframes moteBob { 50% { transform: translateY(calc(-1 * var(--mote-px))); } }
+
+/* Thinking: the bulb flickers. Pressed: a hop. Asleep: still, with a z. */
+.mote[data-busy] .mote__px--t { animation: moteBulb 0.45s steps(1, end) infinite; }
+.mote[data-busy] .mote__body::before { animation: moteGlow 0.9s ease-in-out infinite; }
+@keyframes moteBulb { 50% { fill: var(--ink); } }
+@keyframes moteGlow { 50% { transform: scale(1.6); opacity: 0.6; } }
+.mote[data-pet] .mote__body svg, .mote[data-pet] .mote__body::before { animation: moteHop 0.6s steps(6, end); }
+@keyframes moteHop { 30% { transform: translateY(calc(-3 * var(--mote-px))); } 60% { transform: translateY(calc(-1 * var(--mote-px))); } }
+.mote[data-asleep] .mote__body svg, .mote[data-asleep] .mote__body::before { animation: none; }
+.mote[data-asleep] .mote__body::before { opacity: 0.35; }
+.mote__z { position: absolute; right: -2px; top: -6px; font-family: var(--f-pixel); font-size: 9px; color: var(--ink-2); opacity: 0; pointer-events: none; }
+.mote[data-asleep] .mote__z { animation: moteZ 2.4s steps(8, end) infinite; }
+@keyframes moteZ { 0% { opacity: 0; transform: none; } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(6px, -14px); } }
+
+/* The speech box: the deck's black box, with a pixel tail down to Mote. */
+.mote__panel {
+  position: absolute;
+  right: calc(-40px - 0.5rem);
+  bottom: calc(var(--mote-size) + 0.75rem);
+  width: min(17rem, calc(100vw - 2 * var(--mote-edge)));
+  padding: 0.7rem 0.85rem;
+  background: var(--mote-night);
+  border: 1px solid var(--rule-2);
+  border-left: 2px solid var(--accent);
+  animation: moteIn 0.2s steps(3, end);
+}
+.mote__panel[hidden] { display: none; }
+.mote__panel::after {
+  content: "";
+  position: absolute;
+  right: calc(40px + 0.5rem + var(--mote-size) / 2 - 4px);
+  bottom: -6px;
+  width: 6px;
+  height: 6px;
+  background: var(--mote-night);
+  border-right: 1px solid var(--rule-2);
+  border-bottom: 1px solid var(--rule-2);
+}
+@keyframes moteIn { from { opacity: 0; transform: translateY(4px); } }
+.mote__line { min-height: 1.5em; color: var(--ink); overflow-wrap: anywhere; }
+.mote__unsaid { visibility: hidden; }
+.mote__hint, .mote__heard { color: var(--ink-3); }
+.mote__heard { margin-bottom: 0.35rem; overflow-wrap: anywhere; }
+.mote__dots::after { content: ""; color: var(--ink-3); animation: deckDots 1.2s steps(1, end) infinite; }
+.mote__ask { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.6rem; padding-top: 0.55rem; border-top: 1px solid color-mix(in srgb, var(--ink-3) 40%, transparent); color: var(--accent); }
+.mote__ask input { flex: 1; min-width: 0; padding: 0; background: transparent; border: 0; outline: none; color: var(--ink); font: inherit; }
+.mote__ask input::placeholder { color: var(--ink-3); }
+.mote__ask button { color: var(--ink-2); transition: color 0.2s; }
+.mote__ask button:hover:not(:disabled) { color: var(--accent); }
+.mote__ask button:disabled { opacity: 0.4; cursor: default; }
+.mote__ask button:focus-visible { outline: 1px solid var(--ink-3); outline-offset: 2px; }
+/* One box at a time in the corner: the deck's panel wins. */
+body:has(.deck[data-open]) .mote__panel { display: none; }
+
+/* The hero strip's scroll cue would sit under the deck and Mote; it steps left. */
+.hero__strip { padding-right: calc(clamp(0.75rem, 2vw, 1.5rem) + 40px + 0.5rem + 64px + 1rem); }
 
 @media (prefers-reduced-motion: reduce) {
   .deck[data-live] .fab__reel,
@@ -2389,8 +2487,11 @@ kbd {
   .deck__dots::after { animation: none; }
   .deck__dots::after { content: "..."; }
   .deck__panel, .deck[data-open] .deck__panel { transition: none; }
+  .mote__body svg, .mote__body::before, .mote__panel, .mote__px--t { animation: none !important; }
+  .mote[data-asleep] .mote__z { animation: none; opacity: 1; }
+  .mote__dots::after { animation: none; content: "..."; }
 }
 @media print {
-  .deck { display: none; }
+  .deck, .mote { display: none; }
   .hero__strip { padding-right: var(--hero-gutter); }
 }

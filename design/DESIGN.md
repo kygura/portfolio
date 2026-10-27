@@ -81,6 +81,7 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 | `←` `→` `Home` `End` | Move along the nav links when one is focused |
 | `[` `]` | Previous / next hero scene (home) |
 | `m` | Play / pause the tape deck |
+| `b` | Talk to Mote |
 | `?` | Help sheet (focus held on its close button) |
 | `Esc` | Close help, leave a field |
 
@@ -94,6 +95,11 @@ A minimal tape recorder fixed to the bottom-right corner (`src/components/player
 
 - **Tapes**: files the site serves from `public/lofi/`, listed in `public/lofi/playlist.json` and fetched on first open. `bun scripts/fetch-lofi.ts` fills it with Holizna's CC0 collections from OpenGameArt, re-encoded to 112k MP3. Only CC0 or CC-BY music belongs here, since serving a file is redistributing it (Pixabay's licence rules its tracks out).
 - **Radio**: curated official Spotify and YouTube (`youtube-nocookie.com`) embeds in `stations.ts`. The platform streams and licenses the audio; the iframe loads only after a click, and stays mounted when the panel closes so it keeps playing. Spotify plays 30-second previews to visitors not signed in to Spotify.
+
+## Mote
+A 16×16 pixel critter perched left of the tape deck (`src/components/critter/`), mounted beside the routes like the deck. One body, an antenna bulb that glows, and faces laid over it per expression (`sprite.ts`: idle, blink, talk, happy, look, sleep, surprised). Every pixel slot is a theme token: body in the accent, shade in the deep accent, bulb and cheeks in the variant's `--danger`, outline near-black, so it changes colour with the 1 to 6 switch. It bobs a pixel at a time, hops when pressed, looks up at its flickering bulb while it thinks and dozes (a drifting `z`) after 90 seconds with no input. Reduced motion stops all of it and types lines out at once.
+
+It reads the page (`glance.ts`): the route, the title, the heading nearest the top of the viewport (or the hero scene on `/`) and the text on screen, skipping the nav, the deck and itself. `POST /api/critter` (`api/critter.ts`) hands that to Haiku with Mote's persona and returns one short line and a mood, shown in the deck's black box with a pixel tail and typed out with a moving mouth. It speaks unprompted once when a page opens (once per page per visit) and when a new section or hero scene holds the top of the screen for six seconds (40 s apart, twelve per visit). Pressing it, or `b`, opens a prompt to talk back; the last six lines go along as context. `hush` stops the unprompted lines (`localStorage["nca-mote-hush"]`). The deck's open panel hides Mote's box. Without `ANTHROPIC_API_KEY`, or when the model fails, it greets pages with a few canned lines (`lines.ts`) and stays quiet otherwise. Unprompted remarks are cached by what was on screen; requests are limited per visitor.
 
 ## Also fixed
 
