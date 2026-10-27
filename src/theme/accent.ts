@@ -6,6 +6,7 @@
  * both the page and the scene.
  */
 import { useSyncExternalStore } from "react";
+import { playAccentSfx } from "./sfx";
 
 export interface Accent {
   id: "lichen" | "torch" | "astral" | "madder" | "mono" | "manuscript";
@@ -88,6 +89,7 @@ export function setAccent(i: number) {
   if (a.id === "lichen") document.documentElement.removeAttribute("data-accent");
   else document.documentElement.setAttribute("data-accent", a.id);
   listeners.forEach((l) => l());
+  playAccentSfx(a.id);
 }
 
 const subscribe = (l: () => void) => {

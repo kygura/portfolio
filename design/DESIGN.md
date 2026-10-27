@@ -17,7 +17,7 @@ The only fills are the accent and the sheet. Corners are square and shadows flat
 
 ### Accent variants
 
-Keys `1`–`6`, or `t` to cycle, or the row of six squares at the right of the nav bar. Stored in `localStorage["nca-accent-v2"]` as the variant id (the older `nca-accent` index key is still read once and mapped). Guarded with try/catch; an inline script in `index.html` applies it before first paint. One switch rewrites the CSS tokens and the hero's shader uniforms (accent, deep accent, fog, zenith).
+Keys `1`–`6`, or `t` to cycle, or the row of six squares at the right of the nav bar. Stored in `localStorage["nca-accent-v2"]` as the variant id (the older `nca-accent` index key is still read once and mapped). Guarded with try/catch; an inline script in `index.html` applies it before first paint. One switch rewrites the CSS tokens and the hero's shader uniforms (accent, deep accent, fog, zenith). It also plays a short synthesised motif (`src/theme/sfx.ts`, Web Audio, no files), pitched up the spectrum with Graphite a dry click.
 
 The variants run as a colour spectrum by hue, red to blue, with neutral Graphite last:
 
