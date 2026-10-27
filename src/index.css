@@ -1367,6 +1367,191 @@
 .page-shell--narrow { max-width: 48rem; }
 
 /* ─────────────────────────────────────────────
+   WRITINGS LEDGER — the index as a catalogue:
+   month rules, entry numbers, read time as ticks
+   ───────────────────────────────────────────── */
+.ledger__stats {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1.25rem;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.ledger__group + .ledger__group { margin-top: 2.5rem; }
+
+.ledger__month {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-bottom: 0.25rem;
+  font-family: var(--f-pixel);
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.ledger__month::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+.ledger__row {
+  border-bottom: 1px dashed var(--rule);
+  animation: ledger-in 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.ledger__link {
+  position: relative;
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr) 9rem;
+  gap: 1.5rem;
+  padding: 1.6rem 1rem 1.6rem 1.1rem;
+  color: var(--ink);
+  text-decoration: none;
+  transition: background-color 0.25s ease;
+}
+.ledger__link::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2px;
+  background: var(--accent);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ledger__link:hover,
+.ledger__link:focus-visible { background: var(--sheet); }
+.ledger__link:hover::before,
+.ledger__link:focus-visible::before { transform: scaleY(1); }
+
+.ledger__num {
+  padding-top: 0.45rem;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  transition: color 0.25s ease;
+}
+
+.ledger__title {
+  font-family: var(--f-body);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  transition: color 0.25s ease;
+}
+
+.ledger__arrow {
+  position: absolute;
+  right: 1rem;
+  bottom: 1.6rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: var(--accent);
+  opacity: 0;
+  transform: translateX(-0.4em);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.ledger__excerpt {
+  margin-top: 0.6rem;
+  max-width: 60ch;
+  font-size: 0.98rem;
+  line-height: 1.65;
+  color: var(--ink-2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ledger__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+  margin-top: 0.85rem;
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.ledger__tags span::before { content: "#"; margin-right: 0.15em; opacity: 0.6; }
+
+.ledger__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.7rem;
+  padding-top: 0.45rem;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.ledger__ticks {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--ink-3);
+}
+.ledger__ticks i {
+  width: 3px;
+  height: 10px;
+  background: var(--rule-2);
+  transition: background-color 0.2s ease;
+}
+.ledger__ticks span { margin-left: 0.5rem; letter-spacing: 0.04em; }
+
+.ledger__link:hover .ledger__num,
+.ledger__link:focus-visible .ledger__num,
+.ledger__link:hover .ledger__title,
+.ledger__link:focus-visible .ledger__title { color: var(--accent); }
+.ledger__link:hover .ledger__arrow,
+.ledger__link:focus-visible .ledger__arrow { opacity: 1; transform: none; }
+.ledger__link:hover .ledger__ticks i,
+.ledger__link:focus-visible .ledger__ticks i { background: var(--accent); }
+
+@keyframes ledger-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (max-width: 640px) {
+  .ledger__link {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+    padding: 1.3rem 0.75rem 1.3rem 0.9rem;
+  }
+  .ledger__num { display: none; }
+  .ledger__meta {
+    order: -1;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ledger__row { animation: none; }
+  .ledger__link::before,
+  .ledger__arrow,
+  .ledger__ticks i { transition: none; }
+}
+
+/* ─────────────────────────────────────────────
    POST TOC — a survey rail on the right edge. Collapsed, it is a column of
    Notion-style bars, one per heading, over a hairline that fills with
    reading progress. The rail is a scrubber: drag it to move through the
