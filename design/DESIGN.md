@@ -103,4 +103,4 @@ Post markdown: fenced code is detected from its `<pre>` (react-markdown no longe
 
 ## 404
 
-`src/pages/NotFound.tsx`, inside the usual Layout. A canvas-2D contour field (marching squares over drifting sines) swells under the pointer and sinks round an accent X where the missing page "should" be (hidden under 720px). The path is hashed into a fixed sheet number and grid reference, so the same bad URL always lands on the same spot. The 404's zero is drawn hollow in the accent and drifts; a compass needle hunts and never settles. Known routes are listed as landmarks with their `g` chords, and the closest one to the requested path (edit distance on the first segment) is marked "nearest". Under reduced motion the field draws one still frame and nothing animates.
+`src/pages/NotFound.tsx`, inside the usual Layout: the eyebrow, a big "404", the requested path, and the four nav routes with their `g` chords. The route closest to the requested path (edit distance on the first segment) is marked "nearest", so `/writngs/…` points to `/writings`.
