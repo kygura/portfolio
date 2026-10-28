@@ -103,4 +103,4 @@ Post markdown: fenced code is detected from its `<pre>` (react-markdown no longe
 
 ## 404
 
-`src/pages/NotFound.tsx`, inside the usual Layout: the eyebrow, a big "404", the requested path, and the four nav routes with their `g` chords. The route closest to the requested path (edit distance on the first segment) is marked "nearest", so `/writngs/…` points to `/writings`.
+`src/pages/NotFound.tsx`, inside the usual Layout: a big "404", the requested path, and the four nav routes with their `g` chords. The route closest to the requested path (edit distance on the first segment) is marked "nearest", so `/writngs/…` points to `/writings`.

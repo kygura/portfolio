@@ -3,9 +3,6 @@ const Artifacts = () => {
   return (
     <div className="page-shell page-shell--mid">
       <div className="prose-minimal animate-fade-in">
-        <p className="font-pixel text-[10.5px] tracking-[0.08em] uppercase text-[var(--accent)] mb-6">
-          ( 05 &mdash; ARTIFACTS )
-        </p>
         <h1>Artifacts</h1>
         <p className="text-xl text-muted-foreground mb-12">
           A collection of digital objects and experiments.

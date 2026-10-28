@@ -38,10 +38,6 @@ const NotFound = () => {
 
   return (
     <section className="lost" aria-labelledby="lost-title">
-      <p className="font-pixel text-[10.5px] tracking-[0.08em] uppercase text-[var(--accent)]">
-        ( 404 &mdash; OFF THE MAP )
-      </p>
-
       <h1 id="lost-title" className="lost__code">
         404
       </h1>
