@@ -100,3 +100,7 @@ A minimal tape recorder fixed to the bottom-right corner (`src/components/player
 ## Also fixed
 
 Post markdown: fenced code is detected from its `<pre>` (react-markdown no longer passes `inline`, so every inline code span rendered as a block); a markdown `h1` renders as `h2` under the page title; the hast `node` prop is no longer forwarded to the DOM. Code blocks use a token-driven Prism theme (comments ink-3, keywords accent, literals ink-2). Footer quote keys ignore typing and claimed chord keys.
+
+## 404
+
+`src/pages/NotFound.tsx`, inside the usual Layout: a big "404", the requested path, and the four nav routes with their `g` chords. The route closest to the requested path (edit distance on the first segment) is marked "nearest", so `/writngs/…` points to `/writings`.
