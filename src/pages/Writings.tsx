@@ -51,9 +51,6 @@ const Writings = () => {
   return (
     <div className="page-shell page-shell--wide animate-fade-in">
       <div className="mb-10 sm:mb-14 pb-6 sm:pb-8 border-b border-[var(--border-muted)] relative">
-        <p className="font-pixel text-[10.5px] tracking-[0.08em] uppercase text-[var(--accent)] mb-6">
-          ( 01 &mdash; WRITINGS )
-        </p>
         <h1 className="text-5xl md:text-7xl font-display text-foreground tracking-[-0.01em] leading-[0.85] uppercase mb-4 relative z-10">Writings</h1>
         <p className="text-lg md:text-xl text-foreground max-w-2xl leading-relaxed relative z-10">
           Thoughts on the arts, engineering, the esoteric and the existential.

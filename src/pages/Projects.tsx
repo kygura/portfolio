@@ -75,15 +75,11 @@ const Projects = () => {
   return (
     <div className="page-shell page-shell--wide animate-fade-in">
       <div className="mb-10 sm:mb-14 pb-6 sm:pb-8 border-b border-[var(--border-muted)]">
-        <p className="font-pixel text-[10.5px] tracking-[0.08em] uppercase text-[var(--accent)] mb-6">
-          ( 02 &mdash; SOFTWARE )
-        </p>
         <h1 className="text-5xl md:text-7xl font-display text-foreground tracking-[-0.01em] leading-[0.85] uppercase mb-4">
           Software
         </h1>
         <p className="text-lg md:text-xl text-foreground max-w-2xl leading-relaxed">
-          Projects, straight from GitHub. Deployed ones show the live site, and open it in a new tab; the rest show their source as a
-          map, and can run a short session scripted from the code.
+          My projects, pulled from GitHub. Deployed projects link to the live site; the rest link to the source.
         </p>
         {data && (
           <p className="repo-index__stamp">

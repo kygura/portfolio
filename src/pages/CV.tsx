@@ -90,9 +90,6 @@ const CV = () => {
     <div className="px-6 md:px-12 lg:px-16 py-16 md:py-24 max-w-4xl animate-fade-in mx-auto">
       <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-8">
         <div>
-          <p className="font-pixel text-[10.5px] tracking-[0.08em] uppercase text-[var(--accent)] mb-6">
-            ( 04 &mdash; CREDENTIALS )
-          </p>
           <h1 className="text-5xl md:text-6xl font-display font-light tracking-[-0.01em] leading-[0.9] mb-4">
             Curriculum Vitae
           </h1>
