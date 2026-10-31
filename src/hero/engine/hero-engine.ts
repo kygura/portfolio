@@ -3,7 +3,7 @@
  * (plus the outgoing one during a dither dissolve) into a quarter-resolution
  * target, then blits through a 15-bit quantize + Bayer dither pass.
  *
- * Loaded with a dynamic import from <CartographicHero/>, so three.js stays out of every
+ * Loaded with a dynamic import from useHeroStage (home hero, /scenes), so three.js stays out of every
  * other route's bundle. The render loop only runs while there is something
  * to draw: it stops when the hero is offscreen, the tab is hidden, or motion
  * is paused and nothing is dirty.

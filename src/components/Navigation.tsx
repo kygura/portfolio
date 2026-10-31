@@ -11,16 +11,18 @@ const CLOCK_FORMAT = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Europe/Madrid",
 });
 
-const NAV_ITEMS = [
+const NAV_ITEMS: { path: string; label: string; wide?: boolean }[] = [
   { path: "/", label: "Home" },
   { path: "/writings", label: "Writings" },
   { path: "/projects", label: "Software" },
+  // Below 1024px the bar has room for four links; Scenes stays reachable from the hero strip, g v and the palette.
+  { path: "/scenes", label: "Scenes", wide: true },
   { path: "/cv", label: "CV" },
 ];
 
-function NavItem({ path, label, end }: { path: string; label: string; end?: boolean }) {
+function NavItem({ path, label, end, wide }: { path: string; label: string; end?: boolean; wide?: boolean }) {
   return (
-    <li>
+    <li className={wide ? "nav-item--wide" : undefined}>
       <NavLink
         to={path}
         end={end}
@@ -162,6 +164,7 @@ const Navigation = () => {
               path={item.path}
               label={item.label}
               end={item.path === "/"}
+              wide={item.wide}
             />
           ))}
         </ul>
