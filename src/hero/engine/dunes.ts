@@ -50,7 +50,8 @@ export function buildDunes(kit: PsxKit): SceneDef {
     return m;
   };
   const lit = { amb: "#9a8a80", sun: "#fff0d8" };
-  const mSand = own(kit.psx({ map: tex.tSand, tint: P.sand, ...lit }));
+  // Lower ambient on the sand so the lit windward slopes and the shaded slip faces separate.
+  const mSand = own(kit.psx({ map: tex.tSand, tint: P.sand, amb: "#5c4a46", sun: "#fff4e0" }));
   const mBone = own(kit.psx({ map: tex.tStone, tint: "#e6dcc8", ...lit }));
   const mDark = own(kit.psx({ map: tex.tPlain, tint: "#5e5466", ...lit }));
   const mGlass = own(kit.psx({ map: tex.tGlass, tint: "#c4c8c4", ...lit }));
@@ -77,16 +78,29 @@ export function buildDunes(kit: PsxKit): SceneDef {
   scene.add(sky);
   const sun = kit.sunDisc(scene, SUN.x, SUN.y, SUN.z, 30, P.sun, P.glow);
 
-  /* ---- dunes: long asymmetric crests across the wind, flattened round the monument ---- */
+  /* ---- dunes: transverse ridges across a wind from -x. Each ridge climbs a long
+     windward slope to a sharp crest and drops down a short slip face; the crests
+     meander, a smaller train rides on the big one, and the field grows toward the
+     horizon. Low round the monument and the camera's walk, so nothing hides it. ---- */
+  const ridge = (u: number) => {
+    const f = u - Math.floor(u), c = 0.74;
+    // Windward: eased climb to the brink. Lee: a steep fall that rounds off at the foot.
+    return f < c ? Math.pow(Math.sin((f / c) * Math.PI * 0.5), 1.6) : Math.pow(1 - (f - c) / (1 - c), 1.8);
+  };
   const groundH = (x: number, z: number) => {
-    const u = x * 0.021 + z * 0.006 + Math.sin(z * 0.013) * 1.3;
-    const crest = Math.pow(0.5 + 0.5 * Math.sin(u), 2.2) * 9;
-    const swell = 3 * Math.sin(x * 0.006 - z * 0.009) + 1.4 * Math.sin(z * 0.05 - x * 0.02);
-    const r = Math.hypot(x, z), flat = THREE.MathUtils.smoothstep(r, 18, 70);
-    return (crest + swell) * flat - 1;
+    const r = Math.hypot(x, z);
+    // Wind runs along +x, a little off axis; crests bend with z.
+    const along = x * 0.96 + z * 0.28;
+    const bend = Math.sin(z * 0.0105 + 0.7) * 34 + Math.sin(z * 0.031 - x * 0.004) * 11;
+    const big = ridge((along + bend) / 230) * (28 + 10 * Math.sin(z * 0.004 + x * 0.002));
+    const small = ridge((along * 1.08 + bend * 0.5 + 20) / 74) * (7 + 3 * Math.sin(x * 0.013 + z * 0.009));
+    const ss = THREE.MathUtils.smoothstep;
+    const grow = 0.55 * ss(r, 26, 90) + 0.45 * ss(r, 140, 320) + 0.8 * ss(r, 320, 760);
+    const swell = 2.2 * Math.sin(x * 0.006 - z * 0.009) * ss(r, 20, 80);
+    return (big + small) * grow + swell - 1;
   };
   {
-    const geo = new THREE.PlaneGeometry(2400, 2400, 170, 170);
+    const geo = new THREE.PlaneGeometry(2400, 2400, 240, 240);
     geo.rotateX(-Math.PI / 2);
     const p = geo.attributes.position, uv = geo.attributes.uv;
     for (let i = 0; i < p.count; i++) {
@@ -94,7 +108,7 @@ export function buildDunes(kit: PsxKit): SceneDef {
       p.setY(i, groundH(x, z));
       uv.setXY(i, x * 0.07, z * 0.07);
     }
-    kit.mesh(facet(geo, 0.6), mSand, scene);
+    kit.mesh(facet(geo, 0.25), mSand, scene);
   }
 
   /* ---- the waste in the sand ---- */

@@ -86,4 +86,4 @@ export const SHEETS: SheetMeta[] = ALL_SHEETS.filter((s) => s.enabled !== false)
 export const sheetIndex = (id: string | undefined) => SHEETS.findIndex((s) => s.id === id);
 
 /** The one scene the home hero shows. */
-export const HOME_SCENE = Math.max(0, sheetIndex("drift"));
+export const HOME_SCENE = Math.max(0, sheetIndex("cipher"));
