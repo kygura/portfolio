@@ -13,11 +13,14 @@ const variants = {
 };
 
 export default function PageTransition({ children }: PageTransitionProps) {
-  const location = useLocation();
+  const { pathname } = useLocation();
+  // Every scene has its own URL, but the viewer must stay mounted between them:
+  // remounting would rebuild the engine and lose its dither dissolve.
+  const key = pathname.startsWith("/scenes") ? "/scenes" : pathname;
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
-        key={location.pathname}
+        key={key}
         variants={variants}
         initial="initial"
         animate="animate"

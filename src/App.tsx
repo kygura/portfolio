@@ -81,17 +81,14 @@ const App = () => (
             />
             {/* Old dossier links land on the index. */}
             <Route path="/projects/:slug" element={<Navigate to="/projects" replace />} />
-            {["/scenes", "/scenes/:id"].map((path) => (
-              <Route
-                key={path}
-                path={path}
-                element={
-                  <Layout>
-                    <Scenes />
-                  </Layout>
-                }
-              />
-            ))}
+            <Route
+              path="/scenes/:id?"
+              element={
+                <Layout>
+                  <Scenes />
+                </Layout>
+              }
+            />
             <Route
               path="/cv"
               element={
