@@ -30,8 +30,7 @@ const readFound = (): string[] => {
 export const reduceQuery = () =>
   typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
 
-export function useHeroStage(sheet: number, opts: { paused?: boolean; psx?: boolean } = {}) {
-  const { paused = false, psx = true } = opts;
+export function useHeroStage(sheet: number) {
   const accent = useAccent();
   const [noGl, setNoGl] = useState(false);
   const [egg, setEgg] = useState<EggNote | null>(null);
@@ -44,9 +43,8 @@ export function useHeroStage(sheet: number, opts: { paused?: boolean; psx?: bool
   const engineRef = useRef<HeroEngine | null>(null);
   const cipherRef = useRef<CipherField | null>(null);
   const cipherOn = SHEETS[sheet].id === "cipher";
-  const motionOn = () => !paused && !cipherOn && !reduceQuery()?.matches;
-  const live = useRef({ accent, sheet, motion: motionOn(), psx });
-  live.current = { accent, sheet, motion: motionOn(), psx };
+  const live = useRef({ accent, sheet, motion: !cipherOn && !reduceQuery()?.matches });
+  live.current = { accent, sheet, motion: !cipherOn && !reduceQuery()?.matches };
 
   useEffect(() => {
     let dead = false;
@@ -63,7 +61,7 @@ export function useHeroStage(sheet: number, opts: { paused?: boolean; psx?: bool
           accent: ACCENTS[live.current.accent],
           sheet: live.current.sheet,
           motion: live.current.motion,
-          psx: live.current.psx,
+          psx: true,
           reducedMotion: Boolean(reduceQuery()?.matches),
           onContextLost: () => setNoGl(true),
           onEgg: ({ id, total }) => {
@@ -116,11 +114,8 @@ export function useHeroStage(sheet: number, opts: { paused?: boolean; psx?: bool
     cipherRef.current?.setActive(cipherOn);
   }, [cipherOn]);
   useEffect(() => {
-    engineRef.current?.setMotion(!paused && !cipherOn && !reduceQuery()?.matches);
-  }, [paused, cipherOn]);
-  useEffect(() => {
-    engineRef.current?.setPsx(psx);
-  }, [psx]);
+    engineRef.current?.setMotion(!cipherOn && !reduceQuery()?.matches);
+  }, [cipherOn]);
 
   return { canvasRef, cipherCanvasRef, stageRef, engineRef, noGl, egg, cipherOn };
 }

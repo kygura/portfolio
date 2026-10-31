@@ -164,7 +164,7 @@ export default function CommandPalette({
                 >
                   Bottom of page
                 </Item>
-                {(pathname === "/" || pathname.startsWith("/scenes")) && (
+                {pathname.startsWith("/scenes") && (
                   <Item value="page next hero scene" onSelect={() => run(() => pressKey("]"))} keys={["]"]}>
                     Next scene
                   </Item>

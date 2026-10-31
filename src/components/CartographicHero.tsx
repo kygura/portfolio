@@ -1,28 +1,22 @@
-import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
-import { SHEET_KEY, storedSheet, writeStored } from "@/theme/accent";
+import { useEffect, useRef } from "react";
 import { isTyping } from "@/theme/keymap";
-import { SHEETS, sheetNo } from "@/hero/sheets";
+import { HOME_SCENE, SHEETS } from "@/hero/sheets";
 import { useHeroStage } from "@/hero/useHeroStage";
 
 /**
  * Cartographic hero — stage, name, tagline, accent initials and hairline
  * strip sit in normal flow and scroll away with the page; the field behind
  * them is the PS1 renderer (see useHeroStage). Without WebGL the stage falls
- * back to a CSS contour sheet. The strip names the current scene and links
- * to the /scenes viewer; [ ] still cycle scenes here.
+ * back to a CSS contour sheet. It shows one scene (HOME_SCENE); the rest
+ * live on /scenes.
  */
 
 const NAME = "NICOLAS";
 
 const CartographicHero = () => {
-  const [sheet, setSheet] = useState(() => storedSheet(SHEETS.length));
+  const sheet = HOME_SCENE;
   const { canvasRef, cipherCanvasRef, stageRef, engineRef, noGl, egg, cipherOn } = useHeroStage(sheet);
   const footerRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    writeStored(SHEET_KEY, String(sheet));
-  }, [sheet]);
 
   // The strip wraps to two rows on phones; keep the monogram clear of its hairline.
   useEffect(() => {
@@ -35,14 +29,11 @@ const CartographicHero = () => {
     return () => ro.disconnect();
   }, [stageRef]);
 
-  // [ ] cycle scenes; Shift+arrows orbit, + / - dolly, 0 resets the camera
-  // (while the stage is on screen).
+  // Shift+arrows orbit, + / - dolly, 0 resets the camera (while the stage is on screen).
   useEffect(() => {
     const STEP = 0.18;
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented || isTyping(e.target)) return;
-      if (e.key === "[") return setSheet((s) => (s + SHEETS.length - 1) % SHEETS.length);
-      if (e.key === "]") return setSheet((s) => (s + 1) % SHEETS.length);
       const eng = engineRef.current;
       const r = stageRef.current?.getBoundingClientRect();
       if (!eng || !r || r.bottom < window.innerHeight * 0.4 || r.top > window.innerHeight * 0.6) return;
@@ -60,8 +51,6 @@ const CartographicHero = () => {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [engineRef, stageRef]);
-
-  const cur = SHEETS[sheet];
 
   return (
     <div className={`hero${noGl ? " hero--no-gl" : ""}`}>
@@ -108,22 +97,8 @@ const CartographicHero = () => {
           <div className="hero__mark-text">C.A</div>
         </div>
 
-        {/* Hairline footer strip: current scene + a way into the viewer. */}
-        <footer ref={footerRef} className="hero__strip">
-          <div className="hero__sheets">
-            <Link to={`/scenes/${cur.id}`} className="hero__scene-link" aria-label={`Scene ${sheetNo(sheet)}: ${cur.name}. Open in the scene viewer`}>
-              <span className="hero__scene-no">{sheetNo(sheet)}</span>
-              <span className="hero__scene-name">{cur.name}</span>
-            </Link>
-            <span className="hero__sheet-keys" aria-hidden="true">
-              <kbd>[</kbd>
-              <kbd>]</kbd>
-            </span>
-            <Link to="/scenes" className="hero__scene-all">
-              All scenes <span aria-hidden="true">&rarr;</span>
-            </Link>
-          </div>
-        </footer>
+        {/* Hairline footer strip. */}
+        <footer ref={footerRef} className="hero__strip" />
       </div>
 
     </div>
