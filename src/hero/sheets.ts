@@ -84,3 +84,9 @@ export const SHEETS: SheetMeta[] = ALL_SHEETS.filter((s) => s.enabled !== false)
 
 /** Tab number: scenes are numbered by position, so adding one renumbers the rest. */
 export const sheetNo = (i: number) => String(i + 1).padStart(2, "0");
+
+/** Position of a scene by its id (the /scenes/:id slug), or -1. */
+export const sheetIndex = (id: string | undefined) => SHEETS.findIndex((s) => s.id === id);
+
+/** Default hint for scenes that only orbit. */
+export const ORBIT_HINT = "DRAG TO ORBIT · CTRL+WHEEL TO ZOOM · DOUBLE-CLICK TO RESET";

@@ -26,6 +26,7 @@ const Projects = lazy(() => import("./pages/Projects"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Artifacts = lazy(() => import("./pages/Artifacts"));
 const CV = lazy(() => import("./pages/CV"));
+const Scenes = lazy(() => import("./pages/Scenes"));
 
 const queryClient = new QueryClient();
 
@@ -80,6 +81,17 @@ const App = () => (
             />
             {/* Old dossier links land on the index. */}
             <Route path="/projects/:slug" element={<Navigate to="/projects" replace />} />
+            {["/scenes", "/scenes/:id"].map((path) => (
+              <Route
+                key={path}
+                path={path}
+                element={
+                  <Layout>
+                    <Scenes />
+                  </Layout>
+                }
+              />
+            ))}
             <Route
               path="/cv"
               element={

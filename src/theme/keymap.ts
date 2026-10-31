@@ -4,6 +4,7 @@ export const CHORDS: Record<string, { to: string; label: string }> = {
   h: { to: "/", label: "Home" },
   w: { to: "/writings", label: "Writings" },
   s: { to: "/projects", label: "Software" },
+  v: { to: "/scenes", label: "Scenes" },
   c: { to: "/cv", label: "CV" },
 };
 

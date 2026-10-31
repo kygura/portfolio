@@ -1,126 +1,28 @@
 import { useEffect, useRef, useState } from "react";
-import { ACCENTS, EGGS_KEY, SHEET_KEY, readStored, storedSheet, useAccent, writeStored } from "@/theme/accent";
+import { Link } from "react-router-dom";
+import { SHEET_KEY, storedSheet, writeStored } from "@/theme/accent";
 import { isTyping } from "@/theme/keymap";
 import { SHEETS, sheetNo } from "@/hero/sheets";
-import type { HeroEngine } from "@/hero/engine/hero-engine";
-import { createCipherField, type CipherField } from "@/hero/cipher";
+import { useHeroStage } from "@/hero/useHeroStage";
 
 /**
  * Cartographic hero — stage, name, tagline, accent initials and hairline
- * strip sit in normal flow and scroll away with the page; the field behind them is
- * the PS1 renderer (cipher / ocean / astral / ruins / drift / dunes / rift / frost / field / matrix / abyss / cliff). three.js is fetched
- * with a dynamic import on mount, so no other route downloads it. Without
- * WebGL the stage falls back to a CSS contour sheet.
- *
- * The engine runs its own render loop and stops it when offscreen, hidden, or
- * paused under reduced motion. The cipher sheet is a black stage in the
- * engine with a 2D glyph canvas over it; the engine's clock stops while it is up.
+ * strip sit in normal flow and scroll away with the page; the field behind
+ * them is the PS1 renderer (see useHeroStage). Without WebGL the stage falls
+ * back to a CSS contour sheet. The strip names the current scene and links
+ * to the /scenes viewer; [ ] still cycle scenes here.
  */
 
 const NAME = "NICOLAS";
 
-const readFound = (): string[] => {
-  try {
-    const v = JSON.parse(readStored(EGGS_KEY) ?? "[]");
-    return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
-  } catch {
-    return [];
-  }
-};
-
-const reduceQuery = () =>
-  typeof window.matchMedia === "function" ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
-
 const CartographicHero = () => {
-  const accent = useAccent();
   const [sheet, setSheet] = useState(() => storedSheet(SHEETS.length));
-  const [noGl, setNoGl] = useState(false);
-  const [egg, setEgg] = useState<{ n: number; total: number; fresh: boolean; key: number } | null>(null);
-  const found = useRef<Set<string> | null>(null);
-  const eggTimer = useRef(0);
-
-  const rootRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
+  const { canvasRef, cipherCanvasRef, stageRef, engineRef, noGl, egg, cipherOn } = useHeroStage(sheet);
   const footerRef = useRef<HTMLElement>(null);
-  const engineRef = useRef<HeroEngine | null>(null);
-  const cipherCanvasRef = useRef<HTMLCanvasElement>(null);
-  const cipherRef = useRef<CipherField | null>(null);
-  const cipherOn = SHEETS[sheet].id === "cipher";
-  const live = useRef({ accent, sheet });
-  live.current = { accent, sheet };
-
-  // ── PS1 renderer: lazy-loaded, disposed on unmount ───────────────────
-  useEffect(() => {
-    let dead = false;
-    let engine: HeroEngine | null = null;
-    import("@/hero/engine/hero-engine")
-      .then(({ createHeroEngine }) => {
-        if (dead || !canvasRef.current || !stageRef.current) return;
-        const reduced = Boolean(reduceQuery()?.matches);
-        engine = createHeroEngine({
-          canvas: canvasRef.current,
-          host: stageRef.current,
-          readKeys: [],
-          readVals: [],
-          compass: null,
-          accent: ACCENTS[live.current.accent],
-          sheet: live.current.sheet,
-          motion: !reduced && SHEETS[live.current.sheet].id !== "cipher",
-          psx: true,
-          reducedMotion: reduced,
-          onContextLost: () => setNoGl(true),
-          onEgg: ({ id, total }) => {
-            found.current ??= new Set(readFound());
-            const fresh = !found.current.has(id);
-            if (fresh) {
-              found.current.add(id);
-              writeStored(EGGS_KEY, JSON.stringify([...found.current]));
-            }
-            setEgg({ n: found.current.size, total, fresh, key: Date.now() });
-            window.clearTimeout(eggTimer.current);
-            eggTimer.current = window.setTimeout(() => setEgg(null), 5000);
-          },
-        });
-        engineRef.current = engine;
-      })
-      .catch(() => {
-        if (!dead) setNoGl(true);
-      });
-    return () => {
-      dead = true;
-      window.clearTimeout(eggTimer.current);
-      engine?.dispose();
-      engineRef.current = null;
-    };
-  }, []);
-
-  // Glyph field: plain 2D canvas, built eagerly so switching to it is instant.
-  useEffect(() => {
-    if (!cipherCanvasRef.current) return;
-    const field = createCipherField(cipherCanvasRef.current, {
-      accent: ACCENTS[live.current.accent].hex,
-      reducedMotion: Boolean(reduceQuery()?.matches),
-    });
-    cipherRef.current = field;
-    return () => {
-      field.dispose();
-      cipherRef.current = null;
-    };
-  }, []);
 
   useEffect(() => {
-    engineRef.current?.setAccent(ACCENTS[accent]);
-    cipherRef.current?.setAccent(ACCENTS[accent].hex);
-  }, [accent]);
-  useEffect(() => {
-    engineRef.current?.setSheet(sheet);
     writeStored(SHEET_KEY, String(sheet));
   }, [sheet]);
-  useEffect(() => {
-    cipherRef.current?.setActive(cipherOn);
-    engineRef.current?.setMotion(!cipherOn && !reduceQuery()?.matches);
-  }, [cipherOn]);
 
   // The strip wraps to two rows on phones; keep the monogram clear of its hairline.
   useEffect(() => {
@@ -131,9 +33,7 @@ const CartographicHero = () => {
     const ro = new ResizeObserver(sync);
     ro.observe(strip);
     return () => ro.disconnect();
-  }, []);
-
-  const goSheet = (i: number) => setSheet(((i % SHEETS.length) + SHEETS.length) % SHEETS.length);
+  }, [stageRef]);
 
   // [ ] cycle scenes; Shift+arrows orbit, + / - dolly, 0 resets the camera
   // (while the stage is on screen).
@@ -159,10 +59,12 @@ const CartographicHero = () => {
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, []);
+  }, [engineRef, stageRef]);
+
+  const cur = SHEETS[sheet];
 
   return (
-    <div ref={rootRef} className={`hero${noGl ? " hero--no-gl" : ""}`}>
+    <div className={`hero${noGl ? " hero--no-gl" : ""}`}>
       <div ref={stageRef} className="hero__stage">
         <canvas ref={canvasRef} className="hero__canvas" role="img" aria-label={SHEETS[sheet].aria} />
         <canvas
@@ -206,28 +108,20 @@ const CartographicHero = () => {
           <div className="hero__mark-text">C.A</div>
         </div>
 
-        {/* Hairline footer strip: scene tabs on the left. */}
+        {/* Hairline footer strip: current scene + a way into the viewer. */}
         <footer ref={footerRef} className="hero__strip">
-          <div className="hero__sheets" role="group" aria-label="Hero scene">
-            {SHEETS.map((s, i) => (
-              <button
-                key={s.id}
-                type="button"
-                className="hero__sheet"
-                aria-pressed={i === sheet}
-                aria-label={`Scene ${sheetNo(i)}: ${s.name}`}
-                onClick={() => goSheet(i)}
-              >
-                {sheetNo(i)}
-              </button>
-            ))}
+          <div className="hero__sheets">
+            <Link to={`/scenes/${cur.id}`} className="hero__scene-link" aria-label={`Scene ${sheetNo(sheet)}: ${cur.name}. Open in the scene viewer`}>
+              <span className="hero__scene-no">{sheetNo(sheet)}</span>
+              <span className="hero__scene-name">{cur.name}</span>
+            </Link>
             <span className="hero__sheet-keys" aria-hidden="true">
               <kbd>[</kbd>
               <kbd>]</kbd>
             </span>
-            <span className="hero__orbit-hint" aria-hidden="true">
-              {SHEETS[sheet].hint ?? "DRAG TO ORBIT \u00b7 CTRL+WHEEL TO ZOOM \u00b7 DOUBLE-CLICK TO RESET"}
-            </span>
+            <Link to="/scenes" className="hero__scene-all">
+              All scenes <span aria-hidden="true">&rarr;</span>
+            </Link>
           </div>
         </footer>
       </div>
