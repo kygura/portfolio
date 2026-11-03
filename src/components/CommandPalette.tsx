@@ -9,7 +9,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Command } from "cmdk";
 import { useMarkdownPosts } from "@/hooks/useMarkdownPosts";
-import { ACCENTS, setAccent, useAccent } from "@/theme/accent";
+import { FAMILIES, familyAccents, setAccent, useAccent } from "@/theme/accent";
 import { CHORDS, PAGES } from "@/theme/keymap";
 
 const pressKey = (key: string) =>
@@ -135,21 +135,23 @@ export default function CommandPalette({
                 </Command.Group>
               )}
 
-              <Command.Group heading="Theme">
-                {ACCENTS.map((a, i) => (
-                  <Item
-                    key={a.id}
-                    value={`theme ${a.name}`}
-                    keywords={["accent", "colour", "color"]}
-                    onSelect={() => run(() => setAccent(i))}
-                    swatch={a.hex}
-                    keys={[String(i + 1)]}
-                    meta={i === accent ? "on" : undefined}
-                  >
-                    {a.name}
-                  </Item>
-                ))}
-              </Command.Group>
+              {FAMILIES.map((f, fi) => (
+                <Command.Group key={f.id} heading={`Theme · ${f.name}`}>
+                  {familyAccents(f.id).map(({ a, i }) => (
+                    <Item
+                      key={a.id}
+                      value={`theme ${f.name} ${a.name}`}
+                      keywords={["accent", "colour", "color", "palette"]}
+                      onSelect={() => run(() => setAccent(i))}
+                      swatch={a.hex}
+                      keys={[String(fi + 1)]}
+                      meta={i === accent ? "on" : undefined}
+                    >
+                      {a.name}
+                    </Item>
+                  ))}
+                </Command.Group>
+              ))}
 
               <Command.Group heading="Page">
                 <Item value="page next" onSelect={() => run(() => step(1))} keys={["n"]}>Next page</Item>

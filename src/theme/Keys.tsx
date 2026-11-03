@@ -1,13 +1,14 @@
 /**
  * Additive keyboard layer: g-chords for the nav routes, `g g` to the top,
- * `n`/`p` for next/previous page, `1`–`6` and `t` for the theme, `j`/`k`/`G` to
- * scroll, `?` for the help sheet. Pages add their own keys
+ * `n`/`p` for next/previous page, `1`–`4` for a theme family (press again to
+ * step through it), `t` to cycle every theme, `j`/`k`/`G` to scroll, `?` for
+ * the help sheet. Pages add their own keys
  * (the hero listens for `[` `]`). Nothing fires while typing in a field or
  * with a modifier held, so the terminal's Ctrl+K and the backtick stay put.
  */
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ACCENTS, setAccent, useAccent } from "./accent";
+import { ACCENTS, familyStep, setAccent, useAccent } from "./accent";
 import { CHORDS, PAGES, isTyping } from "./keymap";
 
 const K = ({ k }: { k: string }) => <kbd>{k}</kbd>;
@@ -65,7 +66,7 @@ function HelpOverlay({ onClose }: { onClose: () => void }) {
             <h3>View</h3>
             <dl>
               <div><dt><K k="n" /> <K k="p" /></dt><dd>Next / previous page</dd></div>
-              <div><dt><K k="1" />–<K k="6" /></dt><dd>Theme</dd></div>
+              <div><dt><K k="1" />–<K k="4" /></dt><dd>Theme family (again to step)</dd></div>
               <div><dt><K k="t" /></dt><dd>Cycle theme</dd></div>
               <div><dt><K k="j" /> <K k="k" /></dt><dd>Scroll down / up</dd></div>
               <div><dt><K k="G" /></dt><dd>Bottom of page</dd></div>
@@ -155,9 +156,7 @@ export default function Keys() {
         case "2":
         case "3":
         case "4":
-        case "5":
-        case "6":
-          setAccent(Number(e.key) - 1);
+          setAccent(familyStep(Number(e.key) - 1, live.current.accent));
           return;
       }
     };

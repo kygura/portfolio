@@ -281,6 +281,269 @@
   --sidebar-accent-foreground: 41 29% 89%;
 }
 
+/* ── Added families: Moss and Jade join Lichen in Grove, Glacier and Iris join
+   Sky in Tide, Phosphor and Vermilion join Graphite in Signal. Each swaps the
+   whole sheet like the originals. ── */
+
+/* Moss: a deep forest floor. Green-black ground, sap-pale ink, a fern accent. */
+:root[data-accent="moss"] {
+  --bg: #0e1611;
+  --bg-2: #121c16;
+  --sheet: #1a281f;
+  --code: #09100c;
+  --ink: #dde8d4;
+  --ink-2: #a3b79f;
+  --ink-3: #6f846d;
+  --rule: #21312a;
+  --rule-2: #32473a;
+  --grid: rgba(127, 207, 138, 0.05);
+  --scrim: rgba(9, 16, 12, 0.86);
+  --danger: #ee8c7c;
+  --accent: #7fcf8a;
+  --accent-deep: #2f7a45;
+  --on-accent: #08170c;
+  --accent-h: 128 45% 65%;
+  --on-accent-h: 136 48% 6%;
+  --tex: radial-gradient(140% 60% at 50% 110%, rgba(127, 207, 138, 0.07), transparent 70%);
+  --tex-size: auto;
+
+  --background: 142 22% 7%;
+  --foreground: 93 30% 87%;
+  --card: 144 22% 9%;
+  --card-foreground: 93 30% 87%;
+  --popover: 144 22% 9%;
+  --popover-foreground: 93 30% 87%;
+  --secondary: 141 21% 13%;
+  --secondary-foreground: 93 30% 87%;
+  --destructive: 8 77% 71%;
+  --destructive-foreground: 142 22% 7%;
+  --muted: 141 21% 13%;
+  --muted-foreground: 110 14% 67%;
+  --border: 154 20% 16%;
+  --input: 143 17% 24%;
+  --sidebar-background: 144 22% 9%;
+  --sidebar-foreground: 93 30% 87%;
+  --sidebar-border: 154 20% 16%;
+  --sidebar-accent: 141 21% 13%;
+  --sidebar-accent-foreground: 93 30% 87%;
+}
+
+/* Jade: still water over stone. Teal-black ground, celadon ink, a mint accent. */
+:root[data-accent="jade"] {
+  --bg: #0b1615;
+  --bg-2: #0f1d1c;
+  --sheet: #162a28;
+  --code: #071010;
+  --ink: #d6ebe4;
+  --ink-2: #9bbcb3;
+  --ink-3: #678a81;
+  --rule: #1d3431;
+  --rule-2: #2c4a46;
+  --grid: rgba(90, 214, 173, 0.05);
+  --scrim: rgba(7, 16, 16, 0.86);
+  --danger: #f08f86;
+  --accent: #5ad6ad;
+  --accent-deep: #1d7a63;
+  --on-accent: #04170f;
+  --accent-h: 160 60% 60%;
+  --on-accent-h: 155 70% 5%;
+  --tex: none;
+  --tex-size: auto;
+
+  --background: 175 33% 6%;
+  --foreground: 160 34% 88%;
+  --card: 176 32% 9%;
+  --card-foreground: 160 34% 88%;
+  --popover: 176 32% 9%;
+  --popover-foreground: 160 34% 88%;
+  --secondary: 174 31% 13%;
+  --secondary-foreground: 160 34% 88%;
+  --destructive: 5 78% 73%;
+  --destructive-foreground: 175 33% 6%;
+  --muted: 174 31% 13%;
+  --muted-foreground: 164 20% 67%;
+  --border: 172 28% 16%;
+  --input: 172 25% 23%;
+  --sidebar-background: 176 32% 9%;
+  --sidebar-foreground: 160 34% 88%;
+  --sidebar-border: 172 28% 16%;
+  --sidebar-accent: 174 31% 13%;
+  --sidebar-accent-foreground: 160 34% 88%;
+}
+
+/* Glacier: polar dusk. Slate-blue ground, frost ink, a pale steel accent. */
+:root[data-accent="glacier"] {
+  --bg: #10151c;
+  --bg-2: #141b24;
+  --sheet: #1c2530;
+  --code: #0b0f14;
+  --ink: #e4ecf4;
+  --ink-2: #a9b7c6;
+  --ink-3: #748395;
+  --rule: #24303d;
+  --rule-2: #364556;
+  --grid: rgba(195, 217, 239, 0.04);
+  --scrim: rgba(11, 15, 20, 0.86);
+  --danger: #f29a9a;
+  --accent: #c3d9ef;
+  --accent-deep: #4f7398;
+  --on-accent: #0c1520;
+  --accent-h: 210 58% 85%;
+  --on-accent-h: 213 45% 9%;
+  --tex: linear-gradient(180deg, rgba(195, 217, 239, 0.06), transparent 40%);
+  --tex-size: auto;
+
+  --background: 215 27% 9%;
+  --foreground: 210 42% 93%;
+  --card: 214 29% 11%;
+  --card-foreground: 210 42% 93%;
+  --popover: 214 29% 11%;
+  --popover-foreground: 210 42% 93%;
+  --secondary: 213 26% 15%;
+  --secondary-foreground: 210 42% 93%;
+  --destructive: 0 77% 78%;
+  --destructive-foreground: 215 27% 9%;
+  --muted: 213 26% 15%;
+  --muted-foreground: 211 20% 72%;
+  --border: 211 26% 19%;
+  --input: 212 23% 27%;
+  --sidebar-background: 214 29% 11%;
+  --sidebar-foreground: 210 42% 93%;
+  --sidebar-border: 211 26% 19%;
+  --sidebar-accent: 213 26% 15%;
+  --sidebar-accent-foreground: 210 42% 93%;
+}
+
+/* Iris: an indigo night. Ink-blue ground, lavender ink, a periwinkle accent. */
+:root[data-accent="iris"] {
+  --bg: #111024;
+  --bg-2: #16142c;
+  --sheet: #1f1c3a;
+  --code: #0b0a19;
+  --ink: #e6e2f6;
+  --ink-2: #aea8cc;
+  --ink-3: #7a7499;
+  --rule: #29254a;
+  --rule-2: #3c3764;
+  --grid: rgba(169, 156, 245, 0.06);
+  --scrim: rgba(11, 10, 25, 0.86);
+  --danger: #ff92a8;
+  --accent: #a99cf5;
+  --accent-deep: #5543b0;
+  --on-accent: #110c2a;
+  --accent-h: 249 82% 79%;
+  --on-accent-h: 250 56% 11%;
+  --tex: radial-gradient(120% 70% at 50% 115%, rgba(169, 156, 245, 0.09), transparent 70%);
+  --tex-size: auto;
+
+  --background: 243 38% 10%;
+  --foreground: 252 53% 93%;
+  --card: 245 38% 13%;
+  --card-foreground: 252 53% 93%;
+  --popover: 245 38% 13%;
+  --popover-foreground: 252 53% 93%;
+  --secondary: 246 35% 17%;
+  --secondary-foreground: 252 53% 93%;
+  --destructive: 348 100% 79%;
+  --destructive-foreground: 243 38% 10%;
+  --muted: 246 35% 17%;
+  --muted-foreground: 250 26% 73%;
+  --border: 246 33% 22%;
+  --input: 247 29% 30%;
+  --sidebar-background: 245 38% 13%;
+  --sidebar-foreground: 252 53% 93%;
+  --sidebar-border: 246 33% 22%;
+  --sidebar-accent: 246 35% 17%;
+  --sidebar-accent-foreground: 252 53% 93%;
+}
+
+/* Phosphor: a green-screen terminal. Near-black ground, phosphor ink, a lit-green accent and faint scanlines. */
+:root[data-accent="phosphor"] {
+  --bg: #080c09;
+  --bg-2: #0c120d;
+  --sheet: #121a13;
+  --code: #050806;
+  --ink: #c9f2cf;
+  --ink-2: #8fc297;
+  --ink-3: #5c8564;
+  --rule: #18251a;
+  --rule-2: #253a28;
+  --grid: rgba(92, 240, 138, 0.05);
+  --scrim: rgba(5, 8, 6, 0.86);
+  --danger: #ffb36b;
+  --accent: #5cf08a;
+  --accent-deep: #1f8a43;
+  --on-accent: #03140a;
+  --accent-h: 139 83% 65%;
+  --on-accent-h: 145 74% 5%;
+  --tex: repeating-linear-gradient(0deg, rgba(92, 240, 138, 0.025) 0 1px, transparent 1px 3px);
+  --tex-size: auto;
+
+  --background: 135 20% 4%;
+  --foreground: 129 61% 87%;
+  --card: 130 20% 6%;
+  --card-foreground: 129 61% 87%;
+  --popover: 130 20% 6%;
+  --popover-foreground: 129 61% 87%;
+  --secondary: 128 18% 9%;
+  --secondary-foreground: 129 61% 87%;
+  --destructive: 29 100% 71%;
+  --destructive-foreground: 135 20% 4%;
+  --muted: 128 18% 9%;
+  --muted-foreground: 129 29% 66%;
+  --border: 129 21% 12%;
+  --input: 129 22% 19%;
+  --sidebar-background: 130 20% 6%;
+  --sidebar-foreground: 129 61% 87%;
+  --sidebar-border: 129 21% 12%;
+  --sidebar-accent: 128 18% 9%;
+  --sidebar-accent-foreground: 129 61% 87%;
+}
+
+/* Vermilion: black ink and a seal stamp. Pure soot ground, bone ink, one hot red. */
+:root[data-accent="vermilion"] {
+  --bg: #0d0c0c;
+  --bg-2: #131211;
+  --sheet: #1b1918;
+  --code: #080707;
+  --ink: #efe8dd;
+  --ink-2: #b5aea4;
+  --ink-3: #7f7972;
+  --rule: #2a2725;
+  --rule-2: #3e3a37;
+  --grid: rgba(239, 232, 221, 0.03);
+  --scrim: rgba(8, 7, 7, 0.86);
+  --danger: #ffd08a;
+  --accent: #ff5a3c;
+  --accent-deep: #a8261a;
+  --on-accent: #1c0703;
+  --accent-h: 9 100% 62%;
+  --on-accent-h: 10 81% 6%;
+  --tex: none;
+  --tex-size: auto;
+
+  --background: 0 4% 5%;
+  --foreground: 37 36% 90%;
+  --card: 30 6% 7%;
+  --card-foreground: 37 36% 90%;
+  --popover: 30 6% 7%;
+  --popover-foreground: 37 36% 90%;
+  --secondary: 20 6% 10%;
+  --secondary-foreground: 37 36% 90%;
+  --destructive: 36 100% 77%;
+  --destructive-foreground: 0 4% 5%;
+  --muted: 20 6% 10%;
+  --muted-foreground: 35 10% 68%;
+  --border: 24 6% 15%;
+  --input: 26 6% 23%;
+  --sidebar-background: 30 6% 7%;
+  --sidebar-foreground: 37 36% 90%;
+  --sidebar-border: 24 6% 15%;
+  --sidebar-accent: 20 6% 10%;
+  --sidebar-accent-foreground: 37 36% 90%;
+}
+
+
 @media (min-width: 640px) {
   :root { --nav-h: 68px; }
 }
@@ -1989,56 +2252,115 @@ kbd {
 .wordmark i { font-family: var(--f-pixel); font-style: normal; font-size: 1.18em; color: var(--text-secondary); }
 .wordmark em { font-family: var(--f-body); font-style: italic; font-weight: 400; font-size: 1.28em; color: var(--accent); }
 
-/* Accent picker: a horizontal run of squares. Keys 1–5, or t to cycle. */
-.accent-pick { display: inline-flex; align-items: center; gap: 5px; padding: 7px 9px; border: 1px solid var(--rule-2); }
-.accent-pick button {
-  width: 10px; height: 10px; padding: 0; background: var(--sw);
-  border: 1px solid transparent; outline-offset: 1px; opacity: 0.55; transition: opacity 0.15s ease;
-}
-.accent-pick button:hover { opacity: 1; }
-.accent-pick button[aria-pressed="true"] { opacity: 1; outline: 1px solid var(--ink); }
 @media (max-width: 639px) {
-  .accent-pick { gap: 2px; padding: 3px; }
-  .accent-pick button { width: 8px; height: 8px; }
   .nav-bar .nav-link { padding-inline: 0.15rem; font-size: clamp(8.5px, 2.5vw, 11px); letter-spacing: 0.04em; }
   .wordmark em, .wordmark i { display: none; }
 }
 
-/* Under 1024px the squares fold into one swatch (AccentMenu) that opens the
-   themes as a vertical list; the freed room takes the palette button, the
-   way in for touch screens that can't press `:`. */
-.accent-menu, .cmd-open {
-  display: none; align-items: center; justify-content: center; width: 26px; height: 24px; padding: 0;
+/* Theme picker (Navigation.tsx). The trigger is a split swatch, the
+   palette's ground with its accent laid in, plus the name from 1024px. Under
+   1024px the `:` button beside it opens the command palette for touch
+   screens that can't press `:`. */
+.theme-trigger, .cmd-open {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 24px; padding: 0 7px;
   background: transparent; border: 1px solid var(--rule-2); transition: border-color 0.15s ease;
 }
-.accent-menu::before { content: ""; width: 10px; height: 10px; background: var(--sw); }
-.cmd-open { font: 13px var(--f-mono); line-height: 1; color: var(--accent); }
-.accent-menu:hover, .accent-menu:focus-visible, .accent-menu[data-state="open"],
-.cmd-open:hover, .cmd-open:focus-visible { border-color: var(--accent); }
+.theme-trigger i {
+  width: 12px; height: 12px; flex: none; background: linear-gradient(135deg, var(--c-bg) 0 50%, var(--c-acc) 50% 100%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-ink) 35%, transparent);
+}
+.theme-trigger span {
+  display: none; font: 11px var(--f-mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-2);
+}
+.cmd-open { display: none; width: 26px; padding: 0; font: 13px var(--f-mono); line-height: 1; color: var(--accent); }
+.theme-trigger:hover, .theme-trigger:focus-visible, .theme-trigger[data-state="open"],
+.cmd-open:hover, .cmd-open:focus-visible { border-color: var(--accent); outline: none; }
+.theme-trigger[data-state="open"] span, .theme-trigger:hover span { color: var(--ink); }
 .cmd-open:active { opacity: 0.7; }
+@media (min-width: 1024px) {
+  .theme-trigger { height: 28px; padding: 0 10px 0 8px; }
+  .theme-trigger span { display: inline; }
+}
 @media (max-width: 1023px) {
-  .accent-pick { display: none; }
-  .accent-menu, .cmd-open { display: inline-flex; }
+  .cmd-open { display: inline-flex; }
 }
 @media (max-width: 639px) {
-  .accent-menu, .cmd-open { width: 22px; height: 18px; }
-  .accent-menu::before { width: 8px; height: 8px; }
+  .theme-trigger, .cmd-open { width: 22px; height: 18px; padding: 0; }
+  .theme-trigger i { width: 9px; height: 9px; }
   .cmd-open { font-size: 12px; }
 }
-.accent-list {
-  z-index: 99000; display: flex; flex-direction: column; min-width: 190px; padding: 4px 0;
-  background: var(--bg-2); border: 1px solid var(--accent); font-family: var(--f-mono);
-  animation: themeFade 0.12s ease; outline: none;
+
+/* The panel: one row per family, a label column and three paint chips. */
+.theme-panel {
+  z-index: 99000; width: min(470px, calc(100vw - 24px)); padding: 0;
+  background: var(--bg-2); border: 1px solid var(--rule-2); border-top: 1px solid var(--accent);
+  font-family: var(--f-mono); color: var(--ink-2); outline: none;
+  animation: themeFade 0.14s ease;
 }
-.accent-list button {
-  display: flex; align-items: center; gap: 10px; padding: 9px 12px 9px 10px; text-align: left;
-  font: 12px var(--f-mono); letter-spacing: 0.04em; color: var(--ink-2); background: transparent;
-  border: 0; border-left: 2px solid transparent;
+.theme-panel kbd {
+  display: inline-grid; place-items: center; min-width: 16px; height: 16px; padding: 0 3px;
+  font: 10px var(--f-mono); color: var(--ink-2); border: 1px solid var(--rule-2);
 }
-.accent-list button:hover, .accent-list button:focus-visible { color: var(--ink); background: var(--sheet); outline: none; }
-.accent-list button[aria-pressed="true"] { color: var(--ink); border-left-color: var(--accent); }
-.accent-list i { width: 10px; height: 10px; flex: none; background: var(--sw); }
-.accent-list span { flex: 1; }
+.theme-panel__head {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 14px;
+  border-bottom: 1px solid var(--rule); font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase;
+}
+.theme-panel__head > span:first-child { font-family: var(--f-pixel); letter-spacing: 0.06em; color: var(--accent); }
+.theme-panel__now { color: var(--ink-3); }
+.theme-panel__now b { font-weight: 400; color: var(--ink); }
+.theme-fam {
+  display: grid; grid-template-columns: 118px 1fr; align-items: center; gap: 12px; padding: 12px 14px;
+  border-bottom: 1px solid var(--rule);
+}
+.theme-fam__label { display: grid; grid-template-columns: auto 1fr; column-gap: 7px; row-gap: 3px; align-items: center; }
+.theme-fam__label span { font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink); }
+.theme-fam__label small { grid-column: 1 / -1; font-size: 10px; letter-spacing: 0.04em; color: var(--ink-3); }
+.theme-fam__chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+
+/* A chip is a miniature sheet in the palette's own colours: ground, an
+   accent rule down the left, two lines of ink and an accent mark. */
+.theme-chip {
+  display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 0;
+  text-align: left; background: transparent; border: 0; color: var(--ink-3); cursor: pointer;
+}
+.theme-chip__card {
+  position: relative; display: block; height: 42px; overflow: hidden;
+  background: var(--c-bg); border-left: 3px solid var(--c-acc);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-ink) 14%, transparent);
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s ease;
+}
+.theme-chip__card i { position: absolute; left: 8px; height: 2px; background: var(--c-ink); }
+.theme-chip__card i:nth-child(1) { top: 10px; width: 55%; opacity: 0.9; }
+.theme-chip__card i:nth-child(2) { top: 17px; width: 38%; opacity: 0.45; }
+.theme-chip__card i:nth-child(3) { left: auto; right: 7px; top: auto; bottom: 7px; width: 9px; height: 9px; background: var(--c-acc); }
+.theme-chip__name {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; transition: color 0.15s ease;
+}
+.theme-chip:hover .theme-chip__card, .theme-chip:focus-visible .theme-chip__card {
+  transform: translateY(-2px);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-ink) 30%, transparent);
+}
+.theme-chip:hover .theme-chip__name, .theme-chip:focus-visible .theme-chip__name { color: var(--ink); }
+.theme-chip:focus-visible { outline: none; }
+.theme-chip:focus-visible .theme-chip__card { outline: 1px dashed var(--ink-2); outline-offset: 2px; }
+.theme-chip[aria-pressed="true"] .theme-chip__card { outline: 1px solid var(--c-acc); outline-offset: 2px; }
+.theme-chip[aria-pressed="true"] .theme-chip__name { color: var(--ink); }
+.theme-chip[aria-pressed="true"] .theme-chip__name::before { content: "> "; color: var(--accent); }
+.theme-panel__foot {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; padding: 9px 14px;
+  font-size: 10px; letter-spacing: 0.06em; color: var(--ink-3);
+}
+.theme-panel__foot span { display: inline-flex; align-items: center; gap: 4px; }
+@media (max-width: 479px) {
+  .theme-fam { grid-template-columns: 1fr; gap: 9px; padding: 11px 12px; }
+  .theme-fam__label { grid-template-columns: auto auto 1fr; }
+  .theme-fam__label small { grid-column: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .theme-chip__card { transition: none; }
+  .theme-chip:hover .theme-chip__card, .theme-chip:focus-visible .theme-chip__card { transform: none; }
+}
 
 .skip-link {
   position: fixed; top: 8px; left: 8px; z-index: 100001; padding: 6px 10px;
