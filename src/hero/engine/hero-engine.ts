@@ -89,8 +89,52 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     cipher: () => buildVoid(), ocean: buildOcean, sea: buildSea, astral: buildAstral, ruins: buildRuins, drift: buildDrift, dunes: buildDunes, rift: buildRift, frost: buildFrost,
     field: buildField, matrix: buildMatrix, abyss: buildAbyss, cliff: buildCliff,
   };
-  const SC: SceneDef[] = SHEETS.map((s) => BUILD[s.id](kit));
-  const eggTotal = SC.reduce((n, s) => n + (s.eggs?.length ?? 0), 0);
+  /* Scenes are built on first use, not all up front: building all thirteen in
+     one go blocked the main thread for over a second on load. The rest are
+     built one per idle slot after the first frame, so switching stays instant. */
+  const built: (SceneDef | undefined)[] = new Array(SHEETS.length);
+  let accentHex = o.accent.hex;
+  const fitCam = (s: SceneDef) => {
+    s.cam.aspect = cssW / cssH;
+    s.cam.fov = s.cam.aspect < 1 ? s.fov[1] : s.fov[0];
+    s.cam.updateProjectionMatrix();
+  };
+  const scene = (i: number): SceneDef => {
+    let s = built[i];
+    if (!s) {
+      s = BUILD[SHEETS[i].id](kit);
+      s.moteMat?.color.set(accentHex);
+      built[i] = s;
+      fitCam(s);
+    }
+    return s;
+  };
+  const builtScenes = () => built.filter((s): s is SceneDef => Boolean(s));
+  /** Eggs are counted across every scene, so an egg find builds whatever is still missing. */
+  const eggTotal = () => {
+    for (let i = 0; i < SHEETS.length; i++) scene(i);
+    return builtScenes().reduce((n, s) => n + (s.eggs?.length ?? 0), 0);
+  };
+  let idle = 0;
+  const idleBuild = () => {
+    idle = 0;
+    const i = SHEETS.findIndex((_, k) => !built[k]);
+    if (i < 0) return;
+    scene(i);
+    queueIdle();
+  };
+  const ric = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+  const cic = (window as Window & { cancelIdleCallback?: (h: number) => void }).cancelIdleCallback;
+  function queueIdle() {
+    if (idle) return;
+    idle = ric ? ric(idleBuild, { timeout: 4000 }) : window.setTimeout(idleBuild, 400);
+  }
+  const cancelIdle = () => {
+    if (!idle) return;
+    if (ric && cic) cic(idle);
+    else window.clearTimeout(idle);
+    idle = 0;
+  };
 
   /* ---- post: two low-res targets, dissolve + dither/quantize blit ---- */
   const rtOpt = { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: true, stencilBuffer: false };
@@ -115,7 +159,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   /* ---- state ---- */
   let motion = o.motion;
   let psxOn = o.psx;
-  let cur = Math.max(0, Math.min(SC.length - 1, o.sheet));
+  let cur = Math.max(0, Math.min(SHEETS.length - 1, o.sheet));
   let prev = cur;
   let mixT = 1;
   let t = 18;
@@ -136,7 +180,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   // After a pinch, the finger left behind does nothing until it lifts, so the view doesn't jump.
   let pinchHold = false;
   const clampView = () => {
-    const lim = SC[cur].limits;
+    const lim = scene(cur).limits;
     if (lim.yaw !== undefined) yawT = Math.max(-lim.yaw, Math.min(lim.yaw, yawT));
     pitchT = Math.max(lim.pitch[0], Math.min(lim.pitch[1], pitchT));
     zoomT = Math.max(lim.zoom[0], Math.min(lim.zoom[1], zoomT));
@@ -170,7 +214,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   /* ---- easter eggs: the nearest hidden target to a tap, within its screen radius ---- */
   const tryEgg = (e: PointerEvent) => {
-    const sc = SC[cur];
+    const sc = scene(cur);
     if (!sc.eggs?.length) return false;
     const r = host.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
     sc.cam.updateMatrixWorld();
@@ -184,7 +228,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     }
     if (!best) return false;
     best.fire(t);
-    o.onEgg?.({ id: best.id, total: eggTotal });
+    o.onEgg?.({ id: best.id, total: eggTotal() });
     dirty = true;
     kick();
     return true;
@@ -238,11 +282,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     cssH = Math.max(1, host.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(cssW, cssH, false);
-    for (const s of SC) {
-      s.cam.aspect = cssW / cssH;
-      s.cam.fov = s.cam.aspect < 1 ? s.fov[1] : s.fov[0];
-      s.cam.updateProjectionMatrix();
-    }
+    builtScenes().forEach(fitCam);
     lw = Math.max(200, Math.min(360, Math.round(cssW / 3.6)));
     lh = Math.max(120, Math.round((lw * cssH) / cssW));
     rtA.setSize(lw, lh);
@@ -259,10 +299,10 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     U.uFogFar.value = sc.fog[1];
   };
   const render = () => {
-    const sc = SC[cur];
+    const sc = scene(cur);
     if (psxOn) {
       if (mixT < 1) {
-        const ps = SC[prev];
+        const ps = scene(prev);
         apply(ps);
         renderer.setRenderTarget(rtB);
         renderer.render(ps.scene, ps.cam);
@@ -279,7 +319,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       renderer.render(sc.scene, sc.cam);
     }
   };
-  const wants = () => visible && !document.hidden && (motion || dirty || mixT < 1 || !viewSettled() || Boolean(SC[cur].pointer?.busy()));
+  const wants = () => visible && !document.hidden && (motion || dirty || mixT < 1 || !viewSettled() || Boolean(scene(cur).pointer?.busy()));
   function loop(now: number) {
     raf = 0;
     const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
@@ -302,12 +342,12 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     view.pitch += (pitchT - view.pitch) * ease;
     view.zoom += (zoomT - view.zoom) * ease;
     U.uTime.value = t;
-    aimScene(SC[cur]);
-    SC[cur].update(t);
-    if (mixT < 1) SC[prev].update(t);
+    aimScene(scene(cur));
+    scene(cur).update(t);
+    if (mixT < 1) scene(prev).update(t);
     render();
-    placeLabels(SC[cur]);
-    if (frameN++ % 6 === 0 || dirty) readouts(SC[cur]);
+    placeLabels(scene(cur));
+    if (frameN++ % 6 === 0 || dirty) readouts(scene(cur));
     dirty = false;
     if (wants()) raf = requestAnimationFrame(loop);
   }
@@ -319,7 +359,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   /* ---- observers ---- */
   const onPointer = (e: PointerEvent) => {
-    if (SC[cur].pointer) {
+    if (scene(cur).pointer) {
       // Touch only reports while a finger is down on the stage; the mouse hovers.
       if (e.pointerType === "touch" ? drag?.own : !interactive(e.target)) setPtr(e, true);
       else ptr.in = false;
@@ -341,7 +381,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   };
   const startPinch = () => {
     // A second finger turns whatever the first was doing into a pinch.
-    if (drag?.own) SC[cur].pointer?.release(false);
+    if (drag?.own) scene(cur).pointer?.release(false);
     if (drag?.own) ptr.in = false;
     drag = null;
     yawV = pitchV = 0;
@@ -363,9 +403,9 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     }
     // Plain drags orbit in every scene. A scene with a pointer bridge gets Shift+drag
     // (the drag is its own) and taps; right-drag orbits there too.
-    const rc = e.button === 2 && Boolean(SC[cur].pointer);
+    const rc = e.button === 2 && Boolean(scene(cur).pointer);
     if ((e.button !== 0 && !rc) || !e.isPrimary || interactive(e.target)) return;
-    const sc = SC[cur], own = Boolean(sc.pointer) && e.shiftKey && !rc;
+    const sc = scene(cur), own = Boolean(sc.pointer) && e.shiftKey && !rc;
     drag = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, own };
     yawV = pitchV = 0;
     tpx = tpy = 0;
@@ -424,9 +464,9 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     if (!drag || e.pointerId !== drag.id) return;
     const tap = e.type === "pointerup" && e.button === 0 && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 8;
     const egg = tap && tryEgg(e);
-    if (tap && !egg && !drag.own && SC[cur].pointer) {
+    if (tap && !egg && !drag.own && scene(cur).pointer) {
       // An orbiting scene still takes a tap as a press at the pointer.
-      const sc = SC[cur];
+      const sc = scene(cur);
       setPtr(e, false);
       aimScene(sc);
       sc.pointer!.press();
@@ -435,7 +475,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       dirty = true;
     }
     if (drag.own) {
-      const sc = SC[cur], up = e.type === "pointerup";
+      const sc = scene(cur), up = e.type === "pointerup";
       if (up) { setPtr(e, false); aimScene(sc); }
       sc.pointer?.release(up && !egg && tap);
       if (e.pointerType === "touch") ptr.in = false;
@@ -484,7 +524,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   };
   host.addEventListener("pointerleave", onLeave);
   const onContext = (e: MouseEvent) => {
-    if (SC[cur].pointer && !interactive(e.target)) e.preventDefault();
+    if (scene(cur).pointer && !interactive(e.target)) e.preventDefault();
   };
   host.addEventListener("contextmenu", onContext);
   host.addEventListener("pointerdown", onDown);
@@ -506,8 +546,9 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   const ro = new ResizeObserver(resize);
   ro.observe(host);
 
-  buildLabels(SC[cur]);
+  buildLabels(scene(cur));
   resize();
+  queueIdle();
 
   const api: HeroEngine = {
     setAccent(a) {
@@ -515,21 +556,22 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       U.uAccent2.value.set(a.deep);
       U.uFogColor.value.set(a.fog);
       U.uZen.value.set(a.zen);
-      for (const s of SC) s.moteMat?.color.set(a.hex);
+      accentHex = a.hex;
+      for (const s of builtScenes()) s.moteMat?.color.set(a.hex);
       dirty = true;
       kick();
     },
     setSheet(i) {
-      i = ((i % SC.length) + SC.length) % SC.length;
+      i = ((i % SHEETS.length) + SHEETS.length) % SHEETS.length;
       if (i === cur) return;
-      SC[cur].pointer?.release(false);
+      scene(cur).pointer?.release(false);
       prev = cur;
       cur = i;
       ptr.moved = false;
       yawT = pitchT = yawV = pitchV = 0;
       zoomT = 1;
       mixT = psxOn && !o.reducedMotion ? 0 : 1;
-      buildLabels(SC[cur]);
+      buildLabels(scene(cur));
       dirty = true;
       kick();
     },
@@ -561,6 +603,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     dispose() {
       if (raf) cancelAnimationFrame(raf);
       raf = 0;
+      cancelIdle();
       io.disconnect();
       ro.disconnect();
       host.removeEventListener("pointermove", onPointer);
@@ -580,7 +623,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       canvas.removeEventListener("webglcontextlost", onLost);
       const geos = new Set<THREE.BufferGeometry>();
       const mats = new Set<THREE.Material>();
-      for (const s of [...SC.map((x) => x.scene), postScene]) {
+      for (const s of [...builtScenes().map((x) => x.scene), postScene]) {
         s.traverse((obj) => {
           const m = obj as THREE.Mesh;
           if (m.geometry) geos.add(m.geometry);

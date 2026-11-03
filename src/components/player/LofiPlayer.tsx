@@ -4,7 +4,7 @@
  * it to play, wind a reel to scrub) and whatever it holds plays through one
  * <audio> element: the site's own tapes or a SomaFM stream. It sits outside
  * the routes, so playback carries across page changes. `m` plays and pauses.
- * Colours are the theme tokens, so it follows the 1–6 accent switch with no
+ * Colours are the theme tokens, so it follows the theme switch with no
  * code of its own.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

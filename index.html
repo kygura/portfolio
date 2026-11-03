@@ -27,6 +27,10 @@
         var a = localStorage.getItem("nca-accent-v2") ||
           ["lichen", "torch", "astral", "madder", "mono", "manuscript"][parseInt(localStorage.getItem("nca-accent"), 10)];
         if (a && a !== "lichen") document.documentElement.setAttribute("data-accent", a);
+        // Grounds per palette, so mobile browser chrome matches from first paint (see src/theme/accent.ts).
+        var g = { manuscript: "#1b1a17", torch: "#17121a", madder: "#1a0f14", moss: "#0e1611", jade: "#0b1615",
+          astral: "#0b1424", glacier: "#10151c", iris: "#111024", mono: "#121212", phosphor: "#080c09", vermilion: "#0d0c0c" }[a];
+        if (g) document.querySelector('meta[name="theme-color"]').setAttribute("content", g);
       } catch (e) {}
 
       // Hold the hero name reveal until Literata is in: with display=swap the
