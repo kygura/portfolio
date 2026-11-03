@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { NavLink } from "@/components/NavLink";
-import { ACCENTS, setAccent, useAccent } from "@/theme/accent";
+import { ACCENTS, FAMILIES, familyAccents, setAccent, useAccent } from "@/theme/accent";
 import { CHORD_FOR, FLYOUT_FOR_PATH, openCommands } from "@/theme/keymap";
 import { NavFlyout } from "@/components/NavFlyout";
 
@@ -53,66 +53,78 @@ function NavItem({ path, label, end, wide }: { path: string; label: string; end?
   );
 }
 
-function AccentPick() {
-  const accent = useAccent();
-  return (
-    <div className="accent-pick" role="group" aria-label="Accent">
-      {ACCENTS.map((a, i) => (
-        <button
-          key={a.id}
-          type="button"
-          onClick={() => setAccent(i)}
-          aria-pressed={i === accent}
-          aria-label={`Accent: ${a.name}`}
-          title={`${a.name} (${i + 1})`}
-          aria-keyshortcuts={String(i + 1)}
-          style={{ "--sw": a.hex } as React.CSSProperties}
-        />
-      ))}
-    </div>
-  );
-}
-
 /**
- * Below 1024px the row of squares folds into one swatch that opens the
- * themes as a vertical list, so the nav links keep their room.
+ * Theme picker: one swatch in the nav (with the palette's name from 1024px)
+ * that opens the palettes grouped by family, each as a paint chip showing
+ * its own ground, ink and accent. The panel stays open on a pick so palettes
+ * can be compared against the live page behind it.
  */
-function AccentMenu() {
+function ThemePicker() {
   const accent = useAccent();
-  const [open, setOpen] = useState(false);
   const current = ACCENTS[accent];
   return (
-    <Popover.Root open={open} onOpenChange={setOpen}>
+    <Popover.Root>
       <Popover.Trigger
-        className="accent-menu"
+        className="theme-trigger"
         aria-label={`Theme: ${current.name}`}
-        title={`Theme: ${current.name}`}
-        style={{ "--sw": current.hex } as React.CSSProperties}
-      />
+        title={`Theme: ${current.name} (1–4, t)`}
+        style={chipVars(current)}
+      >
+        <i aria-hidden="true" />
+        <span>{current.name}</span>
+      </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Content className="accent-list" align="end" sideOffset={8} aria-label="Theme">
-          {ACCENTS.map((a, i) => (
-            <button
-              key={a.id}
-              type="button"
-              onClick={() => {
-                setAccent(i);
-                setOpen(false);
-              }}
-              aria-pressed={i === accent}
-              aria-keyshortcuts={String(i + 1)}
-              style={{ "--sw": a.hex } as React.CSSProperties}
-            >
-              <i aria-hidden="true" />
-              <span>{a.name}</span>
-              <kbd aria-hidden="true">{i + 1}</kbd>
-            </button>
+        <Popover.Content className="theme-panel" align="end" sideOffset={10} collisionPadding={12} aria-label="Theme">
+          <div className="theme-panel__head">
+            <span>Palette</span>
+            <span className="theme-panel__now">
+              {FAMILIES.find((f) => f.id === current.family)?.name} / <b>{current.name}</b>
+            </span>
+          </div>
+          {FAMILIES.map((f, fi) => (
+            <section key={f.id} className="theme-fam" aria-label={f.name}>
+              <div className="theme-fam__label">
+                <kbd aria-hidden="true">{fi + 1}</kbd>
+                <span>{f.name}</span>
+                <small>{f.mood}</small>
+              </div>
+              <div className="theme-fam__chips">
+                {familyAccents(f.id).map(({ a, i }) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    className="theme-chip"
+                    onClick={(e) => {
+                      const r = e.currentTarget.getBoundingClientRect();
+                      setAccent(i, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
+                    }}
+                    aria-pressed={i === accent}
+                    aria-label={`${f.name}: ${a.name}`}
+                    style={chipVars(a)}
+                  >
+                    <span className="theme-chip__card" aria-hidden="true">
+                      <i />
+                      <i />
+                      <i />
+                    </span>
+                    <span className="theme-chip__name">{a.name}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
           ))}
+          <div className="theme-panel__foot" aria-hidden="true">
+            <span><kbd>1</kbd>–<kbd>4</kbd> family, again to step</span>
+            <span><kbd>t</kbd> cycle all</span>
+          </div>
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>
   );
 }
+
+const chipVars = (a: (typeof ACCENTS)[number]) =>
+  ({ "--c-bg": a.bg, "--c-ink": a.ink, "--c-acc": a.hex }) as React.CSSProperties;
 
 /** Left/Right/Home/End move focus along the links, like a toolbar. */
 function arrowNav(e: React.KeyboardEvent<HTMLUListElement>) {
@@ -186,8 +198,7 @@ const Navigation = () => {
           <span className="nav-micro hidden lg:inline font-mono tracking-[0.16em] text-[var(--text-secondary)] whitespace-nowrap">
             {clock}
           </span>
-          <AccentPick />
-          <AccentMenu />
+          <ThemePicker />
           {/* Touch screens have no `/` or ⌘K; this is their way in (shown under 1024px). */}
           <button
             type="button"

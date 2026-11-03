@@ -1,8 +1,9 @@
 /**
- * Synthesised sound effects (no audio files). One short motif per accent,
- * pitched up the spectrum so the order is audible: Rose lowest, Sky highest,
- * Graphite a dry click. Browsers only allow audio after a gesture, and
- * switches always come from one, so the context is created lazily on first use.
+ * Synthesised sound effects (no audio files). One short motif per palette,
+ * pitched by family so the grouping is audible: Hearth low and warm, Grove in
+ * the middle, Tide bright and high, Signal dry clicks and blips. Browsers only
+ * allow audio after a gesture, and switches always come from one, so the
+ * context is created lazily on first use.
  */
 import type { Accent } from "./accent";
 
@@ -17,12 +18,18 @@ interface Voice {
 }
 
 const VOICES: Record<Accent["id"], Voice> = {
-  madder: { notes: [196, 294], wave: "triangle", step: 0.07, decay: 0.45 },
   manuscript: { notes: [247, 311, 370], wave: "triangle", step: 0.06, decay: 0.4 },
   torch: { notes: [294, 370, 440], wave: "sine", step: 0.06, decay: 0.4 },
+  madder: { notes: [196, 294], wave: "triangle", step: 0.07, decay: 0.45 },
   lichen: { notes: [349, 440, 523], wave: "sine", step: 0.055, decay: 0.38 },
+  moss: { notes: [330, 392, 494], wave: "triangle", step: 0.06, decay: 0.42 },
+  jade: { notes: [392, 494, 587], wave: "sine", step: 0.05, decay: 0.38 },
   astral: { notes: [523, 659, 784, 1047], wave: "sine", step: 0.05, decay: 0.36 },
+  glacier: { notes: [880, 1175], wave: "sine", step: 0.08, decay: 0.5 },
+  iris: { notes: [466, 587, 698, 932], wave: "sine", step: 0.055, decay: 0.4 },
   mono: { notes: [180], wave: "square", step: 0, decay: 0.06 },
+  phosphor: { notes: [1320, 1760], wave: "square", step: 0.04, decay: 0.05 },
+  vermilion: { notes: [140, 110], wave: "sawtooth", step: 0.05, decay: 0.08 },
 };
 
 const LEVEL = 0.06;

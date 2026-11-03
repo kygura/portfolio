@@ -17,16 +17,31 @@ The only fills are the accent and the sheet. Corners are square and shadows flat
 
 ### Accent variants
 
-Keys `1`–`6`, or `t` to cycle, or the row of six squares at the right of the nav bar. Stored in `localStorage["nca-accent-v2"]` as the variant id (the older `nca-accent` index key is still read once and mapped). Guarded with try/catch; an inline script in `index.html` applies it before first paint. One switch rewrites the CSS tokens and the hero's shader uniforms (accent, deep accent, fog, zenith). It also plays a short synthesised motif (`src/theme/sfx.ts`, Web Audio, no files), pitched up the spectrum with Graphite a dry click.
+Twelve palettes in four families of three. Every palette swaps the whole sheet (ground, ink, rules, danger, shadcn kit tokens, surface texture), not only the highlight. The picker is one swatch at the right of the nav bar (the palette's ground split with its accent, plus its name from 1024px) that opens a panel with one row per family and a paint chip per palette, drawn in that palette's own ground, ink and accent. The panel stays open on a pick so palettes can be compared against the live page. Keys `1`–`4` pick a family; pressing the same key again steps through it. `t` cycles all twelve. The command palette lists them under `Theme · <family>`.
 
-The variants run as a colour spectrum by hue, red to blue, with neutral Graphite last:
+Stored in `localStorage["nca-accent-v2"]` as the variant id (the older `nca-accent` index key is still read once and mapped). Guarded with try/catch; an inline script in `index.html` applies it, and the matching `theme-color`, before first paint. One switch rewrites the CSS tokens and the hero's shader uniforms (accent, deep accent, fog, zenith). Where the browser supports view transitions, the new palette opens as a circle from the clicked chip (`vtReveal`); under reduced motion it swaps at once. It also plays a short synthesised motif (`src/theme/sfx.ts`, Web Audio, no files), pitched by family.
 
-1. Rose `#e5787f`: oxblood wine (`:root[data-accent="madder"]`). Wine ground, blush ink, and a dotted lattice (a pinprick every 32px) in place of lines.
-2. Manuscript `#e08a62`: the brown lamp-lit sheet from the Manuscript mock (`design/mock/prose-mock.html` on the `theme/manuscript` branch). Like Graphite it swaps the ground, ink, rules and kit tokens (`:root[data-accent="manuscript"]`): warm brown ground, paper-coloured ink, clay accent. Fonts stay as they are.
-3. Amber `#eaa24c`: plum-black dusk (`:root[data-accent="torch"]`). Swaps ground, ink, rules, danger and kit tokens; the lattice is replaced by a faint lamp-glow falling from the top edge.
-4. Lichen `#bcc77c` (default)
-5. Sky `#86d3dc`: navy blueprint (`:root[data-accent="astral"]`). Cold ground, pale ice ink, and a drafting-paper grid (24px minor lines, a heavier line every 120px).
-6. Graphite `#d4d4d4`: the monochrome option. Also swaps the ground, ink, rules, danger and shadcn kit tokens for pure grays (`:root[data-accent="mono"]` in `src/index.css`), so the sheet carries no hue. Errors read as the brightest ink rather than red.
+Palette data lives in `src/theme/accent.ts` (`FAMILIES`, `ACCENTS`); tokens in `src/index.css` under `:root[data-accent="…"]`.
+
+**Hearth** (warm, lamp-lit)
+- Manuscript `#e08a62` (`manuscript`): warm brown ground, paper ink, clay accent.
+- Amber `#eaa24c` (`torch`): plum-black dusk with a lamp-glow falling from the top edge.
+- Rose `#e5787f` (`madder`): oxblood wine ground, blush ink.
+
+**Grove** (living green)
+- Lichen `#bcc77c` (default, `:root`): slate ground with a green-blue bias, bone ink.
+- Moss `#7fcf8a` (`moss`): green-black forest floor, a fern accent, a faint glow rising from the bottom.
+- Jade `#5ad6ad` (`jade`): teal-black, celadon ink, mint accent.
+
+**Tide** (cold, after dark)
+- Sky `#86d3dc` (`astral`): navy blueprint with a drafting grid.
+- Glacier `#c3d9ef` (`glacier`): slate-blue polar dusk, frost ink, pale steel accent.
+- Iris `#a99cf5` (`iris`): indigo night, lavender ink, periwinkle accent.
+
+**Signal** (stark, one colour)
+- Graphite `#d4d4d4` (`mono`): pure grays, no hue anywhere; errors read as the brightest ink.
+- Phosphor `#5cf08a` (`phosphor`): green-screen terminal, near-black ground with faint scanlines.
+- Vermilion `#ff5a3c` (`vermilion`): soot-black ground, bone ink, one hot red like a seal stamp.
 
 The surface texture is two tokens, `--tex` and `--tex-size`, which `body` reads; a variant that sets both changes the page's texture. Fonts and layout stay as they are in every variant.
 
@@ -36,7 +51,7 @@ The surface texture is two tokens, `--tex` and `--tex-size`, which `body` reads;
 - **Fragment Mono**: code, data, nav links, buttons, terminal, labels (`font-mono`).
 - **Silkscreen** (`font-pixel`): page eyebrows `( 0x — … )`, the hero strip and runway marker, help-sheet headings, and the "NCA" of the wordmark. Nowhere else.
 
-Wordmark (nav, where master printed "N.CA"): "NCA" in Silkscreen + "Ventures" in Literata italic in the accent. Under 800px the bar keeps only "NCA" (and from 640px to 1023px drops "©2026" and tightens link tracking) so the links fit unscrolled at every width. The space between links grows with the bar (from about 12px on a phone to 48px on a wide screen), sized per range from the room left once all four fit. Under 1024px the six accent squares fold into one swatch that opens the themes as a vertical list, and a `:` button beside it opens the command palette for touch screens.
+Wordmark (nav, where master printed "N.CA"): "NCA" in Silkscreen + "Ventures" in Literata italic in the accent. Under 800px the bar keeps only "NCA" (and from 640px to 1023px drops "©2026" and tightens link tracking) so the links fit unscrolled at every width. The space between links grows with the bar (from about 12px on a phone to 48px on a wide screen), sized per range from the room left once all four fit. The theme picker is one swatch (named from 1024px) that opens the grouped palette panel; under 1024px a `:` button beside it opens the command palette for touch screens.
 
 ## Layout
 
@@ -46,7 +61,7 @@ Per-project accent hues on `/projects` were dropped for the site accent (they sa
 
 ## Hero
 
-Master's `CartographicHero` keeps its sticky stage, scroll runway, name, tagline, "C.A" accent initials, hairline strip and scroll parallax. Only the field behind them changed: the canvas-2D contour field is replaced by the PS1 five-scene renderer in `src/hero/` (`sheets.ts` metadata, `engine/` three.js r160: `psx.ts` shared materials and helpers, `ocean.ts`, `astral.ts`, `ruins.ts`, `drift.ts`, `dunes.ts`, `rift.ts`, `frost.ts`, `wasteland.ts`, `field.ts`, `hero-engine.ts` loop + post). The engine is a dynamic import, so only `/` downloads three.
+Master's `CartographicHero` keeps its sticky stage, scroll runway, name, tagline, "C.A" accent initials, hairline strip and scroll parallax. Only the field behind them changed: the canvas-2D contour field is replaced by the PS1 five-scene renderer in `src/hero/` (`sheets.ts` metadata, `engine/` three.js r160: `psx.ts` shared materials and helpers, `ocean.ts`, `astral.ts`, `ruins.ts`, `drift.ts`, `dunes.ts`, `rift.ts`, `frost.ts`, `wasteland.ts`, `field.ts`, `hero-engine.ts` loop + post). The engine is a dynamic import, fetched the first time a WebGL scene is shown, so the Cipher-only home hero and every other route skip three.js. Scenes are built on first use, the rest one per idle slot.
 
 - **01 Ocean** (replaced the mock's Ruins sheet): endless swell, overgrown half-drowned towers with lit bands, palm islands, the King of Red Lions, the lion-headed sailboat from The Wind Waker, moored at a pier, twin suns with glitter on the water, gulls.
 - **02 Astral**: halo with glyphs, cored polyhedra, the watcher, moon with satellite.
@@ -76,7 +91,7 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 | --- | --- |
 | `g h` / `g w` / `g s` / `g c` | Home / Writings / Software / CV |
 | `g g` | Top of page (a hint strip lists the second keys while `g` is pending) |
-| `1`–`6` / `t` | Theme / cycle theme |
+| `1`–`4` / `t` | Theme family (again to step) / cycle every theme |
 | `:` / `⌘K` | Command palette (Ctrl+K stays with the terminal) |
 | `n` / `p` | Next / previous page (nav order, wraps) |
 | `j` / `k` / `G` | Scroll down / up / bottom |
@@ -92,7 +107,7 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 
 ## Tape deck
 
-A minimal tape recorder fixed to the bottom-right corner (`src/components/player/`), mounted beside the routes so playback carries across pages. Drawn after Kentucky Route Zero: a near-black box of plain Fragment Mono, flat hairline shapes, lots of dark, and one lit thing. Collapsed it is a cassette outline; while anything plays its window lights in the accent and its reels turn. Open, `tapes` / `radio` switch like dialogue choices (`>` marks the current one). Tapes shows the cassette (`Cassette.tsx`) as hairlines with its window glowing in the accent while playing, the reels trading tape with progress and turning; then the title and credit, the seek line drawn as a road with an accent square travelling along it, the clock, and `rew play ff` as plain words. Radio lists the stations as numbered choices. Everything reads the theme tokens, so it follows the 1 to 6 switch; reduced motion stops the reels. The hero strip pads its right end so the scroll cue clears it.
+A minimal tape recorder fixed to the bottom-right corner (`src/components/player/`), mounted beside the routes so playback carries across pages. Drawn after Kentucky Route Zero: a near-black box of plain Fragment Mono, flat hairline shapes, lots of dark, and one lit thing. Collapsed it is a cassette outline; while anything plays its window lights in the accent and its reels turn. Open, `tapes` / `radio` switch like dialogue choices (`>` marks the current one). Tapes shows the cassette (`Cassette.tsx`) as hairlines with its window glowing in the accent while playing, the reels trading tape with progress and turning; then the title and credit, the seek line drawn as a road with an accent square travelling along it, the clock, and `rew play ff` as plain words. Radio lists the stations as numbered choices. Everything reads the theme tokens, so it follows the theme switch; reduced motion stops the reels. The hero strip pads its right end so the scroll cue clears it.
 
 - **Tapes**: files the site serves from `public/lofi/`, listed in `public/lofi/playlist.json` and fetched on first open. `bun scripts/fetch-lofi.ts` fills it with Holizna's CC0 collections from OpenGameArt, re-encoded to 112k MP3. Only CC0 or CC-BY music belongs here, since serving a file is redistributing it (Pixabay's licence rules its tracks out).
 - **Radio**: curated official Spotify and YouTube (`youtube-nocookie.com`) embeds in `stations.ts`. The platform streams and licenses the audio; the iframe loads only after a click, and stays mounted when the panel closes so it keeps playing. Spotify plays 30-second previews to visitors not signed in to Spotify.

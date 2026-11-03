@@ -12,14 +12,14 @@
  * Actions owned by other components (help sheet, terminal, hero scenes) are
  * reached by pressing their key, so each keeps a single source of truth.
  */
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import * as Dialog from "@radix-ui/react-dialog";
 import { Command } from "cmdk";
 import { useMarkdownPosts } from "@/hooks/useMarkdownPosts";
 import { useShowcase } from "@/lib/showcase";
 import { SHEETS } from "@/hero/sheets";
-import { ACCENTS, setAccent, useAccent } from "@/theme/accent";
+import { FAMILIES, familyAccents, setAccent, useAccent } from "@/theme/accent";
 import { CHORDS, PAGES, readRecent, scrollToId } from "@/theme/keymap";
 import { score } from "@/theme/match";
 
@@ -196,16 +196,18 @@ export default function CommandPalette({
     })
     .slice(0, 4);
 
-  const themes: Entry[] = ACCENTS.map((a, i) => ({
-    value: `theme ${a.id}`,
-    label: a.name,
-    keywords: ["theme", "accent", "colour", "color"],
-    run: () => setAccent(i),
-    swatch: a.hex,
-    keys: [String(i + 1)],
-    meta: i === accent ? "on" : undefined,
+  const themeGroups = FAMILIES.map((f, fi) => ({
+    heading: `Theme · ${f.name}`,
+    entries: familyAccents(f.id).map(({ a, i }): Entry => ({
+      value: `theme ${a.id}`,
+      label: a.name,
+      keywords: [f.name, "theme", "accent", "colour", "color", "palette"],
+      run: () => setAccent(i),
+      swatch: a.hex,
+      keys: [String(fi + 1)],
+      meta: i === accent ? "on" : undefined,
+    })),
   }));
-
   const pageActions: Entry[] = [
     { value: "page next", label: "Next page", keywords: ["page"], run: () => step(1), keys: ["n"] },
     { value: "page prev", label: "Previous page", keywords: ["page", "back"], run: () => step(-1), keys: ["p"] },
@@ -301,7 +303,7 @@ export default function CommandPalette({
       <>
         {group("Recent", recentEntries)}
         {group("Go to", routes)}
-        {group("Theme", themes)}
+        {themeGroups.map((g) => <Fragment key={g.heading}>{group(g.heading, g.entries)}</Fragment>)}
         {group("Page", pageActions)}
         {group("Open", opens)}
       </>
@@ -313,7 +315,7 @@ export default function CommandPalette({
         {group("Writings", children.writings)}
         {group("Scenes", children.scenes)}
         {group("Software", children.software)}
-        {group("Theme", themes)}
+        {themeGroups.map((g) => <Fragment key={g.heading}>{group(g.heading, g.entries)}</Fragment>)}
         {group("Page", pageActions)}
         {group("Open", opens)}
       </>
