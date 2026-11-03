@@ -1,23 +1,31 @@
 import { lazy, Suspense, useEffect, useState } from "react";
-import { COMMANDS_EVENT, isTyping } from "@/theme/keymap";
+import { useLocation } from "react-router-dom";
+import { COMMANDS_EVENT, isTyping, pushRecent } from "@/theme/keymap";
 
 const CommandPalette = lazy(() => import("./CommandPalette"));
 
 /**
  * Keeps the command palette out of the initial bundle, like TerminalHost.
- * `:` (vim's command line) or ⌘K opens it; Ctrl+K stays with the terminal.
- * Under 1024px the nav carries a button for touch screens (`openCommands`).
+ * `/`, `:` (vim's command line) or ⌘K opens it; Ctrl+K stays with the
+ * terminal. Under 1024px the nav carries a button for touch screens
+ * (`openCommands`). Also records each visited path for the Recent group.
  */
 export default function CommandHost() {
   const [open, setOpen] = useState(false);
   const [armed, setArmed] = useState(false);
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    pushRecent(pathname);
+  }, [pathname]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented) return;
       const cmdK = e.metaKey && !e.ctrlKey && !e.altKey && e.key.toLowerCase() === "k";
-      const colon = e.key === ":" && !e.metaKey && !e.ctrlKey && !e.altKey && !isTyping(e.target);
-      if (!cmdK && !colon) return;
+      const bare = !e.metaKey && !e.ctrlKey && !e.altKey && !isTyping(e.target);
+      const key = bare && (e.key === ":" || e.key === "/");
+      if (!cmdK && !key) return;
       e.preventDefault();
       setArmed(true);
       setOpen((o) => (cmdK ? !o : true));

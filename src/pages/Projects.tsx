@@ -44,6 +44,7 @@ type RepoCardProps = { repo: ShowcaseRepo; index: number; featured?: boolean; te
 
 const RepoCard = ({ repo, index, featured, terminal }: RepoCardProps) => (
   <article
+    id={`repo-${repo.name}`}
     className={`repo-card${featured ? " repo-card--featured" : ""}`}
     style={{ animationDelay: `${index * 80}ms` }}
   >

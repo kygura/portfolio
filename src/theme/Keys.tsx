@@ -2,7 +2,8 @@
  * Additive keyboard layer: g-chords for the nav routes, `g g` to the top,
  * `n`/`p` for next/previous page, `1`–`4` for a theme family (press again to
  * step through it), `t` to cycle every theme, `j`/`k`/`G` to scroll, `?` for
- * the help sheet. Pages add their own keys
+ * the help sheet. The palette (`/`, CommandHost) is the
+ * non-chord way around. Pages add their own keys
  * (the hero listens for `[` `]`). Nothing fires while typing in a field or
  * with a modifier held, so the terminal's Ctrl+K and the backtick stay put.
  */
@@ -75,7 +76,7 @@ function HelpOverlay({ onClose }: { onClose: () => void }) {
               <div><dt><K k="A" /> <K k="D" /></dt><dd>Previous / next quote</dd></div>
               <div><dt><K k="m" /></dt><dd>Play / pause music</dd></div>
               <div><dt><K k="`" /></dt><dd>Terminal</dd></div>
-              <div><dt><K k=":" /> <K k="⌘K" /></dt><dd>Commands</dd></div>
+              <div><dt><K k="/" /> <K k=":" /> <K k="⌘K" /></dt><dd>Jump anywhere: type a page, writing or scene</dd></div>
               <div><dt><K k="?" /></dt><dd>This sheet</dd></div>
               <div><dt><K k="Esc" /></dt><dd>Close, leave a field</dd></div>
             </dl>

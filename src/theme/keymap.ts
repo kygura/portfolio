@@ -25,3 +25,40 @@ export const COMMANDS_EVENT = "nca:commands";
 
 /** Opens the palette from a control (the nav button) rather than a key. */
 export const openCommands = () => window.dispatchEvent(new Event(COMMANDS_EVENT));
+
+/** Last few paths visited, newest first, for the palette's Recent group. */
+const RECENT_KEY = "nca:recent";
+const RECENT_MAX = 6;
+
+export function readRecent(): string[] {
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(RECENT_KEY) ?? "[]");
+    return Array.isArray(raw) ? raw.filter((p): p is string => typeof p === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+export function pushRecent(path: string) {
+  try {
+    const next = [path, ...readRecent().filter((p) => p !== path)].slice(0, RECENT_MAX);
+    window.localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+  } catch {
+    /* storage blocked: the palette just shows no Recent group */
+  }
+}
+
+/** Nav routes that open a hover menu of their pages (NavFlyout). */
+export type FlyoutId = "writings" | "scenes" | "software";
+export const FLYOUT_FOR_PATH: Record<string, FlyoutId> = {
+  "/writings": "writings",
+  "/scenes": "scenes",
+  "/projects": "software",
+};
+
+/** Wait for a lazily rendered element, then bring it into view. */
+export function scrollToId(id: string, tries = 90) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ block: "start" });
+  else if (tries > 0) requestAnimationFrame(() => scrollToId(id, tries - 1));
+}

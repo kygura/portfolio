@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { NavLink } from "@/components/NavLink";
 import { ACCENTS, FAMILIES, familyAccents, setAccent, useAccent } from "@/theme/accent";
-import { CHORD_FOR, openCommands } from "@/theme/keymap";
+import { CHORD_FOR, FLYOUT_FOR_PATH, openCommands } from "@/theme/keymap";
+import { NavFlyout } from "@/components/NavFlyout";
 
 const CLOCK_FORMAT = new Intl.DateTimeFormat("en-GB", {
   hour: "2-digit",
@@ -21,21 +22,33 @@ const NAV_ITEMS: { path: string; label: string; wide?: boolean }[] = [
 ];
 
 function NavItem({ path, label, end, wide }: { path: string; label: string; end?: boolean; wide?: boolean }) {
+  const chord = CHORD_FOR[path] ? `g ${CHORD_FOR[path]}` : undefined;
+  const link = (extra?: object) => (
+    <NavLink
+      to={path}
+      end={end}
+      className="nav-link uppercase whitespace-nowrap font-mono tracking-[0.08em] sm:tracking-[0.16em]"
+      activeClassName="nav-link--active"
+      title={chord}
+      aria-keyshortcuts={chord}
+      {...extra}
+    >
+      <span className="nav-br" aria-hidden="true">[</span>
+      <span className="nav-cur" aria-hidden="true">&gt;</span>
+      <span className="nav-label">{label}</span>
+      <span className="nav-br" aria-hidden="true">]</span>
+    </NavLink>
+  );
+  const flyout = FLYOUT_FOR_PATH[path];
   return (
     <li className={wide ? "nav-item--wide" : undefined}>
-      <NavLink
-        to={path}
-        end={end}
-        className="nav-link uppercase whitespace-nowrap font-mono tracking-[0.08em] sm:tracking-[0.16em]"
-        activeClassName="nav-link--active"
-        title={CHORD_FOR[path] ? `g ${CHORD_FOR[path]}` : undefined}
-        aria-keyshortcuts={CHORD_FOR[path] ? `g ${CHORD_FOR[path]}` : undefined}
-      >
-        <span className="nav-br" aria-hidden="true">[</span>
-        <span className="nav-cur" aria-hidden="true">&gt;</span>
-        <span className="nav-label">{label}</span>
-        <span className="nav-br" aria-hidden="true">]</span>
-      </NavLink>
+      {flyout ? (
+        <NavFlyout id={flyout} label={label}>
+          {(handlers) => link(handlers)}
+        </NavFlyout>
+      ) : (
+        link()
+      )}
     </li>
   );
 }
@@ -244,15 +257,15 @@ const Navigation = () => {
           </span>
           <SwatchStrip />
           <ThemePicker />
-          {/* Touch screens have no `:` or ⌘K; this is their way in (shown under 1024px). */}
+          {/* Touch screens have no `/` or ⌘K; this is their way in (shown under 1024px). */}
           <button
             type="button"
             className="cmd-open"
             onClick={openCommands}
             aria-label="Commands"
             aria-haspopup="dialog"
-            aria-keyshortcuts=": Meta+K"
-            title="Commands (: or ⌘K)"
+            aria-keyshortcuts="/ : Meta+K"
+            title="Jump to (/ or ⌘K)"
           >
             :
           </button>
