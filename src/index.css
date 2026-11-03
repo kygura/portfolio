@@ -2075,6 +2075,32 @@ kbd {
 .help dt { white-space: nowrap; }
 .help dd { margin: 0; color: var(--ink); }
 
+/* Nav hover menus (NavFlyout): same sheet panel as the palette, compact. */
+.fly-anchor { display: inline-flex; }
+.fly {
+  z-index: 60; min-width: 240px; max-width: min(calc(100vw - 32px), 360px);
+  max-height: min(70vh, 460px); overflow-y: auto; overscroll-behavior: contain; padding: 6px 0;
+  background: var(--bg-2); border: 1px solid var(--rule-2); border-top-color: var(--accent);
+  font-family: var(--f-mono); font-size: 12.5px; color: var(--ink-2);
+  animation: flyIn 0.14s ease; outline: none;
+}
+@keyframes flyIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.fly-head {
+  margin: 0; padding: 8px 12px 6px; font-family: var(--f-pixel); font-size: 10px;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent);
+}
+.fly-note { margin: 0; padding: 6px 12px; color: var(--ink-3); }
+.fly-row {
+  display: flex; align-items: baseline; gap: 12px; padding: 6px 12px 6px 10px;
+  color: var(--ink); text-decoration: none; border-left: 2px solid transparent;
+}
+.fly-row:hover, .fly-row:focus-visible { background: var(--sheet); border-left-color: var(--accent); outline: none; }
+.fly-row[aria-current="page"] { color: var(--accent); }
+.fly-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fly-meta { color: var(--ink-3); font-size: 11px; white-space: nowrap; }
+.fly-grid { display: grid; grid-template-columns: 1fr 1fr; }
+@media (prefers-reduced-motion: reduce) { .fly { animation: none; } }
+
 /* Command palette (`/`, `:` or ⌘K): the help sheet's panel with a vim-style prompt. */
 .cmd-back { position: fixed; inset: 0; z-index: 100000; background: var(--scrim); animation: themeFade 0.12s ease; }
 .cmd {

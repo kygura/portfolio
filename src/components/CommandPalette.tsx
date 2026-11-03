@@ -20,7 +20,7 @@ import { useMarkdownPosts } from "@/hooks/useMarkdownPosts";
 import { useShowcase } from "@/lib/showcase";
 import { SHEETS } from "@/hero/sheets";
 import { ACCENTS, setAccent, useAccent } from "@/theme/accent";
-import { CHORDS, PAGES, readRecent } from "@/theme/keymap";
+import { CHORDS, PAGES, readRecent, scrollToId } from "@/theme/keymap";
 import { score } from "@/theme/match";
 
 const pressKey = (key: string) =>
@@ -33,13 +33,6 @@ const filter = (_value: string, search: string, keywords?: string[]) => {
   const [label = "", ...extras] = keywords ?? [];
   return score(search, label, extras);
 };
-
-/** Wait for a lazily rendered element, then bring it into view. */
-function scrollToId(id: string, tries = 90) {
-  const el = document.getElementById(id);
-  if (el) el.scrollIntoView({ block: "start" });
-  else if (tries > 0) requestAnimationFrame(() => scrollToId(id, tries - 1));
-}
 
 type FolderId = "writings" | "scenes" | "software";
 

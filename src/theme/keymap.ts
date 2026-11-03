@@ -47,3 +47,18 @@ export function pushRecent(path: string) {
     /* storage blocked: the palette just shows no Recent group */
   }
 }
+
+/** Nav routes that open a hover menu of their pages (NavFlyout). */
+export type FlyoutId = "writings" | "scenes" | "software";
+export const FLYOUT_FOR_PATH: Record<string, FlyoutId> = {
+  "/writings": "writings",
+  "/scenes": "scenes",
+  "/projects": "software",
+};
+
+/** Wait for a lazily rendered element, then bring it into view. */
+export function scrollToId(id: string, tries = 90) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ block: "start" });
+  else if (tries > 0) requestAnimationFrame(() => scrollToId(id, tries - 1));
+}
