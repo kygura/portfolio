@@ -54,6 +54,63 @@ function NavItem({ path, label, end, wide }: { path: string; label: string; end?
 }
 
 /**
+ * From 1024px: every palette as a square in one strip, clustered by family
+ * (three squares each, a gap between families). Hovering or focusing a square
+ * names it under the strip; arrows move along it. Narrower bars use
+ * ThemePicker instead.
+ */
+function SwatchStrip() {
+  const accent = useAccent();
+  const [peek, setPeek] = useState<number | null>(null);
+  const shown = ACCENTS[peek ?? accent];
+  const family = FAMILIES.find((f) => f.id === shown.family);
+  const onKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+    const btns = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>("button"));
+    const i = btns.indexOf(document.activeElement as HTMLButtonElement);
+    if (i < 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    btns[(i + (e.key === "ArrowRight" ? 1 : btns.length - 1)) % btns.length].focus();
+  };
+  return (
+    <div
+      className="swatch-strip"
+      role="group"
+      aria-label="Theme"
+      onKeyDown={onKey}
+      onMouseLeave={() => setPeek(null)}
+      data-peek={peek !== null || undefined}
+    >
+      {FAMILIES.map((f, fi) => (
+        <div key={f.id} className="swatch-strip__fam" data-on={f.id === ACCENTS[accent].family || undefined}>
+          {familyAccents(f.id).map(({ a, i }) => (
+            <button
+              key={a.id}
+              type="button"
+              onClick={(e) => {
+                const r = e.currentTarget.getBoundingClientRect();
+                setAccent(i, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
+              }}
+              onMouseEnter={() => setPeek(i)}
+              onFocus={() => setPeek(i)}
+              onBlur={() => setPeek(null)}
+              aria-pressed={i === accent}
+              aria-label={`${f.name}: ${a.name}`}
+              aria-keyshortcuts={String(fi + 1)}
+              style={chipVars(a)}
+            />
+          ))}
+        </div>
+      ))}
+      <span className="swatch-strip__tag" aria-hidden="true">
+        {family?.name} / <b>{shown.name}</b>
+      </span>
+    </div>
+  );
+}
+
+/**
  * Theme picker: one swatch in the nav (with the palette's name from 1024px)
  * that opens the palettes grouped by family, each as a paint chip showing
  * its own ground, ink and accent. The panel stays open on a pick so palettes
@@ -198,6 +255,7 @@ const Navigation = () => {
           <span className="nav-micro hidden lg:inline font-mono tracking-[0.16em] text-[var(--text-secondary)] whitespace-nowrap">
             {clock}
           </span>
+          <SwatchStrip />
           <ThemePicker />
           {/* Touch screens have no `/` or ⌘K; this is their way in (shown under 1024px). */}
           <button

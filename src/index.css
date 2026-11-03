@@ -2278,9 +2278,41 @@ kbd {
 .cmd-open:hover, .cmd-open:focus-visible { border-color: var(--accent); outline: none; }
 .theme-trigger[data-state="open"] span, .theme-trigger:hover span { color: var(--ink); }
 .cmd-open:active { opacity: 0.7; }
+/* From 1024px the strip of squares takes over and the trigger hides. */
+.swatch-strip { display: none; }
 @media (min-width: 1024px) {
-  .theme-trigger { height: 28px; padding: 0 10px 0 8px; }
-  .theme-trigger span { display: inline; }
+  .theme-trigger { display: none; }
+  .swatch-strip {
+    position: relative; display: inline-flex; align-items: center; gap: 9px; padding: 7px 9px;
+    border: 1px solid var(--rule-2); transition: border-color 0.15s ease;
+  }
+  .swatch-strip:hover, .swatch-strip:focus-within { border-color: var(--rule-2); }
+  .swatch-strip__fam { display: inline-flex; gap: 3px; }
+  /* Hairline between families. */
+  .swatch-strip__fam + .swatch-strip__fam { position: relative; }
+  .swatch-strip__fam + .swatch-strip__fam::before {
+    content: ""; position: absolute; left: -5px; top: 1px; bottom: 1px; width: 1px; background: var(--rule-2);
+  }
+  .swatch-strip button {
+    width: 10px; height: 10px; padding: 0; background: var(--c-acc);
+    border: 0; outline-offset: 2px; opacity: 0.45;
+    transition: opacity 0.15s ease, transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  /* The active family sits a little brighter than the rest. */
+  .swatch-strip__fam[data-on] button { opacity: 0.7; }
+  .swatch-strip button:hover, .swatch-strip button:focus-visible { opacity: 1; transform: translateY(-2px); outline: none; }
+  .swatch-strip button[aria-pressed="true"] { opacity: 1; outline: 1px solid var(--ink); }
+  .swatch-strip__tag {
+    position: absolute; top: calc(100% + 7px); right: -1px; padding: 4px 8px; white-space: nowrap; pointer-events: none;
+    font: 10px var(--f-mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3);
+    background: var(--bg-2); border: 1px solid var(--rule-2);
+    opacity: 0; transform: translateY(-3px); transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+  .swatch-strip__tag b { font-weight: 400; color: var(--ink); }
+  .swatch-strip[data-peek] .swatch-strip__tag { opacity: 1; transform: none; }
+}
+@media (min-width: 1024px) and (prefers-reduced-motion: reduce) {
+  .swatch-strip button, .swatch-strip__tag { transition: none; transform: none !important; }
 }
 @media (max-width: 1023px) {
   .cmd-open { display: inline-flex; }
