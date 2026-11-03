@@ -175,15 +175,15 @@ const Navigation = () => {
           </span>
           <AccentPick />
           <AccentMenu />
-          {/* Touch screens have no `:` or ⌘K; this is their way in (shown under 1024px). */}
+          {/* Touch screens have no `/` or ⌘K; this is their way in (shown under 1024px). */}
           <button
             type="button"
             className="cmd-open"
             onClick={openCommands}
             aria-label="Commands"
             aria-haspopup="dialog"
-            aria-keyshortcuts=": Meta+K"
-            title="Commands (: or ⌘K)"
+            aria-keyshortcuts="/ : Meta+K"
+            title="Jump to (/ or ⌘K)"
           >
             :
           </button>

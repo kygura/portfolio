@@ -627,6 +627,7 @@
 }
 
 .repo-card {
+  scroll-margin-top: 96px;
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -2074,7 +2075,7 @@ kbd {
 .help dt { white-space: nowrap; }
 .help dd { margin: 0; color: var(--ink); }
 
-/* Command palette (`:` or ⌘K): the help sheet's panel with a vim-style prompt. */
+/* Command palette (`/`, `:` or ⌘K): the help sheet's panel with a vim-style prompt. */
 .cmd-back { position: fixed; inset: 0; z-index: 100000; background: var(--scrim); animation: themeFade 0.12s ease; }
 .cmd {
   position: fixed; z-index: 100000; left: 50%; top: clamp(16px, 14vh, 140px); transform: translateX(-50%);
@@ -2106,6 +2107,15 @@ kbd {
 .cmd-keys { display: inline-flex; gap: 4px; }
 .cmd-swatch { width: 10px; height: 10px; flex: none; outline: 1px solid var(--rule-2); outline-offset: 1px; }
 .cmd-empty { padding: 16px 14px; color: var(--ink-3); font-size: 13px; }
+/* Open folder in the prompt ("writings /"); click or Backspace to leave. */
+.cmd-crumb {
+  flex: none; display: inline-flex; align-items: baseline; gap: 6px; padding: 2px 0;
+  font: 14px var(--f-mono); color: var(--accent); background: none; border: 0; cursor: pointer;
+}
+.cmd-crumb i { font-style: normal; color: var(--ink-3); }
+.cmd-crumb:hover i, .cmd-crumb:focus-visible i { color: var(--accent); }
+.cmd-into { color: var(--ink-3); font-size: 14px; line-height: 1; }
+.cmd-item[data-selected="true"] .cmd-into { color: var(--accent); }
 .cmd-foot {
   display: flex; flex-wrap: wrap; gap: 4px 16px; padding: 8px 14px; border-top: 1px solid var(--rule-2);
   font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3);
@@ -2204,135 +2214,6 @@ kbd {
 /* Code blocks: token-driven Prism theme on the code ground. */
 .codeblock { background: var(--code); border-color: var(--rule-2); }
 .codeblock pre, .codeblock code { font-family: var(--f-mono) !important; }
-
-/* ─────────────────────────────────────────────
-   MANIFESTO — home, under the hero
-   ───────────────────────────────────────────── */
-.manifesto {
-  position: relative;
-  padding: clamp(4rem, 12vw, 8rem) var(--page-gutter) clamp(4rem, 12vw, 7rem);
-  background: var(--bg);
-  border-top: 1px solid var(--rule);
-  color: var(--ink);
-}
-.manifesto__inner { max-width: 720px; margin: 0 auto; }
-
-.manifesto__eyebrow {
-  margin: 0 0 2rem;
-  font-family: var(--f-pixel);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  color: var(--accent);
-}
-
-.manifesto__opening {
-  margin: 0 0 clamp(3rem, 8vw, 4.5rem);
-  font-family: var(--f-body);
-  font-style: italic;
-  font-weight: 400;
-  font-size: clamp(1.6rem, 4.2vw, 2.4rem);
-  line-height: 1.3;
-  letter-spacing: -0.005em;
-  color: var(--ink);
-  text-wrap: balance;
-}
-.manifesto__word { display: inline; }
-
-/* Survey rail: a hairline down the numeral column that fills with scroll. */
-.manifesto__body { position: relative; }
-.manifesto__rail {
-  position: absolute;
-  top: 0.55rem;
-  bottom: 0.55rem;
-  left: 1.1rem;
-  width: 1px;
-  background: var(--rule);
-}
-.manifesto__rail span {
-  position: absolute;
-  inset: 0;
-  background: var(--accent);
-  transform-origin: top center;
-}
-
-.manifesto__list { list-style: none; margin: 0; padding: 0; display: grid; gap: clamp(2rem, 5vw, 2.75rem); }
-.manifesto__thesis { display: grid; grid-template-columns: 2.2rem 1fr; column-gap: clamp(1rem, 3vw, 1.75rem); align-items: start; }
-.manifesto__num {
-  position: relative;
-  z-index: 1;
-  justify-self: center;
-  min-width: 1.6rem;
-  padding: 0.15rem 0.2rem;
-  margin-top: 0.3rem;
-  font-family: var(--f-mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
-  text-align: center;
-  color: var(--ink-3);
-  background: var(--bg);
-  border: 1px solid var(--rule);
-  transition: color 0.6s ease, border-color 0.6s ease;
-}
-.manifesto__thesis.is-on .manifesto__num { color: var(--accent); border-color: var(--accent); }
-.manifesto__thesis p {
-  margin: 0;
-  font-family: var(--f-body);
-  font-size: 1.15rem;
-  line-height: 1.68;
-  color: var(--ink-2);
-  max-width: 60ch;
-}
-
-.manifesto__close { margin-top: clamp(3.5rem, 9vw, 5rem); }
-.manifesto__close hr {
-  height: 1px;
-  margin: 0 0 2rem;
-  border: 0;
-  background: var(--rule-2);
-  transform-origin: left center;
-}
-.manifesto__closer {
-  margin: 0 0 2.25rem;
-  font-family: var(--f-body);
-  font-style: italic;
-  font-size: clamp(1.15rem, 2.6vw, 1.35rem);
-  line-height: 1.5;
-  color: var(--ink);
-}
-/* Idle-prompt caret, same rhythm as the nav's current-route cursor. */
-.manifesto__caret {
-  display: inline-block;
-  width: 0.5em;
-  height: 1px;
-  margin-left: 0.3em;
-  vertical-align: 0.05em;
-  background: var(--accent);
-  animation: navBlink 1.6s ease-in-out infinite;
-}
-
-.manifesto__links { display: flex; flex-wrap: wrap; gap: 0.75rem 2rem; }
-.manifesto__links a {
-  font-family: var(--f-mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-2);
-  text-decoration: none;
-  padding-bottom: 0.3rem;
-  border-bottom: 1px solid var(--rule-2);
-  transition: color 0.2s ease, border-color 0.2s ease;
-}
-.manifesto__links a:hover,
-.manifesto__links a:focus-visible { color: var(--accent); border-color: var(--accent); outline: none; }
-
-@media (max-width: 560px) {
-  .manifesto__thesis { grid-template-columns: 1.8rem 1fr; }
-  .manifesto__rail { left: 0.9rem; }
-  .manifesto__thesis p { font-size: 1.02rem; line-height: 1.7; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .manifesto__caret { animation: none; }
-}
 
 /* ─────────────────────────────────────────────
    REDUCED MOTION — global safety net
