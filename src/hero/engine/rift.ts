@@ -1,6 +1,7 @@
 /** Sheet · Rift: the wasteland in a forested mountain valley at the end of
  *  the day. A green forest floor of broadleaf trees, bushes and ferns gives way
- *  to conifers that climb the walls to a treeline, with dead snags standing
+ *  to conifers that cover the mountainsides up to a high treeline, bare rock
+ *  showing only on the sheer faces and crests, with dead snags standing
  *  grey among them; spires crown every ridge in
  *  silhouette and rise out of the canopy, blades as tall as the walls jut out
  *  of them and lean in over the trees, and a colossal shard lies wedged from
@@ -56,7 +57,7 @@ export function buildRift(kit: PsxKit): SceneDef {
     return m;
   };
   const lit = { amb: "#5e5276", sun: "#ffb48a" };
-  const mRock = own(kit.psx({ map: tex.tStone, tint: "#94889e", moss: 0.55, ...lit }));
+  const mRock = own(kit.psx({ map: tex.tStone, tint: "#8c9088", moss: 0.85, ...lit }));
   const mFloor = own(kit.psx({ map: tex.tGround, tint: "#c4e2a0", moss: 0.45, ...lit }));
   const mSpire = own(kit.psx({ map: tex.tStone, tint: "#5a5070", ...lit }));
   const mDark = own(kit.psx({ map: tex.tPlain, tint: "#2e2a40", ...lit }));
@@ -124,7 +125,7 @@ export function buildRift(kit: PsxKit): SceneDef {
       const cy = (gp.getY(t) + gp.getY(t + 1) + gp.getY(t + 2)) / 3;
       const cz = (gp.getZ(t) + gp.getZ(t + 1) + gp.getZ(t + 2)) / 3;
       const ny = (gn.getY(t) + gn.getY(t + 1) + gn.getY(t + 2)) / 3;
-      const onFloor = Math.abs(cx) < Wv(cz) + 6 || (ny > 0.62 && cy < 115 + 12 * Math.sin(cx * 0.05 + cz * 0.03));
+      const onFloor = Math.abs(cx) < Wv(cz) + 6 || (ny > 0.4 && cy < 175 + 18 * Math.sin(cx * 0.05 + cz * 0.03));
       (onFloor ? floor : rock).push(t);
     }
     const pick = (tris: number[]) => {
@@ -173,16 +174,23 @@ export function buildRift(kit: PsxKit): SceneDef {
       ])!,
       0.5,
     );
+    // Fine grid over the floor and lower walls, a coarser one further up the mountainsides.
     const STEP = 5;
+    const cols: [number, number][] = [];
+    for (let gx = -280; gx < 280; ) {
+      const st = Math.abs(gx) < 170 ? STEP : 8;
+      cols.push([gx, st]);
+      gx += st;
+    }
     for (let z = 40; z > -820; z -= STEP) {
-      for (let gx = -170; gx < 170; gx += STEP) {
-        const x = gx + (rnd() - 0.5) * STEP, zz = z + (rnd() - 0.5) * STEP, y = groundH(x, zz);
+      for (const [gx, st] of cols) {
+        const x = gx + (rnd() - 0.5) * st, zz = z + (rnd() - 0.5) * STEP, y = groundH(x, zz);
         const clear = Math.abs(x - riverX(zz)) - (5 + -zz * 0.006);
         // Dense on the floor, thinning with height up the walls; none in the river's clearing.
         const onFloor = Math.abs(x) < Wv(zz);
-        const p = (onFloor ? 0.82 : 0.58) * THREE.MathUtils.smoothstep(150 - y, 0, 70) * THREE.MathUtils.smoothstep(clear, 0, 6);
+        const p = (onFloor ? 0.82 : 0.72) * THREE.MathUtils.smoothstep(205 - y, 0, 60) * THREE.MathUtils.smoothstep(clear, 0, 6);
         if (rnd() > p) continue;
-        const s = between(0.8, 1.7) * (y > 90 ? 0.75 : 1), ry = rnd() * 6.28, kind = rnd();
+        const s = between(0.8, 1.7) * (y > 130 ? 0.8 : 1), ry = rnd() * 6.28, kind = rnd();
         // Broadleaf trees crowd the warm valley bottom and thin out up the walls, where the pines take over.
         const broad = onFloor ? 0.4 : 0.4 * THREE.MathUtils.smoothstep(70 - y, 0, 50);
         if (kind < 0.035) {
@@ -223,9 +231,10 @@ export function buildRift(kit: PsxKit): SceneDef {
       )!,
     );
     const bloom = facet(new THREE.TetrahedronGeometry(0.22, 0));
-    for (let i = 0; i < 4200; i++) {
-      const z = between(-560, 50), x = (rnd() - 0.5) * 2.2 * Wv(z), y = groundH(x, z);
-      if (y > 60) continue;
+    for (let i = 0; i < 6500; i++) {
+      // Most on the floor, the rest scattered up the lower mountainsides.
+      const z = between(-560, 50), x = (rnd() - 0.5) * (i % 3 ? 2.2 * Wv(z) : 360), y = groundH(x, z);
+      if (y > 150) continue;
       const clear = Math.abs(x - riverX(z)) - (5 + -z * 0.006);
       if (clear < 0.5) continue;
       if (rnd() < 0.6) ub.add(bush, mBush[i % 2], x, y - 0.3, z, 0, rnd() * 6.28, 0, between(0.7, 1.9));
