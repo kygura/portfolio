@@ -85,5 +85,12 @@ export const SHEETS: SheetMeta[] = ALL_SHEETS.filter((s) => s.enabled !== false)
 /** Position of a scene by its id (the /scenes/:id slug), or -1. */
 export const sheetIndex = (id: string | undefined) => SHEETS.findIndex((s) => s.id === id);
 
-/** The one scene the home hero shows. */
-export const HOME_SCENE = Math.max(0, sheetIndex("cipher"));
+/**
+ * Index of a random scene for the home hero, never the same as `last` (the
+ * previous visit's pick) when there is a choice.
+ */
+export function pickHomeScene(last: string | null, rand: () => number = Math.random): number {
+  const pool = SHEETS.map((_, i) => i).filter((i) => SHEETS[i].id !== last);
+  const from = pool.length ? pool : SHEETS.map((_, i) => i);
+  return from[Math.floor(rand() * from.length)] ?? 0;
+}

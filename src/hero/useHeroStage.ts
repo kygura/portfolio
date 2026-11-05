@@ -7,7 +7,7 @@ import { createCipherField, type CipherField } from "./cipher";
 /**
  * Engine + cipher wiring shared by the home hero and the /scenes viewer.
  * three.js is fetched with a dynamic import the first time a WebGL scene is
- * shown, so routes (and the Cipher-only home hero) never download it. The cipher sheet is a black stage in the engine
+ * shown, so routes (and the home hero when it lands on Cipher) never download it. The cipher sheet is a black stage in the engine
  * with a 2D glyph canvas over it; the engine's clock stops while it is up.
  */
 
@@ -47,8 +47,8 @@ export function useHeroStage(sheet: number) {
   live.current = { accent, sheet, motion: !cipherOn && !reduceQuery()?.matches };
 
   // The WebGL engine (three.js plus every scene builder) is only fetched once a
-  // scene other than Cipher is shown. Cipher is a 2D canvas, so the home hero,
-  // which only ever shows Cipher, never pays for three.js.
+  // scene other than Cipher is shown. Cipher is a 2D canvas, so a home visit
+  // that lands on Cipher never pays for three.js.
   const [needsEngine, setNeedsEngine] = useState(!cipherOn);
   useEffect(() => {
     if (!cipherOn) setNeedsEngine(true);
