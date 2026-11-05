@@ -1,20 +1,32 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { isTyping } from "@/theme/keymap";
-import { HOME_SCENE, SHEETS } from "@/hero/sheets";
+import { pickHomeScene, SHEETS } from "@/hero/sheets";
+import { readStored, writeStored } from "@/theme/accent";
 import { useHeroStage } from "@/hero/useHeroStage";
 
 /**
  * Cartographic hero — stage, name, tagline, accent initials and hairline
  * strip sit in normal flow and scroll away with the page; the field behind
  * them is the PS1 renderer (see useHeroStage). Without WebGL the stage falls
- * back to a CSS contour sheet. It shows one scene (HOME_SCENE); the rest
- * live on /scenes.
+ * back to a CSS contour sheet. Each page load shows a random scene (never
+ * the previous visit's); all of them live on /scenes.
  */
 
 const NAME = "NICOLAS";
+const HOME_SCENE_KEY = "nca-home-scene";
+
+/** Picked once per page load, so in-app navigation back home keeps the same scene. */
+let homeScene: number | null = null;
+const homeSceneForVisit = () => {
+  if (homeScene === null) {
+    homeScene = pickHomeScene(readStored(HOME_SCENE_KEY));
+    writeStored(HOME_SCENE_KEY, SHEETS[homeScene].id);
+  }
+  return homeScene;
+};
 
 const CartographicHero = () => {
-  const sheet = HOME_SCENE;
+  const [sheet] = useState(homeSceneForVisit);
   const { canvasRef, cipherCanvasRef, stageRef, engineRef, noGl, egg, cipherOn } = useHeroStage(sheet);
   const footerRef = useRef<HTMLElement>(null);
 

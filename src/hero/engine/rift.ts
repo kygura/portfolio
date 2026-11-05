@@ -1,9 +1,11 @@
 /** Sheet · Rift: the wasteland in a forested mountain valley at the end of
- *  the day. Conifers fill the floor and climb the walls to a treeline, with
- *  dead snags standing grey among them; spires crown every ridge in
+ *  the day. A green forest floor of broadleaf trees, bushes and ferns gives way
+ *  to conifers that cover the mountainsides up to a high treeline, bare rock
+ *  showing only on the sheer faces and crests, with dead snags standing
+ *  grey among them; spires crown every ridge in
  *  silhouette and rise out of the canopy, blades as tall as the walls jut out
  *  of them and lean in over the trees, and a colossal shard lies wedged from
- *  wall to wall. Down a clearing in the middle runs a river of broken glass.
+ *  wall to wall. Down a grassy clearing in the middle runs a river of broken glass.
  *  Ash drifts down, mist lies in the trees, stone hangs in the gap, islands
  *  float upside down against an ember sky, and the sun sits in the notch at
  *  the valley's far end.
@@ -55,7 +57,8 @@ export function buildRift(kit: PsxKit): SceneDef {
     return m;
   };
   const lit = { amb: "#5e5276", sun: "#ffb48a" };
-  const mRock = own(kit.psx({ map: tex.tStone, tint: "#94889e", ...lit }));
+  const mRock = own(kit.psx({ map: tex.tStone, tint: "#8c9088", moss: 0.85, ...lit }));
+  const mFloor = own(kit.psx({ map: tex.tGround, tint: "#c4e2a0", moss: 0.45, ...lit }));
   const mSpire = own(kit.psx({ map: tex.tStone, tint: "#5a5070", ...lit }));
   const mDark = own(kit.psx({ map: tex.tPlain, tint: "#2e2a40", ...lit }));
   const mBlade = own(kit.psx({ map: tex.tPlain, tint: "#8a7c90", ...lit }));
@@ -67,7 +70,11 @@ export function buildRift(kit: PsxKit): SceneDef {
   const mRiver = own(kit.psx({ map: tex.tPlain, tint: "#000000", emit: 0.6, fogAmt: 0.4 }));
   const mBark = own(kit.psx({ map: tex.tBark, tint: "#7a6662", ...lit }));
   const mSnag = own(kit.psx({ map: tex.tBark, tint: "#a6989a", ...lit }));
-  const mPine = ["#5e7c66", "#4a6656", "#6c8064"].map((tint) => own(kit.psx({ map: tex.tLeaf, tint, uv: 1.5, ...lit })));
+  const mPine = ["#628a62", "#4c7052", "#6e8e5c"].map((tint) => own(kit.psx({ map: tex.tLeaf, tint, uv: 1.5, ...lit })));
+  const mLeaf = ["#8cb062", "#76a058", "#9cb468"].map((tint) => own(kit.psx({ map: tex.tLeaf, tint, uv: 1.5, ...lit })));
+  const mBush = ["#7aa25a", "#5e8a4e"].map((tint) => own(kit.psx({ map: tex.tLeaf, tint, uv: 2, ...lit })));
+  const mGrass = own(kit.psx({ map: tex.tLeaf, tint: "#b4d07c", side: THREE.DoubleSide, ...lit }));
+  const mBloom = own(kit.psx({ map: tex.tPlain, tint: "#ecd892", ...lit }));
   const W = createWaste(kit, { debris: mDebris, rust: mRust, seam: mSeam });
   const { between } = W;
 
@@ -109,7 +116,29 @@ export function buildRift(kit: PsxKit): SceneDef {
       // Skewed planar UVs with height in v, so the sheer walls keep their texture.
       uv.setXY(i, (x + z * 0.6) * 0.06, (z - x * 0.6) * 0.06 + y * 0.08);
     }
-    kit.mesh(facet(geo, 1), mRock, scene);
+    // Green forest floor on the valley bottom and the gentler lower slopes; bare rock on the
+    // sheer faces and above the treeline (where the moss still catches on ledges).
+    const g = facet(geo, 1), gp = g.attributes.position, gn = g.attributes.normal;
+    const floor: number[] = [], rock: number[] = [];
+    for (let t = 0; t < gp.count; t += 3) {
+      const cx = (gp.getX(t) + gp.getX(t + 1) + gp.getX(t + 2)) / 3;
+      const cy = (gp.getY(t) + gp.getY(t + 1) + gp.getY(t + 2)) / 3;
+      const cz = (gp.getZ(t) + gp.getZ(t + 1) + gp.getZ(t + 2)) / 3;
+      const ny = (gn.getY(t) + gn.getY(t + 1) + gn.getY(t + 2)) / 3;
+      const onFloor = Math.abs(cx) < Wv(cz) + 6 || (ny > 0.4 && cy < 175 + 18 * Math.sin(cx * 0.05 + cz * 0.03));
+      (onFloor ? floor : rock).push(t);
+    }
+    const pick = (tris: number[]) => {
+      const out = new THREE.BufferGeometry();
+      for (const name of ["position", "normal", "uv"] as const) {
+        const a = g.attributes[name], n = a.itemSize, arr = new Float32Array(tris.length * 3 * n);
+        tris.forEach((t, k) => arr.set((a.array as Float32Array).subarray(t * n, (t + 3) * n), k * 3 * n));
+        out.setAttribute(name, new THREE.BufferAttribute(arr, n));
+      }
+      return out;
+    };
+    kit.mesh(pick(floor), mFloor, scene);
+    kit.mesh(pick(rock), mRock, scene);
   }
 
   /* ---- the forest: conifers on the floor and up the walls, thinning out to a treeline,
@@ -134,17 +163,41 @@ export function buildRift(kit: PsxKit): SceneDef {
         new THREE.CylinderGeometry(0.03, 0.07, 2, 4, 1, true).translate(0, 1, 0).rotateX(0.9).translate(0, 8.6, 0),
       ])!,
     );
-    const STEP = 6;
+    // Broadleaf trees: a taller trunk under a lumpy crown of a few rough balls.
+    const bTrunk = facet(new THREE.CylinderGeometry(0.2, 0.42, 5.5, 5, 1, true).translate(0, 2.75, 0));
+    const bCrown = facet(
+      mergeGeometries([
+        new THREE.IcosahedronGeometry(2.6, 0).translate(0, 6.8, 0),
+        new THREE.IcosahedronGeometry(2.0, 0).translate(1.6, 6.0, 0.6),
+        new THREE.IcosahedronGeometry(1.9, 0).translate(-1.3, 6.3, -0.9),
+        new THREE.IcosahedronGeometry(1.6, 0).translate(0.2, 8.6, 0.3),
+      ])!,
+      0.5,
+    );
+    // Fine grid over the floor and lower walls, a coarser one further up the mountainsides.
+    const STEP = 5;
+    const cols: [number, number][] = [];
+    for (let gx = -280; gx < 280; ) {
+      const st = Math.abs(gx) < 170 ? STEP : 8;
+      cols.push([gx, st]);
+      gx += st;
+    }
     for (let z = 40; z > -820; z -= STEP) {
-      for (let gx = -170; gx < 170; gx += STEP) {
-        const x = gx + (rnd() - 0.5) * STEP, zz = z + (rnd() - 0.5) * STEP, y = groundH(x, zz);
+      for (const [gx, st] of cols) {
+        const x = gx + (rnd() - 0.5) * st, zz = z + (rnd() - 0.5) * STEP, y = groundH(x, zz);
         const clear = Math.abs(x - riverX(zz)) - (5 + -zz * 0.006);
         // Dense on the floor, thinning with height up the walls; none in the river's clearing.
-        const p = (Math.abs(x) < Wv(zz) ? 0.62 : 0.5) * THREE.MathUtils.smoothstep(150 - y, 0, 70) * THREE.MathUtils.smoothstep(clear, 0, 6);
+        const onFloor = Math.abs(x) < Wv(zz);
+        const p = (onFloor ? 0.82 : 0.72) * THREE.MathUtils.smoothstep(205 - y, 0, 60) * THREE.MathUtils.smoothstep(clear, 0, 6);
         if (rnd() > p) continue;
-        const s = between(0.8, 1.7) * (y > 90 ? 0.75 : 1), ry = rnd() * 6.28;
-        if (rnd() < 0.08) {
+        const s = between(0.8, 1.7) * (y > 130 ? 0.8 : 1), ry = rnd() * 6.28, kind = rnd();
+        // Broadleaf trees crowd the warm valley bottom and thin out up the walls, where the pines take over.
+        const broad = onFloor ? 0.4 : 0.4 * THREE.MathUtils.smoothstep(70 - y, 0, 50);
+        if (kind < 0.035) {
           fb.add(snag, mSnag, x, y - 0.4, zz, (rnd() - 0.5) * 0.12, ry, (rnd() - 0.5) * 0.12, s * 1.3);
+        } else if (kind < 0.035 + broad) {
+          fb.add(bTrunk, mBark, x, y - 0.3, zz, 0, ry, 0, s);
+          fb.add(bCrown, mLeaf[Math.floor(rnd() * 3)], x, y - 0.3, zz, 0, ry, 0, s * between(0.85, 1.15));
         } else {
           fb.add(trunk, mBark, x, y - 0.3, zz, 0, ry, 0, s);
           fb.add(crown, mPine[Math.floor(rnd() * 3)], x, y - 0.3, zz, 0, ry, 0, s);
@@ -152,6 +205,51 @@ export function buildRift(kit: PsxKit): SceneDef {
       }
     }
     fb.flush(scene);
+  }
+
+  /* ---- undergrowth: bushes under the trees and along the clearing, and a meadow of grass
+     and a few pale flowers down the river's banks ---- */
+  {
+    const ub = W.batch();
+    const bush = facet(
+      mergeGeometries([
+        new THREE.IcosahedronGeometry(1, 0).scale(1.3, 0.8, 1.2),
+        new THREE.IcosahedronGeometry(0.75, 0).scale(1.2, 0.8, 1).translate(0.9, -0.1, 0.4),
+      ])!,
+      0.25,
+    );
+    const fern = facet(
+      mergeGeometries(
+        [0, 1.26, 2.51, 3.77, 5.03].map((a) =>
+          new THREE.ConeGeometry(0.22, 1.5, 3, 1, true).translate(0, 0.75, 0).rotateX(0.7).rotateY(a),
+        ),
+      )!,
+    );
+    const tuft = facet(
+      mergeGeometries(
+        [0, 2.1, 4.2].map((a) => new THREE.ConeGeometry(0.12, 1.1, 3, 1, true).translate(0, 0.55, 0).rotateX(0.25).rotateY(a)),
+      )!,
+    );
+    const bloom = facet(new THREE.TetrahedronGeometry(0.22, 0));
+    for (let i = 0; i < 6500; i++) {
+      // Most on the floor, the rest scattered up the lower mountainsides.
+      const z = between(-560, 50), x = (rnd() - 0.5) * (i % 3 ? 2.2 * Wv(z) : 360), y = groundH(x, z);
+      if (y > 150) continue;
+      const clear = Math.abs(x - riverX(z)) - (5 + -z * 0.006);
+      if (clear < 0.5) continue;
+      if (rnd() < 0.6) ub.add(bush, mBush[i % 2], x, y - 0.3, z, 0, rnd() * 6.28, 0, between(0.7, 1.9));
+      else ub.add(fern, mBush[(i + 1) % 2], x, y - 0.2, z, 0, rnd() * 6.28, 0, between(0.9, 1.6));
+    }
+    // The meadow fills the clearing and spills under the first trees; nearer the eye it is denser.
+    for (let i = 0; i < 5200; i++) {
+      const z = -Math.pow(rnd(), 1.6) * 520 + 50, half = 7 + -z * 0.006;
+      const x = riverX(z) + (rnd() - 0.5) * 2 * half;
+      if (Math.abs(x - riverX(z)) < 1.6) continue;
+      const y = groundH(x, z), ry = rnd() * 6.28;
+      if (rnd() < 0.06) ub.add(bloom, mBloom, x, y + 0.5, z, rnd(), ry, rnd());
+      else ub.add(rnd() < 0.8 ? tuft : fern, rnd() < 0.8 ? mGrass : mBush[0], x, y - 0.15, z, 0, ry, 0, between(0.8, 1.6));
+    }
+    ub.flush(scene);
   }
 
   const b = W.batch();
@@ -210,7 +308,7 @@ export function buildRift(kit: PsxKit): SceneDef {
   });
 
   // Mist lying in the trees.
-  for (const [y, o] of [[9, 0.2], [5, 0.16]]) {
+  for (const [y, o] of [[9, 0.14], [5, 0.1]]) {
     const m = kit.mesh(
       new THREE.PlaneGeometry(500, 1400).rotateX(-Math.PI / 2),
       new THREE.MeshBasicMaterial({ color: P.mist, transparent: true, opacity: o, depthWrite: false }),
