@@ -229,7 +229,7 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const result = await triggerRebuild();
-    if (!result.triggered) {
+    if (result.triggered === false) {
       console.error("Notion webhook could not trigger a rebuild:", result.reason);
       return Response.json({ error: result.reason, eventType: type, eventId }, { status: 500 });
     }

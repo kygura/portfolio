@@ -196,7 +196,7 @@ test("deployments keep their preview; code-only and dead sites map their source,
   assert.deepEqual(previews.framed, { kind: "frame", src: "https://framed.dev/" });
   assert.deepEqual(previews.blocked, { kind: "image", src: "https://blocked.dev/card.png" });
   assert.match(previews.plain.src ?? "", /^https:\/\/opengraph\.githubassets\.com\/\d+\/kygura\/plain$/);
-  assert.deepEqual(previews.slow, { kind: "frame", src: "https://slow.dev" }); // a slow site is still framed
+  assert.deepEqual(previews.slow, { kind: "frame", src: "https://slow.dev/" }); // a slow site is still framed
   assert.deepEqual(previews["private-app"], { kind: "none" }); // GitHub has no public card for it
 });
 
