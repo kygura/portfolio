@@ -45,6 +45,7 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "dunes",
     name: "Dunes",
+    enabled: false,
     aria: "Animated low-poly desert wasteland: bleached dunes running to a white horizon, sharp towers half buried at hard leans, a toppled giant shard, a ring the size of a building standing out of the sand, a monument of leaning blades with glowing seams, stone hanging in the heat, upside-down islands overhead and sand streaming in the wind.",
   },
   {
@@ -55,6 +56,7 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "frost",
     name: "Frost",
+    enabled: false,
     aria: "Animated low-poly frozen wasteland: a sea locked in cracked ice under polar twilight, ice spires pushed up in pressure ridges and splayed clusters, wreckage caught in the freeze, a crown of ice shards round a dark blade with glowing seams, falling snow, hanging stone, upside-down islands, a low moon and an aurora folding across the sky.",
   },
   {
