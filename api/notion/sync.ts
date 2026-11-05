@@ -19,7 +19,7 @@ function getRebuildSecrets(): string[] {
 }
 
 type RebuildResult =
-  | { triggered: true; job: unknown }
+  | { triggered: true; job: unknown; reason?: string }
   | { triggered: false; reason: string };
 
 /**
@@ -60,7 +60,7 @@ async function handle(request: Request): Promise<Response> {
 
   try {
     const result = await triggerRebuild();
-    if (result.triggered === false) {
+    if (!result.triggered) {
       return Response.json({ error: result.reason }, { status: 500 });
     }
     return Response.json({ ok: true, rebuild: "queued", job: result.job }, { status: 202 });

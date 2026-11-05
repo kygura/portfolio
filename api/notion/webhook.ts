@@ -39,7 +39,7 @@ function getWatchedNotionParentIds(): string[] {
 }
 
 type RebuildResult =
-  | { triggered: true; job: unknown }
+  | { triggered: true; job: unknown; reason?: string }
   | { triggered: false; reason: string };
 
 /**
@@ -229,7 +229,7 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const result = await triggerRebuild();
-    if (result.triggered === false) {
+    if (!result.triggered) {
       console.error("Notion webhook could not trigger a rebuild:", result.reason);
       return Response.json({ error: result.reason, eventType: type, eventId }, { status: 500 });
     }
