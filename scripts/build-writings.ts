@@ -33,7 +33,7 @@ import { getNotionClient, resolveDataSourceId } from "./notion/client.ts";
 import { getOptionalNotionToken } from "./notion/env.ts";
 import { fetchAllBlocks } from "./notion/blocks.ts";
 import { renderBlocksToMarkdown } from "./notion/render.ts";
-import { extractPostMetadata } from "./notion/metadata.ts";
+import { dedupeBySlug, extractPostMetadata } from "./notion/metadata.ts";
 import { processPostImages, type ImageDeps } from "./notion/images.ts";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -87,19 +87,15 @@ async function syncFromNotion(): Promise<void> {
     }
   }
 
-  const published = pages
-    .map((page) => ({ page, meta: extractPostMetadata(page as never) }))
-    .filter(({ meta }) => meta.published);
-
-  const seen = new Map<string, string>();
-  for (const { meta } of published) {
-    const owner = seen.get(meta.slug);
-    if (owner) {
-      throw new Error(
-        `Duplicate slug "${meta.slug}" (pages ${owner} and ${meta.pageId}). Rename one of them in Notion.`,
-      );
-    }
-    seen.set(meta.slug, meta.pageId);
+  const { kept: published, conflicts } = dedupeBySlug(
+    pages
+      .map((page) => ({ page, meta: extractPostMetadata(page as never) }))
+      .filter(({ meta }) => meta.published),
+  );
+  for (const { slug, kept, dropped } of conflicts) {
+    console.warn(
+      `[writings]   duplicate slug "${slug}": using most recently edited page ${kept}, ignoring ${dropped}. Rename or unpublish one in Notion.`,
+    );
   }
 
   console.log(`[writings] Notion: ${published.length} published of ${pages.length} pages`);

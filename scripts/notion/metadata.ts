@@ -149,3 +149,34 @@ export function getPageDataSourceId(page: NotionPage): string | null {
   if (parent.type === "database_id") return parent.database_id ?? null;
   return null;
 }
+
+export type SlugConflict = { slug: string; kept: string; dropped: string };
+
+/**
+ * Collapses entries that share a slug, keeping the most recently edited one.
+ * Two published pages with the same title would otherwise collide on
+ * `content/writings/<slug>.md`; the newer edit is the one the author meant.
+ * Ties go to the entry seen first. Input order is preserved for the survivors.
+ */
+export function dedupeBySlug<T extends { meta: NotionPostMetadata }>(
+  entries: T[],
+): { kept: T[]; conflicts: SlugConflict[] } {
+  const winners = new Map<string, T>();
+  const conflicts: SlugConflict[] = [];
+
+  for (const entry of entries) {
+    const current = winners.get(entry.meta.slug);
+    if (!current) {
+      winners.set(entry.meta.slug, entry);
+      continue;
+    }
+    const newer =
+      Date.parse(entry.meta.lastEditedTime) > Date.parse(current.meta.lastEditedTime);
+    const [kept, dropped] = newer ? [entry, current] : [current, entry];
+    winners.set(entry.meta.slug, kept);
+    conflicts.push({ slug: entry.meta.slug, kept: kept.meta.pageId, dropped: dropped.meta.pageId });
+  }
+
+  const survivors = new Set(winners.values());
+  return { kept: entries.filter((e) => survivors.has(e)), conflicts };
+}
