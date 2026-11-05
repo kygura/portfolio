@@ -1,6 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import {
+  dedupeBySlug,
   extractPostMetadata,
   getPageDataSourceId,
 } from "./metadata.ts";
@@ -171,5 +172,40 @@ describe("getPageDataSourceId", () => {
   it("returns null when data_source_id value is undefined", () => {
     const page = { id: "p5", parent: { type: "data_source_id" } };
     assert.equal(getPageDataSourceId(page), null);
+  });
+});
+
+describe("dedupeBySlug", () => {
+  const entry = (pageId: string, slug: string, lastEditedTime: string) => ({
+    meta: {
+      pageId,
+      slug,
+      title: slug,
+      excerpt: "",
+      date: "2026-01-01",
+      tags: [],
+      published: true,
+      createdTime: lastEditedTime,
+      lastEditedTime,
+    },
+  });
+
+  it("keeps the most recently edited page when slugs collide", () => {
+    const older = entry("old", "the-vessel", "2026-10-30T19:12:38.248Z");
+    const newer = entry("new", "the-vessel", "2026-11-03T17:01:59.400Z");
+    const other = entry("x", "on-the-ego", "2026-01-01T00:00:00.000Z");
+
+    for (const input of [[older, other, newer], [newer, other, older]]) {
+      const { kept, conflicts } = dedupeBySlug(input);
+      assert.deepEqual(kept.map((e) => e.meta.pageId).sort(), ["new", "x"]);
+      assert.deepEqual(conflicts, [{ slug: "the-vessel", kept: "new", dropped: "old" }]);
+    }
+  });
+
+  it("passes unique slugs through untouched", () => {
+    const input = [entry("a", "a", "2026-01-01T00:00:00Z"), entry("b", "b", "2026-01-02T00:00:00Z")];
+    const { kept, conflicts } = dedupeBySlug(input);
+    assert.deepEqual(kept, input);
+    assert.deepEqual(conflicts, []);
   });
 });

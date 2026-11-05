@@ -19,7 +19,7 @@ function getRebuildSecrets(): string[] {
 }
 
 type RebuildResult =
-  | { triggered: true; job: unknown }
+  | { triggered: true; job: unknown; reason?: string }
   | { triggered: false; reason: string };
 
 /**
