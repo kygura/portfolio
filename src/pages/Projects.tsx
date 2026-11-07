@@ -1,4 +1,5 @@
-import { ArrowUpRight, GitBranch, Star } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowUpRight, GitBranch, MessageSquare, Star } from "lucide-react";
 import RepoPreview from "@/components/RepoPreview";
 import { timeAgo, useShowcase, type ShowcaseRepo } from "@/lib/showcase";
 
@@ -17,6 +18,12 @@ const RepoMeta = ({ repo }: { repo: ShowcaseRepo }) => (
 
 const RepoLinks = ({ repo }: { repo: ShowcaseRepo }) => (
   <div className="repo-card__links">
+    {repo.preview.kind === "map" && !repo.private && (
+      <Link to={`/projects/${repo.name}`} className="repo-card__link repo-card__link--live">
+        <MessageSquare className="w-4 h-4" aria-hidden="true" />
+        Talk to the codebase
+      </Link>
+    )}
     {repo.liveUrl && (
       <a href={repo.liveUrl} target="_blank" rel="noopener noreferrer" className="repo-card__link repo-card__link--live">
         Visit site
@@ -26,12 +33,11 @@ const RepoLinks = ({ repo }: { repo: ShowcaseRepo }) => (
     {repo.private ? (
       <span className="repo-card__link repo-card__link--muted">Private source</span>
     ) : (
-      // With no site to visit, the source is the card's main link.
       <a
         href={repo.url}
         target="_blank"
         rel="noopener noreferrer"
-        className={`repo-card__link${repo.liveUrl ? "" : " repo-card__link--live"}`}
+        className="repo-card__link"
       >
         <GitBranch className="w-4 h-4" aria-hidden="true" />
         Source
@@ -40,16 +46,16 @@ const RepoLinks = ({ repo }: { repo: ShowcaseRepo }) => (
   </div>
 );
 
-type RepoCardProps = { repo: ShowcaseRepo; index: number; featured?: boolean; terminal: boolean };
+type RepoCardProps = { repo: ShowcaseRepo; index: number; featured?: boolean };
 
-const RepoCard = ({ repo, index, featured, terminal }: RepoCardProps) => (
+const RepoCard = ({ repo, index, featured }: RepoCardProps) => (
   <article
     id={`repo-${repo.name}`}
     className={`repo-card${featured ? " repo-card--featured" : ""}`}
     style={{ animationDelay: `${index * 80}ms` }}
   >
     <div className="repo-card__preview">
-      <RepoPreview repo={repo} terminal={terminal} />
+      <RepoPreview repo={repo} />
     </div>
 
     <div className="repo-card__body">
@@ -80,7 +86,7 @@ const Projects = () => {
           Software
         </h1>
         <p className="text-lg md:text-xl text-foreground max-w-2xl leading-relaxed">
-          My projects, pulled from GitHub. Deployed projects link to the live site; the rest link to the source.
+          My projects, pulled from GitHub. Deployed projects link to the live site. The rest open onto their source, which you can browse and ask questions.
         </p>
         {data && (
           <p className="repo-index__stamp">
@@ -113,9 +119,9 @@ const Projects = () => {
 
       {lead && (
         <div className="repo-grid">
-          <RepoCard repo={lead} index={0} featured terminal={Boolean(data?.terminal)} />
+          <RepoCard repo={lead} index={0} featured />
           {rest.map((repo, i) => (
-            <RepoCard key={repo.fullName} repo={repo} index={i + 1} terminal={Boolean(data?.terminal)} />
+            <RepoCard key={repo.fullName} repo={repo} index={i + 1} />
           ))}
         </div>
       )}

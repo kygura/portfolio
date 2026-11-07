@@ -1,7 +1,7 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { useReducedMotion } from "framer-motion";
-import { ArrowUpRight } from "lucide-react";
-import { formatBytes, useTerminal, type CodeMap, type ShowcaseRepo, type TerminalStep } from "@/lib/showcase";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowUpRight, MessageSquare } from "lucide-react";
+import { formatBytes, type CodeMap, type ShowcaseRepo } from "@/lib/showcase";
 import { squarify, type Rect } from "@/lib/treemap";
 
 /** Group headers get this much of a plot when it is tall enough to spare it. */
@@ -127,164 +127,94 @@ const CodeMapView = ({ map }: { map: CodeMap }) => {
   );
 };
 
-type Cursor = { step: number; typed: number; lines: number };
-
-const NO_STEPS: TerminalStep[] = [];
-
-/** The next frame of the replay and how long to hold the current one, or null at the end. */
-function advance(steps: TerminalStep[], at: Cursor): [Cursor, number] | null {
-  const step = steps[at.step];
-  if (at.typed < step.command.length) return [{ ...at, typed: Math.min(step.command.length, at.typed + 2) }, 38];
-  if (at.lines < step.output.length) return [{ ...at, lines: at.lines + 1 }, at.lines === 0 ? 320 : 55];
-  if (at.step < steps.length - 1) return [{ step: at.step + 1, typed: 0, lines: 0 }, 900];
-  return null;
-}
-
-const finished = (steps: TerminalStep[]): Cursor => {
-  const last = steps.length - 1;
-  return { step: last, typed: steps[last].command.length, lines: steps[last].output.length };
-};
-
-/** Replays a generated session: commands type out, output prints a line at a time. */
-const TerminalView = ({ repo }: { repo: ShowcaseRepo }) => {
-  const { data, error, isPending } = useTerminal(repo.name, repo.pushedAt, true);
-  const still = Boolean(useReducedMotion());
-  const steps = data?.steps ?? NO_STEPS;
-  const [cursor, setCursor] = useState<Cursor>({ step: 0, typed: 0, lines: 0 });
-  const [run, setRun] = useState(0);
-  const bodyRef = useRef<HTMLDivElement>(null);
-  const done = steps.length > 0 && advance(steps, cursor) === null;
-
-  useEffect(() => {
-    if (!steps.length) return;
-    if (still) {
-      setCursor(finished(steps));
-      return;
-    }
-    setCursor({ step: 0, typed: 0, lines: 0 });
-  }, [steps, still, run]);
-
-  useEffect(() => {
-    if (!steps.length || still) return;
-    const next = advance(steps, cursor);
-    if (!next) return;
-    const timer = window.setTimeout(() => setCursor(next[0]), next[1]);
-    return () => window.clearTimeout(timer);
-  }, [steps, cursor, still]);
-
-  useEffect(() => {
-    const el = bodyRef.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [cursor]);
-
-  let body: ReactNode;
-  if (isPending) {
-    body = (
-      <p className="code-term__status">
-        reading the source<span className="code-term__caret" aria-hidden="true" />
-      </p>
-    );
-  } else if (error) {
-    body = <p className="code-term__status">No session right now ({error.message}).</p>;
-  } else if (!steps.length) {
-    body = <p className="code-term__status">Nothing here runs on its own. The map tells this one better.</p>;
-  } else {
-    body = (
-      <>
-        <p className="code-term__note"># illustrative session, scripted from the source</p>
-        {steps.slice(0, cursor.step + 1).map((step, i) => {
-          const current = i === cursor.step;
-          const typed = current ? step.command.slice(0, cursor.typed) : step.command;
-          const lines = current ? step.output.slice(0, cursor.lines) : step.output;
-          return (
-            <div key={i} className="code-term__step">
-              <p>
-                <span className="code-term__prompt">{step.prompt}</span> {typed}
-                {current && !done && cursor.typed < step.command.length && (
-                  <span className="code-term__caret" aria-hidden="true" />
-                )}
-              </p>
-              {lines.map((line, j) => (
-                <p key={j} className="code-term__out">
-                  {line || " "}
-                </p>
+/** The same folded tree as the map, drawn as a listing: top plots, then their largest children. */
+const CodeTreeView = ({ map }: { map: CodeMap }) => (
+  <div className="code-tree">
+    <ul className="code-tree__list" aria-label={`Files${map.base ? ` under ${map.base}` : ""}`}>
+      {map.base && <li className="code-tree__base">{map.base}</li>}
+      {map.nodes.map((node) => (
+        <li key={node.name}>
+          <span className="code-tree__row" data-dir={Boolean(node.children)}>
+            <span className="code-tree__name">{node.name}</span>
+            <span className="code-tree__size">{formatBytes(node.bytes)}</span>
+          </span>
+          {node.children && node.children.length > 0 && (
+            <ul>
+              {node.children.map((child, i) => (
+                <li key={child.name}>
+                  <span className="code-tree__row" data-dir={child.name.endsWith("/")}>
+                    <span className="code-tree__branch" aria-hidden="true">
+                      {i === node.children!.length - 1 ? "└─" : "├─"}
+                    </span>
+                    <span className="code-tree__name">{child.name}</span>
+                    <span className="code-tree__size">{formatBytes(child.bytes)}</span>
+                  </span>
+                </li>
               ))}
-            </div>
-          );
-        })}
-        {done && (
-          <p>
-            <span className="code-term__prompt">{steps[steps.length - 1].prompt}</span>{" "}
-            <span className="code-term__caret" aria-hidden="true" />
-          </p>
-        )}
-      </>
-    );
-  }
+            </ul>
+          )}
+        </li>
+      ))}
+    </ul>
+  </div>
+);
 
-  return (
-    <div className="code-term">
-      <div ref={bodyRef} className="code-term__body" aria-live="polite" aria-busy={isPending}>
-        {body}
-      </div>
-      {done && !still && (
-        <button type="button" className="code-term__replay" onClick={() => setRun((n) => n + 1)}>
-          Replay
-        </button>
-      )}
-    </div>
-  );
-};
-
-type Tab = "map" | "run";
+type Tab = "tree" | "map";
+const TABS: Tab[] = ["tree", "map"];
 
 /**
- * The window for a repo with no site to frame: its source as a map, and,
- * when the endpoint is configured, a terminal tab that asks for a generated
- * session the first time it opens.
+ * The window for a repo with no site to frame: its source as a file tree or a
+ * map, and a way into the codebase page where visitors can ask about it.
  */
-const CodeWindow = ({ repo, map, terminal }: { repo: ShowcaseRepo; map: CodeMap; terminal: boolean }) => {
-  const [tab, setTab] = useState<Tab>("map");
-  const tabs: Tab[] = terminal ? ["map", "run"] : ["map"];
+const CodeWindow = ({ repo, map }: { repo: ShowcaseRepo; map: CodeMap }) => {
+  const [tab, setTab] = useState<Tab>("tree");
 
   return (
     <div className="repo-window repo-window--code">
       <div className="repo-window__bar">
-        <span className="repo-window__dots" aria-hidden="true">
-          <i />
-          <i />
-          <i />
+        <span className="repo-window__address">{repo.name}</span>
+        <span className="repo-window__tabs" role="tablist" aria-label={`${repo.name} views`}>
+          {TABS.map((name) => (
+            <button
+              key={name}
+              type="button"
+              role="tab"
+              aria-selected={tab === name}
+              className="repo-window__tab"
+              onClick={() => setTab(name)}
+            >
+              {name}
+            </button>
+          ))}
         </span>
-        <span className="repo-window__address">~/{repo.name}</span>
-        {tabs.length > 1 && (
-          <span className="repo-window__tabs" role="tablist" aria-label={`${repo.name} views`}>
-            {tabs.map((name) => (
-              <button
-                key={name}
-                type="button"
-                role="tab"
-                aria-selected={tab === name}
-                className="repo-window__tab"
-                onClick={() => setTab(name)}
-              >
-                {name}
-              </button>
-            ))}
-          </span>
+        {!repo.private && (
+          <a
+            href={repo.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="repo-window__open"
+            aria-label={`Open ${repo.name}'s source in a new tab`}
+          >
+            <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+          </a>
         )}
-        <a
-          href={repo.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="repo-window__open"
-          aria-label={`Open ${repo.name}'s source in a new tab`}
-        >
-          <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
-        </a>
       </div>
 
       <div className="repo-window__viewport" role="tabpanel">
-        {tab === "map" ? <CodeMapView map={map} /> : <TerminalView repo={repo} />}
+        {tab === "tree" ? (
+          <>
+            <CodeTreeView map={map} />
+            {/* Private source stays private: no page to open. */}
+            {!repo.private && (
+              <Link to={`/projects/${repo.name}`} className="code-window__ask">
+                <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
+                Ask the codebase
+              </Link>
+            )}
+          </>
+        ) : (
+          <CodeMapView map={map} />
+        )}
       </div>
     </div>
   );

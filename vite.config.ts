@@ -2,19 +2,18 @@ import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import { componentTagger } from "lovable-tagger";
 import path from "path";
+import { Readable } from "node:stream";
 import { buildShowcase, parseRepoList, type Showcase } from "./api/github/repos";
-import { createScripter, createSessionStore, handleTerminal } from "./api/github/terminal";
+import { handleCodebase } from "./api/github/codebase";
 
 /**
- * Serves /api/github/repos and /api/github/terminal under `vite dev` with the
+ * Serves /api/github/repos and /api/github/codebase under `vite dev` with the
  * same code the Vercel functions run. The index is cached for ten minutes so
- * reloads stay inside GitHub's unauthenticated rate limit; terminal sessions
- * need ANTHROPIC_API_KEY, as in production, and live in memory.
+ * reloads stay inside GitHub's unauthenticated rate limit; the codebase chat
+ * needs ANTHROPIC_API_KEY, as in production.
  */
 function devGithubApi(): Plugin {
   let cached: { at: number; body: Showcase } | null = null;
-  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
-  const sessions = apiKey ? createSessionStore({ script: createScripter({ apiKey }) }) : null;
   const filter = {
     include: parseRepoList(process.env.SHOWCASE_INCLUDE),
     exclude: parseRepoList(process.env.SHOWCASE_EXCLUDE),
@@ -30,7 +29,6 @@ function devGithubApi(): Plugin {
             const body = await buildShowcase({
               user: process.env.GITHUB_USER || "kygura",
               token: process.env.GITHUB_TOKEN,
-              terminal: sessions !== null,
               filter,
             });
             cached = { at: Date.now(), body };
@@ -41,15 +39,23 @@ function devGithubApi(): Plugin {
           res.end(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }));
         }
       });
-      server.middlewares.use("/api/github/terminal", async (req, res) => {
-        const response = await handleTerminal(new Request(`http://localhost${req.originalUrl ?? req.url}`), sessions, {
+      server.middlewares.use("/api/github/codebase", async (req, res) => {
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) chunks.push(chunk as Buffer);
+        const request = new Request(`http://localhost${req.originalUrl ?? req.url}`, {
+          method: req.method,
+          headers: { "content-type": "application/json" },
+          body: req.method === "POST" ? Buffer.concat(chunks) : undefined,
+        });
+        const response = await handleCodebase(request, {
           user: process.env.GITHUB_USER || "kygura",
           token: process.env.GITHUB_TOKEN || null,
           filter,
         });
         res.statusCode = response.status;
-        res.setHeader("content-type", "application/json");
-        res.end(await response.text());
+        response.headers.forEach((value, key) => res.setHeader(key, value));
+        if (response.body) Readable.fromWeb(response.body as never).pipe(res);
+        else res.end();
       });
     },
   };
