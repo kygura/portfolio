@@ -134,7 +134,7 @@ export async function locateRepo(
   // Checked before any request, so a left-out repo's name gets the same
   // answer as one that does not exist.
   const key = name.toLowerCase();
-  if (filter.exclude.has(key) || (filter.include.size > 0 && !filter.include.has(key))) {
+  if (filter.exclude.has(key)) {
     throw new NotScriptable(`No repository named ${name}`);
   }
   const headers: Record<string, string> = {
