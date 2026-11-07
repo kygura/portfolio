@@ -170,9 +170,8 @@ export function scoreRepo(repo: GithubRepo, now: Date): number {
 const hasTopic = (repo: GithubRepo, topic: string) => (repo.topics ?? []).includes(topic);
 
 /**
- * Every repo of the owner's own (archived ones included: a working deployment
- * is the bar, checked later), minus forks, hidden repos, repos the filter
- * leaves out, the profile README repo and this site's own repo. Flagship
+ * Every repo of the owner's own, minus forks, archived repos, hidden repos,
+ * repos the filter leaves out, the profile README repo and this site's own repo. Flagship
  * repos lead; stars and recency order the rest.
  */
 export function rankRepos(
@@ -188,6 +187,7 @@ export function rankRepos(
     .filter(
       (repo) =>
         !repo.fork &&
+        !repo.archived &&
         !hasTopic(repo, HIDE_TOPIC) &&
         !skip.has(repo.name.toLowerCase()) &&
         isListed(repo.name, filter),
