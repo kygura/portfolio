@@ -15,8 +15,8 @@ const FACTS: { label: string; value: string }[] = [
 ];
 
 const ROUTES: { to: string; label: string; note: string }[] = [
-  { to: "/projects", label: "Software", note: "code" },
-  { to: "/writings", label: "Writings", note: "essays" },
+  { to: "/projects", label: "Software", note: "what I've built" },
+  { to: "/writings", label: "Writings", note: "what I think about" },
   { to: "/cv", label: "CV", note: "the formal version" },
 ];
 
@@ -29,12 +29,13 @@ const HomeIntro = () => (
 
       <div className="intro__body">
         <h2 id="intro-title" className="intro__lead">
-          I'm Nicolás. I build software where the model suggests and <em>the system decides</em>.
+          I build agentic systems, market tooling and <em>small tools for the open web</em>.
         </h2>
 
         <p className="intro__text">
-          Agent orchestrators, trading tools, some stablecoin research. Getting a model to answer is easy. Deciding
-          what it's allowed to run, and keeping a log you can still read a month later, is the work.
+          Most of my work sits where language models meet systems that act on what they say: trading desks, many
+          agents running side by side. The part I care about is the line between what a model proposes and what a
+          system is willing to execute.
         </p>
 
         <dl className="intro__facts">
