@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Showcase } from "../../api/github/repos";
+import type { ChatEvent, ChatTurn, Codebase } from "../../api/github/codebase";
 
 export type { CodeMap, CodeMapNode, Showcase, ShowcaseRepo, RepoPreview } from "../../api/github/repos";
 
@@ -63,4 +64,62 @@ export function formatBytes(bytes: number): string {
     unit += 1;
   }
   return `${value < 10 ? value.toFixed(1) : Math.round(value)} ${units[unit]}`;
+}
+
+export type { ChatEvent, ChatTurn, Codebase, CodebaseEntry } from "../../api/github/codebase";
+
+async function fetchCodebase(name: string): Promise<Codebase> {
+  const response = await fetch(`/api/github/codebase?repo=${encodeURIComponent(name)}`);
+  if (!response.ok) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.error ?? `The codebase index responded ${response.status}`);
+  }
+  return response.json();
+}
+
+/** One repo's file tree, pinned to the commit its files are read at. */
+export function useCodebase(name: string) {
+  return useQuery({
+    queryKey: ["github-codebase", name],
+    queryFn: () => fetchCodebase(name),
+    staleTime: 10 * 60_000,
+    retry: 1,
+  });
+}
+
+/** GitHub's raw host serves any public file with open CORS; the commit pins it. */
+export function rawUrl(codebase: Pick<Codebase, "fullName" | "commit">, path: string): string {
+  return `https://raw.githubusercontent.com/${codebase.fullName}/${codebase.commit}/${path.split("/").map(encodeURIComponent).join("/")}`;
+}
+
+/** Asks the codebase a question; events arrive as Claude reads files and writes. */
+export async function askCodebase(
+  repo: string,
+  messages: ChatTurn[],
+  onEvent: (event: ChatEvent) => void,
+  signal?: AbortSignal,
+): Promise<void> {
+  const response = await fetch("/api/github/codebase", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ repo, messages }),
+    signal,
+  });
+  if (!response.ok || !response.body) {
+    const body = await response.json().catch(() => null);
+    throw new Error(body?.error ?? `The chat responded ${response.status}`);
+  }
+  const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+  let buffer = "";
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += value;
+    let newline: number;
+    while ((newline = buffer.indexOf("\n")) >= 0) {
+      const line = buffer.slice(0, newline).trim();
+      buffer = buffer.slice(newline + 1);
+      if (line) onEvent(JSON.parse(line) as ChatEvent);
+    }
+  }
 }

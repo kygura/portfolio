@@ -1,5 +1,8 @@
 {
   "buildCommand": "bun run build",
+  "functions": {
+    "api/github/codebase.ts": { "maxDuration": 300 }
+  },
   "redirects": [
     {
       "source": "/(.*)",

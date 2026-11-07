@@ -2,12 +2,15 @@ import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import { componentTagger } from "lovable-tagger";
 import path from "path";
+import { Readable } from "node:stream";
 import { buildShowcase, parseRepoList, type Showcase } from "./api/github/repos";
+import { handleCodebase } from "./api/github/codebase";
 
 /**
- * Serves /api/github/repos under `vite dev` with the same code the Vercel
- * function runs. The index is cached for ten minutes so reloads stay inside
- * GitHub's unauthenticated rate limit.
+ * Serves /api/github/repos and /api/github/codebase under `vite dev` with the
+ * same code the Vercel functions run. The index is cached for ten minutes so
+ * reloads stay inside GitHub's unauthenticated rate limit; the codebase chat
+ * needs ANTHROPIC_API_KEY, as in production.
  */
 function devGithubApi(): Plugin {
   let cached: { at: number; body: Showcase } | null = null;
@@ -35,6 +38,24 @@ function devGithubApi(): Plugin {
           res.statusCode = 502;
           res.end(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }));
         }
+      });
+      server.middlewares.use("/api/github/codebase", async (req, res) => {
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) chunks.push(chunk as Buffer);
+        const request = new Request(`http://localhost${req.originalUrl ?? req.url}`, {
+          method: req.method,
+          headers: { "content-type": "application/json" },
+          body: req.method === "POST" ? Buffer.concat(chunks) : undefined,
+        });
+        const response = await handleCodebase(request, {
+          user: process.env.GITHUB_USER || "kygura",
+          token: process.env.GITHUB_TOKEN || null,
+          filter,
+        });
+        res.statusCode = response.status;
+        response.headers.forEach((value, key) => res.setHeader(key, value));
+        if (response.body) Readable.fromWeb(response.body as never).pipe(res);
+        else res.end();
       });
     },
   };

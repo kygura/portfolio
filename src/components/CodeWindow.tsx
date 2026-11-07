@@ -1,5 +1,6 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ArrowUpRight, MessageSquare } from "lucide-react";
 import { formatBytes, type CodeMap, type ShowcaseRepo } from "@/lib/showcase";
 import { squarify, type Rect } from "@/lib/treemap";
 
@@ -126,26 +127,92 @@ const CodeMapView = ({ map }: { map: CodeMap }) => {
   );
 };
 
-/** The window for a repo with no site to frame: its source as a map. */
-const CodeWindow = ({ repo, map }: { repo: ShowcaseRepo; map: CodeMap }) => (
-  <div className="repo-window repo-window--code">
-    <div className="repo-window__bar">
-      <span className="repo-window__address">{repo.name}</span>
-      <a
-        href={repo.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="repo-window__open"
-        aria-label={`Open ${repo.name}'s source in a new tab`}
-      >
-        <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
-      </a>
-    </div>
-
-    <div className="repo-window__viewport">
-      <CodeMapView map={map} />
-    </div>
+/** The same folded tree as the map, drawn as a listing: top plots, then their largest children. */
+const CodeTreeView = ({ map }: { map: CodeMap }) => (
+  <div className="code-tree">
+    <ul className="code-tree__list" aria-label={`Files${map.base ? ` under ${map.base}` : ""}`}>
+      {map.base && <li className="code-tree__base">{map.base}</li>}
+      {map.nodes.map((node) => (
+        <li key={node.name}>
+          <span className="code-tree__row" data-dir={Boolean(node.children)}>
+            <span className="code-tree__name">{node.name}</span>
+            <span className="code-tree__size">{formatBytes(node.bytes)}</span>
+          </span>
+          {node.children && node.children.length > 0 && (
+            <ul>
+              {node.children.map((child, i) => (
+                <li key={child.name}>
+                  <span className="code-tree__row" data-dir={child.name.endsWith("/")}>
+                    <span className="code-tree__branch" aria-hidden="true">
+                      {i === node.children!.length - 1 ? "└─" : "├─"}
+                    </span>
+                    <span className="code-tree__name">{child.name}</span>
+                    <span className="code-tree__size">{formatBytes(child.bytes)}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </li>
+      ))}
+    </ul>
   </div>
 );
+
+type Tab = "tree" | "map";
+const TABS: Tab[] = ["tree", "map"];
+
+/**
+ * The window for a repo with no site to frame: its source as a file tree or a
+ * map, and a way into the codebase page where visitors can ask about it.
+ */
+const CodeWindow = ({ repo, map }: { repo: ShowcaseRepo; map: CodeMap }) => {
+  const [tab, setTab] = useState<Tab>("tree");
+
+  return (
+    <div className="repo-window repo-window--code">
+      <div className="repo-window__bar">
+        <span className="repo-window__address">{repo.name}</span>
+        <span className="repo-window__tabs" role="tablist" aria-label={`${repo.name} views`}>
+          {TABS.map((name) => (
+            <button
+              key={name}
+              type="button"
+              role="tab"
+              aria-selected={tab === name}
+              className="repo-window__tab"
+              onClick={() => setTab(name)}
+            >
+              {name}
+            </button>
+          ))}
+        </span>
+        <a
+          href={repo.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="repo-window__open"
+          aria-label={`Open ${repo.name}'s source in a new tab`}
+        >
+          <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+        </a>
+      </div>
+
+      <div className="repo-window__viewport" role="tabpanel">
+        {tab === "tree" ? (
+          <>
+            <CodeTreeView map={map} />
+            <Link to={`/projects/${repo.name}`} className="code-window__ask">
+              <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
+              Ask the codebase
+            </Link>
+          </>
+        ) : (
+          <CodeMapView map={map} />
+        )}
+      </div>
+    </div>
+  );
+};
 
 export default CodeWindow;
