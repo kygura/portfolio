@@ -18,7 +18,7 @@ const RAW_GITHUB = "https://raw.githubusercontent.com";
 /** Mirrors the index's hide topic: a hidden repo cannot be browsed either. */
 const HIDE_TOPIC = "portfolio-hide";
 
-/** Mirrors the index's SHOWCASE_INCLUDE / SHOWCASE_EXCLUDE lists (see repos.ts). */
+/** Mirrors the index's SHOWCASE_INCLUDE / SHOWCASE_EXCLUDE lists (see repos.ts); only the blocklist applies here. */
 export interface RepoFilter {
   include: Set<string>;
   exclude: Set<string>;
@@ -115,7 +115,8 @@ export async function locateCodebase(
   // answer as one that does not exist.
   const key = name.toLowerCase();
   if (!REPO_NAME.test(name) || name.startsWith(".")) throw new NotBrowsable(`No repository named ${name}`);
-  if (filter.exclude.has(key) || (filter.include.size > 0 && !filter.include.has(key))) {
+  // SHOWCASE_INCLUDE only opts private repos into the index, and private repos are refused below.
+  if (filter.exclude.has(key)) {
     throw new NotBrowsable(`No repository named ${name}`);
   }
   const headers = githubHeaders(token);

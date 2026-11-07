@@ -22,8 +22,10 @@ const INTERNAL_TOPICS = new Set([HIDE_TOPIC, FLAGSHIP_TOPIC]);
 
 /**
  * Which repos may appear, set in the environment so the names stay out of
- * this public repo. A non-empty `include` turns the index into an allowlist;
- * `exclude` (and the hide topic) always wins over it.
+ * this public repo. Public repos appear by default; `exclude` (and the hide
+ * topic) keeps one off the page. `include` opts private repos in: listed,
+ * they appear even without a live site, as a code map with no source link.
+ * Exclude always wins.
  */
 export interface RepoFilter {
   include: Set<string>;
@@ -40,11 +42,15 @@ export function parseRepoList(value: string | null | undefined): Set<string> {
   );
 }
 
-/** True when the filter lets this repo name onto the page. */
+/** True when the filter lets this repo name onto the page (exclude only: public repos are in by default). */
 export function isListed(name: string, filter: RepoFilter): boolean {
+  return !filter.exclude.has(name.toLowerCase());
+}
+
+/** True when a private repo was opted in by name, so it may show without a live site. */
+export function isOptedIn(name: string, filter: RepoFilter): boolean {
   const key = name.toLowerCase();
-  if (filter.exclude.has(key)) return false;
-  return filter.include.size === 0 || filter.include.has(key);
+  return filter.include.has(key) && !filter.exclude.has(key);
 }
 
 const NO_FILTER: RepoFilter = { include: new Set(), exclude: new Set() };
@@ -680,8 +686,8 @@ export async function buildShowcase({
 
   // Every deployment is checked first. A repo whose site answers keeps that
   // preview; a public one with no site, or a site that is gone, becomes a
-  // code-only card whose map is fetched below. Private repos need a site:
-  // visitors could open nothing else.
+  // code-only card whose map is fetched below. Private repos need a site
+  // (visitors could open nothing else) unless SHOWCASE_INCLUDE opts them in.
   type Candidate = { repo: GithubRepo; liveUrl: string | null; card: string | null; preview: RepoPreview | null };
   const ranked = rankRepos((await response.json()) as GithubRepo[], user, now, Infinity, selfRepo, filter);
   const candidates = (
@@ -694,7 +700,9 @@ export async function buildShowcase({
           const preview = await previewFor(liveUrl, fallback, fetchImpl);
           if (preview) return { repo, liveUrl, card, preview };
         }
-        return repo.private ? null : { repo, liveUrl: null, card, preview: null };
+        return repo.private && !isOptedIn(repo.name, filter ?? NO_FILTER)
+          ? null
+          : { repo, liveUrl: null, card, preview: null };
       }),
     )
   ).filter((candidate): candidate is Candidate => candidate !== null);
@@ -769,7 +777,8 @@ const describe = ANTHROPIC_API_KEY
   : null;
 
 /**
- * SHOWCASE_INCLUDE: when set, only these repos appear (an allowlist).
+ * Public repos appear by default.
+ * SHOWCASE_INCLUDE: private repos to show even without a live site.
  * SHOWCASE_EXCLUDE: these repos never appear, whatever else says so.
  * Both take names separated by commas or whitespace.
  */

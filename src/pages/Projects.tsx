@@ -18,7 +18,7 @@ const RepoMeta = ({ repo }: { repo: ShowcaseRepo }) => (
 
 const RepoLinks = ({ repo }: { repo: ShowcaseRepo }) => (
   <div className="repo-card__links">
-    {repo.preview.kind === "map" && (
+    {repo.preview.kind === "map" && !repo.private && (
       <Link to={`/projects/${repo.name}`} className="repo-card__link repo-card__link--live">
         <MessageSquare className="w-4 h-4" aria-hidden="true" />
         Talk to the codebase

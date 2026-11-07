@@ -187,25 +187,30 @@ const CodeWindow = ({ repo, map }: { repo: ShowcaseRepo; map: CodeMap }) => {
             </button>
           ))}
         </span>
-        <a
-          href={repo.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="repo-window__open"
-          aria-label={`Open ${repo.name}'s source in a new tab`}
-        >
-          <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
-        </a>
+        {!repo.private && (
+          <a
+            href={repo.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="repo-window__open"
+            aria-label={`Open ${repo.name}'s source in a new tab`}
+          >
+            <ArrowUpRight className="w-3.5 h-3.5" aria-hidden="true" />
+          </a>
+        )}
       </div>
 
       <div className="repo-window__viewport" role="tabpanel">
         {tab === "tree" ? (
           <>
             <CodeTreeView map={map} />
-            <Link to={`/projects/${repo.name}`} className="code-window__ask">
-              <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
-              Ask the codebase
-            </Link>
+            {/* Private source stays private: no page to open. */}
+            {!repo.private && (
+              <Link to={`/projects/${repo.name}`} className="code-window__ask">
+                <MessageSquare className="w-3.5 h-3.5" aria-hidden="true" />
+                Ask the codebase
+              </Link>
+            )}
           </>
         ) : (
           <CodeMapView map={map} />
