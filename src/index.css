@@ -2768,6 +2768,77 @@ kbd {
 
 
 /* ─────────────────────────────────────────────
+   HOME INTRO — first section under the hero
+   ───────────────────────────────────────────── */
+.intro {
+  padding-inline: var(--page-gutter);
+  padding-block: clamp(3.5rem, 10vw, 7rem);
+}
+.intro__inner {
+  max-width: 1000px;
+  margin-inline: auto;
+  display: grid;
+  gap: 1.75rem;
+}
+@media (min-width: 900px) {
+  .intro__inner { grid-template-columns: 11rem 1fr; gap: 2.5rem; }
+}
+.intro__eyebrow {
+  font-family: var(--f-pixel);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+  padding-top: 0.55em;
+}
+.intro__lead {
+  font-family: var(--f-body);
+  font-weight: 400;
+  font-size: clamp(1.6rem, 3.6vw, 2.5rem);
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  max-width: 30ch;
+}
+.intro__lead em { font-style: italic; color: var(--accent); }
+.intro__text {
+  margin-top: 1.25rem;
+  font-family: var(--f-body);
+  font-size: 1.0625rem;
+  line-height: 1.68;
+  color: var(--ink-2);
+  max-width: 60ch;
+}
+.intro__routes {
+  margin-top: 2.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.intro__route {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid var(--rule-2);
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color 0.2s, color 0.2s;
+}
+.intro__route-label { letter-spacing: 0.16em; text-transform: uppercase; }
+.intro__route-note { color: var(--ink-3); }
+.intro__route-arrow { align-self: center; color: var(--ink-3); transition: transform 0.2s, color 0.2s; }
+.intro__route:hover,
+.intro__route:focus-visible { border-color: var(--accent); color: var(--accent); }
+.intro__route:hover .intro__route-arrow,
+.intro__route:focus-visible .intro__route-arrow { color: var(--accent); transform: translateX(3px); }
+@media (prefers-reduced-motion: reduce) {
+  .intro__route-arrow { transition: none; }
+  .intro__route:hover .intro__route-arrow { transform: none; }
+}
+
+/* ─────────────────────────────────────────────
    SCENES — full-bleed stage with a rail of names along the foot
    ───────────────────────────────────────────── */
 .scenes { background: var(--bg); }
