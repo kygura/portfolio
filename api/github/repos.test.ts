@@ -65,7 +65,7 @@ test("flagship is an optional boost: tagged repos lead, untagged ones still show
   const ranked = rankRepos(
     [
       repo("popular", { stargazers_count: 40 }),
-      repo("swarm", { topics: ["flagship"], archived: true }),
+      repo("swarm", { topics: ["flagship"] }),
       repo("polytech", { topics: ["flagship"], private: true, pushed_at: "2026-10-20T00:00:00Z" }),
       repo("quiet"),
     ],
@@ -81,7 +81,7 @@ test("leaves out the site's own repo", () => {
   assert.deepEqual(ranked.map((r) => r.name), ["lexis"]);
 });
 
-test("drops forks, hidden repos and the profile repo, but keeps archived ones", () => {
+test("drops forks, archived repos, hidden repos and the profile repo", () => {
   const ranked = rankRepos(
     [
       repo("keep"),
@@ -94,7 +94,7 @@ test("drops forks, hidden repos and the profile repo, but keeps archived ones", 
     NOW,
     10,
   );
-  assert.deepEqual(ranked.map((r) => r.name), ["keep", "archived"]);
+  assert.deepEqual(ranked.map((r) => r.name), ["keep"]);
 });
 
 test("repo lists ignore case, owner prefixes and separators", () => {
