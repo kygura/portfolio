@@ -157,6 +157,10 @@ function renderLlmsTxt(posts: PostSummary[], origin: string): string {
     "Every post is available as raw markdown with YAML frontmatter at",
     "`/writings/<slug>.md`. The full list, with metadata, is at `/writings.json`.",
     "",
+    "## About",
+    "",
+    `- [Curriculum Vitae](${origin}/cv.md): experience, projects, education and skills of Nicolas Cerrato Anton`,
+    "",
     "## Posts",
     "",
     ...posts.map((post) => {
