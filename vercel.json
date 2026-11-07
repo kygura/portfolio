@@ -24,7 +24,7 @@
       "has": [{ "type": "header", "key": "accept", "value": "(.*)text/markdown(.*)" }],
       "destination": "/cv.md"
     },
-    { "source": "/cv/?", "destination": "/cv.html" },
+    { "source": "/cv", "destination": "/cv.html" },
     { "source": "/((?!assets/).*)", "destination": "/index.html" }
   ],
   "crons": [{ "path": "/api/notion/sync", "schedule": "0 5 * * *" }]
