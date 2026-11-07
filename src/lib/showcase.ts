@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import type { Showcase } from "../../api/github/repos";
-import type { TerminalSession } from "../../api/github/terminal";
 
 export type { CodeMap, CodeMapNode, Showcase, ShowcaseRepo, RepoPreview } from "../../api/github/repos";
 
@@ -51,30 +50,6 @@ export function displayHost(url: string): string {
   } catch {
     return url;
   }
-}
-
-export type { TerminalSession, TerminalStep } from "../../api/github/terminal";
-
-/** The repo's push time rides along so the CDN copy turns over with the repo. */
-async function fetchTerminal(name: string, pushedAt: string): Promise<TerminalSession> {
-  const params = new URLSearchParams({ repo: name, rev: String(Date.parse(pushedAt) || 0) });
-  const response = await fetch(`/api/github/terminal?${params}`);
-  if (!response.ok) {
-    const body = await response.json().catch(() => null);
-    throw new Error(body?.error ?? `The terminal responded ${response.status}`);
-  }
-  return response.json();
-}
-
-/** A generated session, fetched only once someone opens the terminal tab. */
-export function useTerminal(name: string, pushedAt: string, enabled: boolean) {
-  return useQuery({
-    queryKey: ["github-terminal", name, pushedAt],
-    queryFn: () => fetchTerminal(name, pushedAt),
-    enabled,
-    staleTime: Infinity,
-    retry: false,
-  });
 }
 
 /** "12.4 KB", "1.2 MB": sizes for the map's labels. */

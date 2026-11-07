@@ -122,8 +122,6 @@ export interface ShowcaseRepo {
 export interface Showcase {
   user: string;
   generatedAt: string;
-  /** Code-only cards can replay a generated session from /api/github/terminal. */
-  terminal: boolean;
   repos: ShowcaseRepo[];
 }
 
@@ -149,8 +147,6 @@ interface ShowcaseOptions {
   limit?: number;
   now?: Date;
   fetchImpl?: Fetch;
-  /** Whether the terminal endpoint can generate sessions (it needs a model key). */
-  terminal?: boolean;
 }
 
 const DAY_MS = 86_400_000;
@@ -665,7 +661,6 @@ export async function buildShowcase({
   limit = 9,
   now = new Date(),
   fetchImpl = fetch,
-  terminal = false,
 }: ShowcaseOptions): Promise<Showcase> {
   const headers: Record<string, string> = {
     accept: "application/vnd.github+json",
@@ -746,7 +741,7 @@ export async function buildShowcase({
     }),
   );
 
-  return { user, generatedAt: now.toISOString(), terminal, repos };
+  return { user, generatedAt: now.toISOString(), repos };
 }
 
 /** GitHub account whose repositories make up the software index. */
@@ -776,8 +771,7 @@ const describe = ANTHROPIC_API_KEY
 /**
  * SHOWCASE_INCLUDE: when set, only these repos appear (an allowlist).
  * SHOWCASE_EXCLUDE: these repos never appear, whatever else says so.
- * Both take names separated by commas or whitespace. The terminal endpoint
- * reads the same two variables, so a left-out repo cannot be scripted either.
+ * Both take names separated by commas or whitespace.
  */
 const FILTER: RepoFilter = {
   include: parseRepoList(process.env.SHOWCASE_INCLUDE),
@@ -802,7 +796,6 @@ export async function GET(): Promise<Response> {
       user: GITHUB_USER,
       token: GITHUB_TOKEN,
       describe,
-      terminal: ANTHROPIC_API_KEY !== null,
       // Vercel's system env names the repo each deployment builds from.
       selfRepo: process.env.VERCEL_GIT_REPO_SLUG,
       filter: FILTER,

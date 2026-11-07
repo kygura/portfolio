@@ -40,16 +40,16 @@ const RepoLinks = ({ repo }: { repo: ShowcaseRepo }) => (
   </div>
 );
 
-type RepoCardProps = { repo: ShowcaseRepo; index: number; featured?: boolean; terminal: boolean };
+type RepoCardProps = { repo: ShowcaseRepo; index: number; featured?: boolean };
 
-const RepoCard = ({ repo, index, featured, terminal }: RepoCardProps) => (
+const RepoCard = ({ repo, index, featured }: RepoCardProps) => (
   <article
     id={`repo-${repo.name}`}
     className={`repo-card${featured ? " repo-card--featured" : ""}`}
     style={{ animationDelay: `${index * 80}ms` }}
   >
     <div className="repo-card__preview">
-      <RepoPreview repo={repo} terminal={terminal} />
+      <RepoPreview repo={repo} />
     </div>
 
     <div className="repo-card__body">
@@ -113,9 +113,9 @@ const Projects = () => {
 
       {lead && (
         <div className="repo-grid">
-          <RepoCard repo={lead} index={0} featured terminal={Boolean(data?.terminal)} />
+          <RepoCard repo={lead} index={0} featured />
           {rest.map((repo, i) => (
-            <RepoCard key={repo.fullName} repo={repo} index={i + 1} terminal={Boolean(data?.terminal)} />
+            <RepoCard key={repo.fullName} repo={repo} index={i + 1} />
           ))}
         </div>
       )}

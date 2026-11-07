@@ -8,12 +8,6 @@ import { displayHost, type ShowcaseRepo } from "@/lib/showcase";
 const FRAME_WIDTH = 1280;
 const FRAME_HEIGHT = 800;
 
-type RepoPreviewProps = {
-  repo: ShowcaseRepo;
-  /** Code-only windows offer a generated terminal session. */
-  terminal?: boolean;
-};
-
 /**
  * A browser window onto the repo's deployment. Sites that allow framing load
  * live once scrolled near, but inert: the window is a link that opens the
@@ -145,10 +139,10 @@ const SiteWindow = ({ repo }: { repo: ShowcaseRepo }) => {
   );
 };
 
-/** The live site when there is one; otherwise the source, as a map and a terminal. */
-const RepoPreview = ({ repo, terminal = false }: RepoPreviewProps) =>
+/** The live site when there is one; otherwise a map of the source. */
+const RepoPreview = ({ repo }: { repo: ShowcaseRepo }) =>
   repo.preview.kind === "map" ? (
-    <CodeWindow repo={repo} map={repo.preview.map} terminal={terminal} />
+    <CodeWindow repo={repo} map={repo.preview.map} />
   ) : (
     <SiteWindow repo={repo} />
   );
