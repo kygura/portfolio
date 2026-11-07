@@ -9,6 +9,7 @@ import {
   createDescriber,
   findSocialImage,
   isListed,
+  isOptedIn,
   languageOf,
   liveUrlFor,
   parseRepoList,
@@ -102,7 +103,7 @@ test("repo lists ignore case, owner prefixes and separators", () => {
   assert.equal(parseRepoList(" , ").size, 0);
 });
 
-test("an include list makes the index an allowlist; exclude always wins", () => {
+test("public repos are in by default; exclude and the hide topic keep one off", () => {
   const all = [repo("lexis"), repo("tally"), repo("secret"), repo("draft", { topics: ["portfolio-hide"] })];
   const names = (include: string, exclude: string) =>
     rankRepos(all, "kygura", NOW, 10, null, { include: parseRepoList(include), exclude: parseRepoList(exclude) })
@@ -110,10 +111,12 @@ test("an include list makes the index an allowlist; exclude always wins", () => 
       .sort();
   assert.deepEqual(names("", ""), ["lexis", "secret", "tally"]);
   assert.deepEqual(names("", "secret"), ["lexis", "tally"]);
-  assert.deepEqual(names("lexis, Tally", ""), ["lexis", "tally"]);
-  assert.deepEqual(names("lexis,tally", "tally"), ["lexis"]);
-  assert.deepEqual(names("draft", ""), []); // the hide topic still wins
-  assert.equal(isListed("LEXIS", { include: parseRepoList("lexis"), exclude: new Set() }), true);
+  assert.deepEqual(names("lexis", ""), ["lexis", "secret", "tally"]); // include no longer narrows the list
+  assert.deepEqual(names("tally", "tally"), ["lexis", "secret"]);
+  assert.deepEqual(names("draft", ""), ["lexis", "secret", "tally"]); // the hide topic still wins
+  assert.equal(isListed("LEXIS", { include: new Set(), exclude: parseRepoList("lexis") }), false);
+  assert.equal(isOptedIn("Vessel", { include: parseRepoList("vessel"), exclude: new Set() }), true);
+  assert.equal(isOptedIn("vessel", { include: parseRepoList("vessel"), exclude: parseRepoList("vessel") }), false);
 });
 
 test("live URL prefers the homepage, then GitHub Pages", () => {
@@ -144,7 +147,7 @@ test("finds og:image in either attribute order and resolves relative URLs", () =
   assert.equal(findSocialImage("<title>none</title>", "https://site.dev"), null);
 });
 
-test("deployments keep their preview; code-only and dead sites map their source, private ones drop", async () => {
+test("deployments keep their preview; code-only and dead sites map their source, private ones drop unless opted in", async () => {
   const fetchImpl = (async (input: string | URL | Request) => {
     const url = String(input);
     if (url === "https://api.github.com/repos/kygura/framed/readme") {
@@ -165,7 +168,7 @@ test("deployments keep their preview; code-only and dead sites map their source,
       ]);
     }
     if (url.includes("/git/trees/")) {
-      if (!url.includes("/code-only/") && !url.includes("/parked/")) return new Response("", { status: 404 });
+      if (!/\/(code-only|parked|private-code)\//.test(url)) return new Response("", { status: 404 });
       return Response.json({ tree: [{ path: "src/main.rs", type: "blob", size: 900 }, { path: "README.md", type: "blob", size: 100 }] });
     }
     if (url.startsWith("https://framed.dev")) return new Response("<html></html>");
@@ -198,6 +201,18 @@ test("deployments keep their preview; code-only and dead sites map their source,
   assert.match(previews.plain.src ?? "", /^https:\/\/opengraph\.githubassets\.com\/\d+\/kygura\/plain$/);
   assert.deepEqual(previews.slow, { kind: "frame", src: "https://slow.dev/" }); // a slow site is still framed
   assert.deepEqual(previews["private-app"], { kind: "none" }); // GitHub has no public card for it
+
+  // Opted in by name, a private repo with no site shows as a code map.
+  const optedIn = await buildShowcase({
+    user: "kygura",
+    now: NOW,
+    fetchImpl,
+    filter: { include: parseRepoList("private-code"), exclude: new Set() },
+  });
+  const privateCode = optedIn.repos.find((r) => r.name === "private-code");
+  assert.equal(privateCode?.preview.kind, "map");
+  assert.equal(privateCode?.private, true);
+  assert.equal(privateCode?.card, null);
 });
 
 test("the cap fills in rank order, and a repo with nothing to map gives up its place", async () => {

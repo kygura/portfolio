@@ -140,7 +140,7 @@ test("left-out repos look exactly like missing ones, and GitHub is never asked a
   const answers = [];
   for (const filter of [
     { include: new Set<string>(), exclude: parseRepoList("tally") },
-    { include: parseRepoList("lexis"), exclude: new Set<string>() },
+    { include: parseRepoList("tally"), exclude: parseRepoList("Tally") },
   ]) {
     const response = await handleTerminal(request("tally"), store, { user: "kygura", filter, fetchImpl: github({}, seen) });
     answers.push([response.status, await response.json()]);
@@ -157,7 +157,7 @@ test("left-out repos look exactly like missing ones, and GitHub is never asked a
 
   const allowed = await handleTerminal(request("tally"), store, {
     user: "kygura",
-    filter: { include: parseRepoList("Tally"), exclude: new Set() },
+    filter: { include: parseRepoList("lexis"), exclude: new Set() }, // public repos need no include
     fetchImpl: github(),
   });
   assert.equal(allowed.status, 200);
