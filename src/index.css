@@ -2561,45 +2561,15 @@ kbd {
 }
 .intro__lead em { font-style: italic; color: var(--accent); }
 .intro__text {
-  margin-top: 1.5rem;
+  margin-top: 1.25rem;
   font-family: var(--f-body);
   font-size: 1.0625rem;
   line-height: 1.68;
   color: var(--ink-2);
   max-width: 60ch;
 }
-.intro__facts {
-  margin-top: 2.5rem;
-  display: grid;
-  border-top: 1px solid var(--rule);
-}
-@media (min-width: 640px) {
-  .intro__facts { grid-template-columns: repeat(3, 1fr); }
-}
-.intro__fact {
-  padding: 0.9rem 0;
-  border-bottom: 1px solid var(--rule);
-}
-@media (min-width: 640px) {
-  .intro__fact { padding: 0.9rem 1rem; }
-  .intro__fact:first-child { padding-left: 0; }
-  .intro__fact + .intro__fact { border-left: 1px solid var(--rule); }
-}
-.intro__fact dt {
-  font-family: var(--f-mono);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.intro__fact dd {
-  margin-top: 0.35rem;
-  font-family: var(--f-body);
-  font-size: 0.975rem;
-  color: var(--ink);
-}
 .intro__routes {
-  margin-top: 2.5rem;
+  margin-top: 2.25rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;

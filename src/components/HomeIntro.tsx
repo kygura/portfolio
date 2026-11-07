@@ -1,18 +1,11 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
-import { cv } from "../../content/cv";
 
 /**
- * Home intro: the first thing under the hero. A short first-person note on
- * who builds the site and what the work is about, a ledger of plain facts,
- * and the three routes worth reading next.
+ * Home intro: the first thing under the hero. A short personal note drawn
+ * from the essays (no stack, no credentials: those live on /cv), then the
+ * three routes worth reading next.
  */
-
-const FACTS: { label: string; value: string }[] = [
-  { label: "Based", value: cv.contact.location },
-  { label: "Works in", value: "TypeScript · Python · Solidity" },
-  { label: "Trained", value: "Computer Engineering, Spain & Germany" },
-];
 
 const ROUTES: { to: string; label: string; note: string }[] = [
   { to: "/projects", label: "Software", note: "what I've built" },
@@ -29,23 +22,20 @@ const HomeIntro = () => (
 
       <div className="intro__body">
         <h2 id="intro-title" className="intro__lead">
-          I build agentic systems, market tooling and <em>small tools for the open web</em>.
+          I chose <em>surface area over depth</em>.
         </h2>
 
         <p className="intro__text">
-          Most of my work sits where language models meet systems that act on what they say: trading desks, many
-          agents running side by side. The part I care about is the line between what a model proposes and what a
-          system is willing to execute.
+          I was a fast kid who quit sprinting the moment training got dull. The pattern stuck: go wide, move on, keep
+          the options open. It's why I can live anywhere and work across too many fields. It has also cost me every
+          future I didn't commit to.
         </p>
 
-        <dl className="intro__facts">
-          {FACTS.map((f) => (
-            <div key={f.label} className="intro__fact">
-              <dt>{f.label}</dt>
-              <dd>{f.value}</dd>
-            </div>
-          ))}
-        </dl>
+        <p className="intro__text">
+          Most of what I write circles one idea: anything built to set people free becomes the next thing they need
+          freeing from. I build software anyway, knowing mine will go the same way. Lately I'm trying to chase less
+          and look around more.
+        </p>
 
         <nav className="intro__routes" aria-label="Start here">
           {ROUTES.map((r) => (
