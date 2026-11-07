@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "bun scripts/build-writings.ts --offline && vite",
-    "build": "bun scripts/build-writings.ts && vite build",
-    "build:dev": "bun scripts/build-writings.ts --offline && vite build --mode development",
+    "build": "bun scripts/build-writings.ts && vite build && bun scripts/build-cv.ts",
+    "build:dev": "bun scripts/build-writings.ts --offline && vite build --mode development && bun scripts/build-cv.ts",
     "lint": "eslint .",
     "preview": "vite preview",
     "sync-posts": "bun scripts/build-writings.ts",
