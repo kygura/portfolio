@@ -127,13 +127,14 @@ void main(){
   gl_FragColor = vec4(c, 1.0);
 }`;
 
+// Not vertex-snapped: the floor is one huge quad, and snapping corners that sit behind the
+// camera tilts the whole plane up over anything standing low in the water.
 const FLOOR_V = `
-uniform vec2 uSnap; varying vec3 vWP; varying float vDepth;
+varying vec3 vWP; varying float vDepth;
 void main(){
   vec4 wp = modelMatrix * vec4(position, 1.0); vWP = wp.xyz;
-  vec4 mv = viewMatrix * wp; vec4 p = projectionMatrix * mv;
-  ${SNAP}
-  gl_Position = p; vDepth = -mv.z;
+  vec4 mv = viewMatrix * wp;
+  gl_Position = projectionMatrix * mv; vDepth = -mv.z;
 }`;
 // Glitter sea or checker tiles over the mirror world; thinner (more reflective) at grazing angles.
 const FLOOR_F = `${RAY_GLSL}
@@ -272,7 +273,7 @@ export function createRay(kit: PsxKit, scene: THREE.Scene, pal: RayPalette) {
         transparent: true,
         depthWrite: false,
         uniforms: {
-          ...skyU, uSnap: kit.U.uSnap, uIce: iceU, uSea: seaU, uFog: fogU, uTime: kit.U.uTime,
+          ...skyU, uIce: iceU, uSea: seaU, uFog: fogU, uTime: kit.U.uTime,
           uFogNear: { value: o.fogNear ?? 60 }, uFogFar: { value: o.fogFar ?? 330 },
           uChecker: checkerU, uGloss: { value: o.gloss ?? 1 }, uFlow: { value: o.flow ?? 1 },
         },

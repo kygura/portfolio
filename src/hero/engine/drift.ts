@@ -1,201 +1,134 @@
-/** Sheet · Drift: a dream, seen side-on. Far out on a still sea, a long train
- *  crosses the horizon on rails a hand's breadth under the surface. The sea is
- *  a mirror: everything above the waterline is drawn a second time, flipped
- *  through it, under a thin murk with slow ripple streaks. Sharp towers stand
- *  in it at every distance (shards, splayed clusters, slant-cut blades, broken
- *  stacks, obelisks), with half-sunk debris at their feet, rings, door frames
- *  and stairs to nowhere, and stone hanging in the air. Beyond the line,
- *  islands float upside down under a low sun that never sets.
+/** Sheet · Drift: a dream, seen side-on, as an early raytracer would draw it.
+ *  Far out on a mirror sea under a plum-to-lilac sky, a long lit train crosses
+ *  the horizon on rails a hand's breadth under the surface. Shard towers stand
+ *  in the water at every distance, chrome rings rise half out of it and door
+ *  frames open onto nothing; stones hang in the air, islands float upside down
+ *  beyond the line, and a low sun never sets. Everything doubles in the sea.
  *
- *  The palette is fixed (dusk lilac and peach); only the seams in the towers
- *  and the drifting motes take the site accent.
+ *  The palette is fixed (plum, lilac and pink), not the site accent.
  *  Tap the cab to sound the horn, a middle car to put its lights out, the tail
  *  lamp to swing it, the sun to flare it. */
 import * as THREE from "three";
-import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { pulse, type PsxKit, type SceneDef } from "./psx";
-import { createWaste, type WasteBatch } from "./wasteland";
+import { createRay } from "./ray";
 
-const P = {
-  zen: "#2c3566",
-  mid: "#8a82ba",
-  hor: "#f4d6c6",
-  fog: "#e4c8ca",
-  sun: "#fff7ea",
-  sunGlow: "#ffc4a2",
-  deep: "#323f68",
-  foam: "#f6eeea",
-  lamp: "#ffdfa6",
-  tail: "#ff5c4c",
-};
-
+const LAMP = "#ffe2a8", TAIL = "#ff5c5c";
 /** Train speed, m/s, and the line it runs on, far out from the eye. */
 const V = 8;
 const TZ = -140;
 
-const NOISE = `
-float h2(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-  return mix(mix(h2(i), h2(i + vec2(1.0, 0.0)), f.x), mix(h2(i + vec2(0.0, 1.0)), h2(i + vec2(1.0, 1.0)), f.x), f.y); }`;
-
-// The sea mirrors the sky, so the dome below the horizon is the dome above it.
-const SKY_V = `varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
-const SKY_F = `
-uniform vec3 uZen; uniform vec3 uMid; uniform vec3 uHor; uniform vec3 uGlow; uniform vec3 uSunDir; uniform float uFlare; uniform float uTime; varying vec3 vDir;
-float hash(vec3 p){ return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
-void main(){
-  vec3 d = normalize(vDir); vec3 m = vec3(d.x, abs(d.y), d.z); float h = m.y;
-  vec3 c = mix(uHor, uMid, smoothstep(0.0, 0.17, h));
-  c = mix(c, uZen, smoothstep(0.15, 0.8, h));
-  float s = max(dot(m, normalize(vec3(uSunDir.x, abs(uSunDir.y), uSunDir.z))), 0.0);
-  c += uGlow * (pow(s, 5.0) * 0.26 + pow(s, 48.0) * 0.4) * (1.0 + uFlare * 1.6);
-  c += uGlow * exp(-h * 34.0) * 0.16;
-  vec3 q = floor(m * 140.0); float st = hash(q);
-  c += vec3(step(0.9965, st) * smoothstep(0.3, 0.65, h) * (0.45 + 0.55 * sin(uTime * 1.3 + st * 60.0))) * 0.6;
-  gl_FragColor = vec4(c, 1.0);
-}`;
-
-// The surface: a thin murk over the mirror world, thickening into haze toward the horizon,
-// with ripple streaks, the sun's glitter, the train's foam and wake, and the headlamp's pool.
-// Unsnapped: it is one quad, and snapping a vertex far behind the lens throws the whole plane.
-const SEA_V = `
-varying vec3 vWP; varying float vDepth;
-void main(){ vec4 wp = modelMatrix * vec4(position, 1.0); vWP = wp.xyz; vec4 mv = viewMatrix * wp; gl_Position = projectionMatrix * mv; vDepth = -mv.z; }`;
-const SEA_F = `
-uniform float uTime; uniform vec3 uDeep; uniform vec3 uFog; uniform vec3 uFoam; uniform vec3 uLamp; uniform vec3 uGlow;
-uniform float uFogNear; uniform float uFogFar; uniform vec3 uTrain; uniform vec3 uHorn; uniform vec2 uSunXZ; uniform float uLampAmt;
-varying vec3 vWP; varying float vDepth;
-${NOISE}
-void main(){
-  vec2 w = vWP.xz + vec2(uTime * 0.6, 0.0);
-  float fg = smoothstep(uFogNear, uFogFar, vDepth);
-  vec3 c = mix(uDeep, uFog, fg);
-  float a = mix(0.46, 1.0, fg);
-  float nearK = 1.0 - smoothstep(25.0, 160.0, vDepth);
-
-  // Ripple streaks: long lines across the view, wobbling as a slow swell passes under them.
-  float wob = vn(vec2(w.x * 0.04, w.y * 0.25) + uTime * 0.04) * 2.2;
-  float band = fract(w.y * 0.42 + wob + sin(w.x * 0.07 + uTime * 0.35) * 0.12);
-  float streak = smoothstep(0.07, 0.0, abs(band - 0.5)) * (0.35 + 0.65 * vn(w * vec2(0.18, 1.0) + uTime * 0.08)) * nearK;
-  c = mix(c, uFoam, streak * 0.3);
-  a = max(a, streak * 0.45);
-
-  // Glitter on the line from the eye to the sun.
-  vec2 eye = cameraPosition.xz, dir = normalize(uSunXZ - eye), rel = vWP.xz - eye;
-  float along = dot(rel, dir), perp = abs(rel.x * dir.y - rel.y * dir.x);
-  float col = exp(-pow(perp / (0.8 + max(along, 0.0) * 0.07), 2.0)) * step(0.0, along);
-  float spark = step(0.82, h2(floor(w * vec2(1.4, 3.0)) + floor(uTime * 5.0)));
-  c += uGlow * col * (0.25 + spark * 0.9);
-  a = max(a, col * spark * 0.8);
-
-  // The train: churn along both sides, a widening V and a trail behind the last car.
-  float side = abs(vWP.z - uTrain.z), behind = uTrain.x - vWP.x;
-  vec2 tw = vec2(vWP.x - uTrain.x, vWP.z);
-  float churn = smoothstep(0.35, 0.75, vn(tw * vec2(0.9, 2.6) + vec2(uTime * 4.0, uTime * 0.7)));
-  float hull = step(uTrain.x, vWP.x) * step(vWP.x, uTrain.y + 0.8) * smoothstep(2.5, 1.35, side);
-  float arm = step(0.0, behind) * smoothstep(0.45 + behind * 0.03, 0.0, abs(side - 1.4 - behind * 0.3)) * exp(-behind * 0.03);
-  float trail = step(0.0, behind) * smoothstep(1.6, 0.3, side) * exp(-behind * 0.05);
-  float foam = clamp(hull * 0.9 + arm + trail * 0.7, 0.0, 1.0) * churn;
-  c = mix(c, uFoam, foam * 0.85);
-  a = max(a, foam * 0.85);
-
-  // Headlamp pool ahead of the cab.
-  float ahead = vWP.x - uTrain.y;
-  float pool = exp(-pow((ahead - 8.0) / 6.5, 2.0)) * exp(-side * side / 5.0) * step(0.0, ahead) * uLampAmt;
-  c += uLamp * pool * 0.55;
-  a = max(a, pool * 0.6);
-
-  // Horn: rings running out over the water from the cab.
-  if (uHorn.z > 0.0 && uHorn.z < 4.0) {
-    float r = length(vWP.xz - uHorn.xy), k = 1.0 - uHorn.z / 4.0;
-    float ring = smoothstep(1.2, 0.0, abs(r - uHorn.z * 16.0)) + smoothstep(1.2, 0.0, abs(r - (uHorn.z - 0.6) * 16.0)) * step(0.6, uHorn.z);
-    c = mix(c, uFoam, ring * k * 0.7);
-    a = max(a, ring * k * 0.7);
-  }
-  gl_FragColor = vec4(c, clamp(a, 0.0, 1.0));
-}`;
-
 export function buildDrift(kit: PsxKit): SceneDef {
-  const { U, rnd, facet, tex, view } = kit;
+  const { rnd, facet, view } = kit;
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(50, 16 / 9, 0.3, 3200);
-  const fog: [number, number] = [30, 420];
+  const R = createRay(kit, scene, {
+    zen: "#3a1450", mid: "#ae8ad0", low: "#f6c2d6", hor: "#fff6f8", fog: "#f4dce8",
+    ice: "#f6dcf2", sea: "#8a68a2", ink: "#2a1238", light: [0.75, 0.35, 0.45],
+  });
+  // One huge quad: unsnapped, or its corners behind the lens tilt the whole plane.
+  R.floor({ size: 3000, fogNear: 140, fogFar: 900 });
+  const between = (a: number, b: number) => a + rnd() * (b - a);
+  const box = (w: number, h: number, d: number) => facet(new THREE.BoxGeometry(w, h, d));
 
-  const fogU = { value: new THREE.Color(P.fog) };
-  // Kit materials, re-pointed at this scene's own fog so the accent switch leaves the palette alone.
-  const own = <M extends THREE.ShaderMaterial>(m: M) => {
-    m.uniforms.uFogColor = fogU;
-    return m;
+  const amb = "#24082e";
+  const mat = {
+    shard: R.flat({ tint: "#f2d8f0", amb, sun: "#ffffff" }),
+    shard2: R.flat({ tint: "#c8a0d8", amb: "#1c0628", sun: "#fff4fa" }),
+    far: R.flat({ tint: "#d8b8e0", amb: "#6a4a88", sun: "#fff0f6", fogAmt: 1 }),
+    stone: R.flat({ tint: "#ffd8e0", amb: "#3a1440", sun: "#ffffff" }),
+    body: R.flat({ tint: "#c83a5a", amb: "#3a0820", sun: "#fff0f0" }),
+    cream: R.flat({ tint: "#fff4e4", amb: "#4a3050" }),
+    roof: R.flat({ tint: "#6a4a80", amb: "#1a0828" }),
+    iron: R.flat({ tint: "#3a2c48", amb: "#140a1c" }),
+    win: R.flat({ tint: "#000000", amb: "#000000", sun: "#000000", emit: LAMP, emitAmt: 1, fogAmt: 0.3 }),
+    pax: R.flat({ tint: "#1c1028", amb: "#1c1028", sun: "#000000", fogAmt: 0.3 }),
+    lamp: R.flat({ tint: "#000000", emit: LAMP, emitAmt: 1.4, fogAmt: 0.2 }),
+    tail: R.flat({ tint: "#000000", emit: TAIL, emitAmt: 1.2, fogAmt: 0.2 }),
   };
-  // Unlit and a little over-bright: lamps, lit windows and the figures against them.
-  const glow = <M extends THREE.ShaderMaterial>(m: M, k = 1.35) => {
-    m.uniforms.uAmbient.value.setScalar(k);
-    return own(m);
+  for (const m of [mat.shard, mat.shard2, mat.stone, mat.body, mat.cream]) (m.uniforms.uSun.value as THREE.Color).multiplyScalar(1.5);
+
+  /* A batch of static parts, merged per material, then put in the world and in its mirror. */
+  const twin = <T extends THREE.Object3D>(o: T) => {
+    R.world.add(o);
+    const c = o.clone() as T;
+    R.mirror.add(c);
+    return [o, c] as const;
   };
-  const lit = { amb: "#5a5880", sun: "#ffd8c6" };
-  const mSpire = own(kit.psx({ map: tex.tStone, tint: "#7c7a9c", ...lit }));
-  const mSpire2 = own(kit.psx({ map: tex.tPlain, tint: "#50527a", ...lit }));
-  const mGlass = own(kit.psx({ map: tex.tGlass, tint: "#9aa4c6", ...lit }));
-  const mFar = own(kit.psx({ map: tex.tPlain, tint: "#6c6690", fogAmt: 0.8, ...lit }));
-  const mDebris = own(kit.psx({ map: tex.tStone, tint: "#aa9ea8", ...lit }));
-  const mRust = own(kit.psx({ map: tex.tBark, tint: "#a06c5c", ...lit }));
-  const mCloud = glow(kit.psx({ map: tex.tPlain, tint: "#f8e8ea", sun: "#000000", fogAmt: 0.45 }), 1.1);
-  const mSeam = own(kit.psx({ map: tex.tPlain, tint: "#000000", emit: 1, fogAmt: 0.35 }));
-  const tl = { amb: "#6c6478", sun: "#ffe2cc" };
-  const mBody = own(kit.psx({ map: tex.tPlain, tint: "#8e3040", ...tl }));
-  const mCream = own(kit.psx({ map: tex.tPlain, tint: "#f0e4cc", ...tl }));
-  const mRoof = own(kit.psx({ map: tex.tPlain, tint: "#4c4460", ...tl }));
-  const mIron = own(kit.psx({ map: tex.tPlain, tint: "#2c2a38", ...tl }));
-  const mMetal = own(kit.psx({ map: tex.tPlain, tint: "#a6a2b4", ...tl }));
-  const mWin = glow(kit.psx({ map: tex.tPlain, tint: P.lamp, sun: "#000000", fogAmt: 0.3 }));
-  const mLamp = glow(kit.psx({ map: tex.tPlain, tint: P.lamp, sun: "#000000", fogAmt: 0.3 }), 1.6);
-  const mPax = glow(kit.psx({ map: tex.tPlain, tint: "#1c1828", sun: "#000000", fogAmt: 0.3 }), 1);
-  const mTail = glow(kit.psx({ map: tex.tPlain, tint: P.tail, sun: "#000000", fogAmt: 0.3 }), 1.4);
-  const additive = (color: string, opacity: number) =>
-    new THREE.MeshBasicMaterial({ color, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
-
-  const W = createWaste(kit, { debris: mDebris, rust: mRust, seam: mSeam });
-  const { between, box } = W;
-
-  /* ---- sky: its own dome, wide enough for the horizon spires, following the camera ---- */
-  const SUN = new THREE.Vector3(330, 64, -1280);
-  const sunDir = new THREE.Vector3();
-  const skyU = {
-    uZen: { value: new THREE.Color(P.zen) }, uMid: { value: new THREE.Color(P.mid) }, uHor: { value: new THREE.Color(P.hor) },
-    uGlow: { value: new THREE.Color(P.sunGlow) }, uSunDir: { value: sunDir }, uFlare: { value: 0 }, uTime: U.uTime,
+  const bake = (b: ReturnType<PsxKit["batcher"]>) => {
+    const g = new THREE.Group();
+    b.flush(g);
+    return twin(g);
   };
-  const sky = new THREE.Mesh(
-    new THREE.SphereGeometry(1500, 24, 16),
-    new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, uniforms: skyU, vertexShader: SKY_V, fragmentShader: SKY_F }),
-  );
-  sky.renderOrder = -1;
-  scene.add(sky);
 
-  // Everything above the waterline goes in `above`; a copy flipped through y = 0 is its reflection.
-  const above = new THREE.Group();
-  scene.add(above);
-  const sun = kit.sunDisc(above, SUN.x, SUN.y, SUN.z, 38, P.sun, P.sunGlow);
-
-  /* ---- the sea of spires, cut at the waterline ---- */
-  {
-    const b = W.batch(0);
-    const sx = (half: number) => (rnd() - 0.5) * 2 * half;
-    // Near: debris low in the water at the eye's feet.
-    for (let i = 0; i < 10; i++) W.junk(b, sx(30), 0, between(-2, 20), between(0.3, 0.7));
-    // Between the eye and the line: a few towers the train passes behind, and wreckage.
-    for (let i = 0; i < 12; i++) W.spire(b, sx(130), 0, between(-24, -112), between(5, 24), [mSpire, mSpire2], true);
-    for (let i = 0; i < 26; i++) W.junk(b, sx(130), 0, between(-6, -125), between(0.6, 1.8));
-    // Beyond the line: a denser stand, low cloud between, small islands overhead.
-    for (let i = 0; i < 42; i++) W.spire(b, sx(430), 0, between(-170, -330), between(18, 90), [mSpire, mSpire2, mGlass], true);
-    for (let i = 0; i < 6; i++) b.add(W.cloud(between(30, 60)), mCloud, sx(400), between(8, 26), between(-200, -340));
-    for (let i = 0; i < 5; i++) b.add(W.island(between(4, 9)), mSpire, sx(380), between(30, 80), between(-180, -300), 0, rnd() * 3, 0);
-    // Horizon: tall hazed silhouettes, the high cloud and the big islands.
-    for (let i = 0; i < 40; i++) W.spire(b, sx(960), 0, between(-420, -700), between(50, 200), [mFar], false);
-    for (let i = 0; i < 12; i++) b.add(W.cloud(between(60, 160)), mCloud, sx(960), between(50, 200), between(-440, -700));
-    for (let i = 0; i < 6; i++) b.add(W.island(between(14, 38)), mFar, sx(900), between(90, 240), between(-380, -620), 0, rnd() * 3, 0);
-    b.flush(above);
+  /* ---- the sea of shards, rings and door frames ---- */
+  const sx = (half: number) => (rnd() - 0.5) * 2 * half;
+  const wb = kit.batcher();
+  const cones: [number, number, number, number][] = [];
+  const shard = (x: number, z: number, h: number, m: THREE.Material, shadow = false) => {
+    const r = h * between(0.07, 0.13), kind = rnd();
+    if (kind < 0.5) {
+      // obelisk, sometimes with a smaller one leaning off it
+      wb.add(facet(new THREE.ConeGeometry(r, h, 4)), m, x, h / 2, z, 0, rnd() * 3, 0);
+      if (rnd() > 0.5) wb.add(facet(new THREE.ConeGeometry(r * 0.6, h * 0.5, 4)), m, x + r * 1.6, h * 0.25, z, 0, rnd() * 3, -0.2);
+    } else if (kind < 0.8) {
+      // slant-cut blade: a thin slab with its top sheared off
+      const g = new THREE.BoxGeometry(r * 2, h, r * 0.6);
+      const p = g.attributes.position;
+      for (let i = 0; i < p.count; i++) if (p.getY(i) > 0) p.setY(i, p.getY(i) - (p.getX(i) / r + 1) * h * 0.2);
+      wb.add(facet(g), m, x, h / 2, z, 0, rnd() * 3, 0);
+    } else {
+      // broken stack: blocks set crooked on each other
+      let y = 0;
+      for (let i = 0; i < 3; i++) {
+        const bh = (h / 3) * between(0.8, 1.1), bw = r * 2 * (1 - i * 0.18);
+        wb.add(box(bw, bh, bw), m, x, y + bh / 2, z, 0, rnd() * 0.6, (rnd() - 0.5) * 0.1);
+        y += bh;
+      }
+    }
+    if (shadow) R.shadow(x, z, r, h * 1.6, 0.4);
+    if (cones.length < 8) cones.push([x, z, r, h]);
+  };
+  // between the eye and the line: a few the train passes behind
+  for (let i = 0; i < 6; i++) shard(sx(110), between(-30, -110), between(8, 26), i % 2 ? mat.shard : mat.shard2, true);
+  // beyond the line: a denser stand, islands upside down over it
+  for (let i = 0; i < 12; i++) shard(sx(420), between(-180, -330), between(20, 70), i % 3 ? mat.shard2 : mat.shard);
+  for (let i = 0; i < 4; i++) {
+    const s = between(5, 10), x = sx(380), y = between(80, 130), z = between(-200, -320);
+    wb.add(facet(new THREE.ConeGeometry(s, s * 2.2, 5).rotateX(Math.PI)), mat.shard2, x, y - s * 1.1, z, 0, rnd() * 3, 0);
+    wb.add(facet(new THREE.CylinderGeometry(s, s, 0.8, 5)), mat.stone, x, y, z, 0, rnd() * 3, 0);
   }
-  const hang = W.hanging(above, 22, [mDebris, mSpire2, mRust], (s) => [(rnd() - 0.5) * 180, between(1.6, 10) + s, between(-10, -120)]);
+  // horizon: tall hazed silhouettes
+  for (let i = 0; i < 16; i++) {
+    const h = between(50, 160);
+    wb.add(facet(new THREE.ConeGeometry(h * 0.08, h, 4)), mat.far, sx(900), h / 2, between(-450, -700), 0, rnd() * 3, 0);
+  }
+  // door frames to nowhere
+  for (const [x, z, h] of [[-26, -60, 7], [34, -92, 9], [-70, -170, 12]]) {
+    wb.add(box(0.9, h, 0.9), mat.shard, x - h * 0.3, h / 2, z);
+    wb.add(box(0.9, h, 0.9), mat.shard, x + h * 0.3, h / 2, z);
+    wb.add(box(h * 0.6 + 1.6, 1, 1.2), mat.shard, x, h + 0.5, z);
+    R.shadow(x, z, h * 0.35, h * 1.4, 0.35);
+  }
+  bake(wb);
+
+  // chrome rings rising half out of the water; the sea draws the other half
+  const chrome = R.chrome({ tint: "#ffffff", marble: 0.3, scale: 2, ink: "#3a1450", cones });
+  for (const [x, z, r, ry] of [[-14, -40, 5, 0.5], [46, -120, 9, -0.3], [-110, -230, 16, 0.2]]) {
+    R.add(new THREE.TorusGeometry(r, r * 0.16, 8, 28), chrome, x, 0, z, 0, ry, 0);
+  }
+
+  /* ---- stones hanging in the air, one of them chrome ---- */
+  const stoneGeo = [facet(new THREE.OctahedronGeometry(1, 0)), facet(new THREE.IcosahedronGeometry(1, 0))];
+  const stones = Array.from({ length: 9 }, (_, i) => {
+    const s = between(0.5, 1.8), x = sx(90), y = between(3, 12), z = between(-12, -120);
+    const pair = i === 0 ? R.add(new THREE.SphereGeometry(1, 24, 16), chrome, 8, 9, -48, 0, 0, 0, 3) : R.add(stoneGeo[i % 2], mat.stone, x, y, z, rnd() * 3, rnd() * 3, 0, s);
+    return { pair, y: i === 0 ? 9 : y, ph: rnd() * 6, sp: between(0.15, 0.35) };
+  });
+
+  /* ---- the low sun, and its double ---- */
+  const SUN = new THREE.Vector3(330, 64, -1280);
+  const sun = kit.sunDisc(scene, SUN.x, SUN.y, SUN.z, 38, "#fff8ee", "#ffb8c8");
+  const sunM = kit.sunDisc(scene, SUN.x, -SUN.y, SUN.z, 38, "#fff8ee", "#ffb8c8");
 
   /* ---- the train: eight cars, cab leading to the right, running toward the sun ---- */
   const CAR = 11, GAP = 1, D = 2.6, N = 8, PITCH = CAR + GAP;
@@ -204,181 +137,120 @@ export function buildDrift(kit: PsxKit): SceneDef {
   const LOOP = 620;
   const train = new THREE.Group();
   train.position.z = TZ;
-  above.add(train);
-  const bodies: THREE.Group[] = [], axles: THREE.Mesh[] = [], pax: THREE.Mesh[] = [], bogX: number[] = [];
-  const wheel = (z: number) => facet(new THREE.CylinderGeometry(0.42, 0.42, 0.14, 8).rotateX(Math.PI / 2).translate(0, 0, z));
-  const axleGeo = mergeGeometries([wheel(D / 2 - 0.22), wheel(-(D / 2 - 0.22)), facet(new THREE.CylinderGeometry(0.07, 0.07, D - 0.3, 4).rotateX(Math.PI / 2))])!;
-  // One bar across each wheel face, so the turning reads up close.
-  const spokeGeo = facet(new THREE.BoxGeometry(0.72, 0.08, D - 0.26));
-  // Half-round end, bulging toward +x (dir 1) or -x (dir -1).
-  const end = (b: WasteBatch, x: number, dir: number) => {
-    const t0 = dir > 0 ? 0 : Math.PI, phi = dir > 0 ? Math.PI / 2 : -Math.PI / 2;
-    b.add(facet(new THREE.CylinderGeometry(D / 2, D / 2, 1.25, 10, 1, false, t0, Math.PI)), mBody, x, 1.62, 0);
-    b.add(facet(new THREE.CylinderGeometry(D / 2, D / 2, 1.35, 10, 1, false, t0, Math.PI)), mCream, x, 2.945, 0);
-    b.add(facet(new THREE.SphereGeometry(D / 2, 10, 4, phi, Math.PI, 0, Math.PI / 2).scale(1, 0.38, 1)), mRoof, x, 3.62, 0);
-  };
-  let lanternPivot: THREE.Group | null = null;
+  const pb = kit.batcher();
+  const tb = kit.batcher();
+  const bogX: number[] = [];
   for (let i = 0; i < N; i++) {
     const cx = (i - (N - 1) / 2) * PITCH;
-    const car = new THREE.Group();
-    car.position.x = cx;
-    train.add(car);
-    const body = new THREE.Group();
-    car.add(body);
-    bodies.push(body);
-
-    const b = W.batch(0);
-    b.add(box(CAR, 1.25, D), mBody, 0, 1.62, 0);
-    b.add(box(CAR + 0.02, 0.08, D + 0.02), mIron, 0, 2.27, 0);
-    b.add(box(CAR, 1.35, D), mCream, 0, 2.945, 0);
-    b.add(facet(new THREE.CylinderGeometry(D / 2, D / 2, CAR, 10, 1, false, Math.PI, Math.PI).rotateZ(-Math.PI / 2).scale(1, 0.38, 1)), mRoof, 0, 3.62, 0);
-    b.add(box(CAR - 1.2, 0.35, D - 0.5), mIron, 0, 0.85, 0);
-    for (const vx of [-2.6, 2.6]) b.add(box(1.2, 0.2, 0.7), mRoof, vx, 4.1, 0);
-    if (i === 0) end(b, -CAR / 2, -1);
-    if (i === N - 1) {
-      end(b, CAR / 2, 1);
-      b.add(box(0.14, 0.32, 0.55), mLamp, CAR / 2 + D / 2 + 0.02, 1.75, 0);
-    }
-    b.flush(body);
-
-    // Windows go right through the body, so both sides are lit; some have a figure against the light.
-    const wb = W.batch(0), pb = W.batch(0);
-    for (let j = 0; j < 7; j++) {
-      const wx = -CAR / 2 + 1.1 + (j * (CAR - 2.2)) / 6;
-      wb.add(box(0.9, 0.8, D + 0.04), mWin, wx, 2.95, 0);
-      if (rnd() < 0.55) {
-        const px = wx + (rnd() - 0.5) * 0.3;
-        pb.add(box(0.44, 0.44, D + 0.06), mPax, px, 2.77, 0);
-        pb.add(box(0.28, 0.3, D + 0.07), mPax, px + (rnd() - 0.5) * 0.06, 3.13, 0);
-      }
-    }
-    if (i === N - 1) wb.add(facet(new THREE.CylinderGeometry(D / 2 + 0.03, D / 2 + 0.03, 0.7, 10, 1, true, 0.5, Math.PI - 1)), mWin, CAR / 2, 3.0, 0);
-    wb.flush(body);
-    pax.push(...pb.flush(body));
-
-    // Bogies hold the rails; the body rides a little above them.
-    const fb = W.batch(0);
-    for (const bx of [-(CAR / 2 - 2.1), CAR / 2 - 2.1]) {
-      bogX.push(cx + bx);
-      fb.add(box(2.4, 0.28, D - 0.1), mIron, bx, 0.62, 0);
-      for (const ax of [-0.7, 0.7]) {
-        const a = kit.mesh(axleGeo, mIron, car, bx + ax, 0.44, 0);
-        kit.mesh(spokeGeo, mMetal, a);
-        axles.push(a);
-      }
-    }
-    fb.flush(car);
-
-    if (i < N - 1) kit.mesh(box(GAP + 0.4, 2.2, 1.7), mIron, train, cx + PITCH / 2, 2.3, 0);
-    if (i === 0) {
-      lanternPivot = new THREE.Group();
-      lanternPivot.position.set(-CAR / 2 - D / 2 - 0.12, 2.5, 0);
-      body.add(lanternPivot);
-      kit.mesh(box(0.06, 0.32, 0.06), mIron, lanternPivot, 0, -0.16, 0);
-      kit.mesh(box(0.24, 0.3, 0.24), mTail, lanternPivot, 0, -0.45, 0);
+    tb.add(box(CAR, 1.25, D), mat.body, cx, 1.62, 0);
+    tb.add(box(CAR, 1.35, D), mat.cream, cx, 2.945, 0);
+    tb.add(box(CAR + 0.1, 0.4, D + 0.1), mat.roof, cx, 3.8, 0);
+    tb.add(box(CAR - 1.2, 0.5, D - 0.5), mat.iron, cx, 0.75, 0);
+    if (i < N - 1) tb.add(box(GAP + 0.4, 2.2, 1.7), mat.iron, cx + PITCH / 2, 2.3, 0);
+    for (const bx of [-(CAR / 2 - 2.1), CAR / 2 - 2.1]) bogX.push(cx + bx);
+    // windows go right through the body, so both sides are lit; some have a figure against the light
+    for (let j = 0; j < 6; j++) {
+      const wx = cx - CAR / 2 + 1.3 + (j * (CAR - 2.6)) / 5;
+      tb.add(box(1.1, 0.8, D + 0.04), mat.win, wx, 2.95, 0);
+      if (rnd() < 0.55) pb.add(box(0.44, 0.7, D + 0.06), mat.pax, wx + (rnd() - 0.5) * 0.3, 2.9, 0);
     }
   }
-  const lantern = lanternPivot!;
+  // the cab: a raked nose with a lamp
+  tb.add(facet(new THREE.ConeGeometry(D * 0.75, 2.6, 4).rotateZ(-Math.PI / 2).rotateX(Math.PI / 4)), mat.body, HALF - D / 2 + 1.3, 2.3, 0);
+  tb.add(box(0.2, 0.4, 0.6), mat.lamp, HALF + 0.9, 1.6, 0);
+  tb.flush(train);
+  const paxG = new THREE.Group();
+  paxG.name = "pax";
+  pb.flush(paxG);
+  train.add(paxG);
+  // tail lamp on a hook off the last car
+  const lantern = new THREE.Group();
+  lantern.name = "lantern";
+  lantern.position.set(-HALF - 0.1, 2.6, 0);
+  train.add(lantern);
+  kit.mesh(box(0.08, 0.32, 0.08), mat.iron, lantern, 0, -0.16, 0);
+  kit.mesh(box(0.3, 0.36, 0.3), mat.tail, lantern, 0, -0.48, 0);
+  const trains = twin(train);
+  const paxes = trains.map((t) => t.getObjectByName("pax")!);
+  const lanterns = trains.map((t) => t.getObjectByName("lantern")!);
 
-  /* ---- the reflection: a copy of everything above, flipped through the surface ---- */
-  const below = above.clone();
-  below.scale.y = -1;
-  scene.add(below);
-  const la: THREE.Object3D[] = [], lb: THREE.Object3D[] = [];
-  above.traverse((o) => la.push(o));
-  below.traverse((o) => lb.push(o));
-
-  /* ---- not mirrored: the sea, the rails under it, the lamp's beam, spray and motes ---- */
-  const seaU = {
-    uTime: U.uTime, uDeep: { value: new THREE.Color(P.deep) }, uFog: fogU, uFoam: { value: new THREE.Color(P.foam) },
-    uLamp: { value: new THREE.Color(P.lamp) }, uGlow: { value: new THREE.Color(P.sunGlow) }, uFogNear: U.uFogNear, uFogFar: U.uFogFar,
-    uTrain: { value: new THREE.Vector3(-HALF, HALF, TZ) }, uHorn: { value: new THREE.Vector3(0, TZ, -9) },
-    uSunXZ: { value: new THREE.Vector2(SUN.x, SUN.z) }, uLampAmt: { value: 1 },
-  };
-  const sea = new THREE.Mesh(
-    new THREE.PlaneGeometry(6000, 6000).rotateX(-Math.PI / 2),
-    new THREE.ShaderMaterial({ transparent: true, depthWrite: false, uniforms: seaU, vertexShader: SEA_V, fragmentShader: SEA_F }),
-  );
-  sea.renderOrder = 1;
-  sea.frustumCulled = false;
-  scene.add(sea);
-
+  /* ---- not mirrored: the rails just under the surface, the lamp's beam, glows, spray and the horn ---- */
   {
-    const rail = facet(new THREE.BoxGeometry(LOOP + 120, 0.07, 0.09, 180, 1, 1));
-    for (const z of [-0.72, 0.72]) kit.mesh(rail, mIron, scene, 0, -0.12, TZ + z);
-    const sb = kit.batcher(), sleeper = facet(new THREE.BoxGeometry(0.22, 0.05, 1.9));
-    for (let x = -LOOP / 2 - 60; x < LOOP / 2 + 60; x += 1.2) sb.add(sleeper, Math.abs(x % 6) < 1.2 ? mRust : mIron, x, -0.2, TZ);
-    sb.flush(scene);
+    const rb = kit.batcher();
+    for (const z of [-0.72, 0.72]) rb.add(box(LOOP + 120, 0.1, 0.12), mat.iron, 0, -0.14, TZ + z);
+    for (let x = -LOOP / 2 - 60; x < LOOP / 2 + 60; x += 1.5) rb.add(box(0.25, 0.06, 1.9), mat.iron, x, -0.22, TZ);
+    rb.flush(scene);
   }
-
-  const beamMat = additive(P.lamp, 0.1);
-  const beam = kit.mesh(new THREE.ConeGeometry(1.5, 16, 10, 1, true).rotateZ(Math.PI / 2), beamMat, scene, 0, 1.75, TZ);
+  const beamMat = R.glow(LAMP, 0.1);
+  beamMat.side = THREE.DoubleSide;
+  const beam = kit.mesh(new THREE.ConeGeometry(1.5, 16, 10, 1, true).rotateZ(Math.PI / 2), beamMat, scene, 0, 1.6, TZ);
   beam.renderOrder = 2;
-  const lampGlow = kit.flare(scene, 0, 1.75, TZ, 0.8);
-  lampGlow.mat.color.set(P.lamp);
-  lampGlow.g.visible = true;
-  const tailGlow = kit.flare(scene, 0, 0, 0, 0.55);
-  tailGlow.mat.color.set(P.tail);
-  tailGlow.g.visible = true;
-  for (const f of [lampGlow, tailGlow]) f.g.children.forEach((c) => { c.renderOrder = 2; });
+  const lampGlow = kit.flare(scene, 0, 1.6, TZ, 0.9);
+  lampGlow.mat.color.set(LAMP);
+  const tailGlow = kit.flare(scene, 0, 0, 0, 0.6);
+  tailGlow.mat.color.set(TAIL);
+  for (const f of [lampGlow, tailGlow]) {
+    f.g.visible = true;
+    f.g.children.forEach((c) => { c.renderOrder = 2; });
+  }
+  const hornMat = R.glow("#ffffff", 0);
+  const horn = kit.mesh(new THREE.RingGeometry(0.92, 1, 48).rotateX(-Math.PI / 2), hornMat, scene, 0, 0.05, TZ);
+  horn.renderOrder = 2;
 
-  // Spray thrown off the wheels, drifting back along the hull.
-  const NS = 128, sprayPos = new Float32Array(NS * 3), spraySeed = Array.from({ length: NS }, () => [rnd(), rnd(), rnd()]);
+  // spray thrown off the bow and the wheels
+  const NS = 96, sprayPos = new Float32Array(NS * 3), spraySeed = Array.from({ length: NS }, () => [rnd(), rnd(), rnd()]);
   const sprayGeo = new THREE.BufferGeometry();
   sprayGeo.setAttribute("position", new THREE.BufferAttribute(sprayPos, 3));
-  const spray = new THREE.Points(sprayGeo, new THREE.PointsMaterial({ color: P.foam, size: 1.4, sizeAttenuation: false }));
+  const spray = new THREE.Points(sprayGeo, new THREE.PointsMaterial({ color: "#fff4fa", size: 1.4, sizeAttenuation: false }));
   spray.frustumCulled = false;
   scene.add(spray);
 
   /* ---- eggs ---- */
   let hornT = -99, lightsT = -99, lanternT = -99, sunT = -99, tNow = 0;
-  const lampOn = new THREE.Color(P.lamp), lampOff = new THREE.Color("#2a2638"), winTint = mWin.uniforms.uTint.value as THREE.Color;
   const onTrain = (v: THREE.Vector3, x: number, y: number) => v.set(train.position.x + x, y, TZ);
-  const eggs: SceneDef["eggs"] = [
-    { id: "drift-horn", r: 34, at: (v) => { onTrain(v, HALF - 5, 3); }, fire: (t) => { hornT = t; } },
-    { id: "drift-lights", r: 30, at: (v) => { onTrain(v, -PITCH / 2, 3); }, fire: (t) => { lightsT = t; } },
-    { id: "drift-lantern", r: 24, at: (v) => { lantern.getWorldPosition(v).y -= 0.45; }, fire: (t) => { lanternT = t; } },
-    { id: "drift-sun", r: 50, at: (v) => { v.copy(SUN); }, fire: (t) => { sunT = t; } },
-  ];
-
   const wrap = (v: number, s: number) => ((v % s) + s) % s;
 
   return {
     scene,
     cam,
-    fog,
+    fog: [60, 700],
     fov: [50, 66],
     limits: { pitch: [-0.22, 0.3], zoom: [0.85, 3.2], yaw: 0.25 },
     labels: [
       { name: "Train", sub: `${N} CARS, NO STOPS`, at: (v) => { onTrain(v, HALF - 6, 6); } },
       { name: "Sun", sub: "NOT SETTING", at: (v) => { v.copy(SUN).y += 60; } },
     ],
-    eggs,
+    eggs: [
+      { id: "drift-horn", r: 34, at: (v) => { onTrain(v, HALF - 5, 3); }, fire: (t) => { hornT = t; } },
+      { id: "drift-lights", r: 30, at: (v) => { onTrain(v, -PITCH / 2, 3); }, fire: (t) => { lightsT = t; } },
+      { id: "drift-lantern", r: 24, at: (v) => { lanterns[0].getWorldPosition(v).y -= 0.45; }, fire: (t) => { lanternT = t; } },
+      { id: "drift-sun", r: 50, at: (v) => { v.copy(SUN); }, fire: (t) => { sunT = t; } },
+    ],
     update(t) {
       tNow = t;
-      hang(t);
+      for (const s of stones) {
+        const y = s.y + Math.sin(t * s.sp + s.ph) * 0.5;
+        for (const o of s.pair) {
+          o.position.y = y;
+          o.rotation.y = t * s.sp * 0.4 + s.ph;
+        }
+      }
 
-      // The ride: the train runs the line and wraps out of sight; wheels turn at line speed,
-      // each body rocks a little on its springs.
+      // The ride: the train runs the line and wraps out of sight.
       const tx = wrap(V * t, LOOP) - LOOP / 2;
-      train.position.x = tx;
-      seaU.uTrain.value.set(tx - HALF, tx + HALF, TZ);
-      const spin = -((V * t) / 0.42) % (Math.PI * 2);
-      for (const a of axles) a.rotation.z = spin;
-      bodies.forEach((b, i) => {
-        b.position.y = 0.022 * (1 + Math.sin(t * 6.3 + i * 1.9));
-        b.rotation.z = 0.003 * Math.sin(t * 2.1 + i * 2.4);
-      });
+      for (const tr of trains) tr.position.set(tx, 0.02 * Math.sin(t * 6.3), TZ);
 
-      // Horn: two blasts of the lamp and rings out over the water.
+      // Horn: two blasts of the lamp and a ring running out over the water from the cab.
       const eh = t - hornT, blast = pulse(eh, 0.5) + pulse(eh - 0.7, 0.5);
-      seaU.uHorn.value.set(tx + HALF - 3, TZ, eh);
-      lampGlow.g.position.set(tx + HALF + 0.25, 1.75, TZ);
+      lampGlow.g.position.set(tx + HALF + 1, 1.6, TZ);
       lampGlow.mat.opacity = 0.5 + 0.9 * blast;
       lampGlow.g.lookAt(cam.position);
-      beam.position.x = tx + HALF + 8;
+      beam.position.x = tx + HALF + 9;
       beamMat.opacity = 0.12 + 0.22 * blast;
-      seaU.uLampAmt.value = 1 + blast;
+      horn.visible = eh > 0 && eh < 4;
+      horn.position.x = tx + HALF - 3;
+      horn.scale.setScalar(1 + eh * 16);
+      hornMat.opacity = 0.7 * (1 - eh / 4);
 
       // Lights: they flicker and go out; when they come back the seats are empty, for a while.
       const el = t - lightsT;
@@ -388,25 +260,25 @@ export function buildDrift(kit: PsxKit): SceneDef {
         else if (el < 2.2) lamp = 0.06;
         else seated = false;
       }
-      winTint.lerpColors(lampOff, lampOn, lamp);
-      for (const m of pax) m.visible = seated;
+      mat.win.uniforms.uEmit.value = lamp;
+      for (const p of paxes) p.visible = seated;
 
       // Tail lamp: swings on its hook and brightens.
-      const et = t - lanternT;
-      lantern.rotation.z = et > 0 && et < 7 ? Math.sin(et * 5.5) * 0.7 * Math.exp(-et * 0.7) : 0;
-      lantern.updateWorldMatrix(true, false);
-      tailGlow.g.position.set(0, -0.45, 0).applyMatrix4(lantern.matrixWorld);
+      const et = t - lanternT, swing = et > 0 && et < 7 ? Math.sin(et * 5.5) * 0.7 * Math.exp(-et * 0.7) : 0;
+      for (const l of lanterns) l.rotation.z = swing;
+      lanterns[0].updateWorldMatrix(true, false);
+      tailGlow.g.position.set(0, -0.48, 0).applyMatrix4(lanterns[0].matrixWorld);
       tailGlow.mat.opacity = 0.35 + 0.7 * pulse(et, 2.2);
       tailGlow.g.lookAt(cam.position);
 
       const es = t - sunT;
-      sun.scale.setScalar(1 + 0.4 * pulse(es, 1.6));
-      skyU.uFlare.value = pulse(es, 2.4);
+      for (const s of [sun, sunM]) s.scale.setScalar(1 + 0.4 * pulse(es, 1.6));
+      R.uniforms.flash.value = 0.25 * pulse(es - 0.3, 2);
 
       for (let i = 0; i < NS; i++) {
         const [a, b, c] = spraySeed[i];
         const ph = (t * (1.1 + a * 0.6) + b) % 1, bow = i < 16;
-        const bx = bow ? HALF - 0.4 : bogX[i % bogX.length], side = Math.floor(i / bogX.length) % 2 ? 1 : -1;
+        const bx = bow ? HALF + 0.6 : bogX[i % bogX.length], side = Math.floor(i / bogX.length) % 2 ? 1 : -1;
         sprayPos[i * 3] = tx + bx + 0.5 - ph * (bow ? 3.5 : 2.2 + c * 1.5);
         sprayPos[i * 3 + 1] = 0.04 + Math.sin(ph * Math.PI) * (bow ? 0.3 + c * 0.7 : 0.15 + c * 0.45);
         sprayPos[i * 3 + 2] = TZ + side * (bow ? 0.3 + ph * (0.8 + a) : D / 2 - 0.1 + ph * (0.4 + a * 0.8));
@@ -417,18 +289,9 @@ export function buildDrift(kit: PsxKit): SceneDef {
       cam.position.set(Math.sin(t * 0.05) * 2 + view.px * 1.5, 3.4 - view.py * 0.4, 34);
       cam.lookAt(6 + view.px * 6 + Math.sin(t * 0.04) * 2, 4.6 - view.py * 3, TZ);
       kit.look(cam);
-      sky.position.copy(cam.position);
-      sea.position.set(cam.position.x, 0, cam.position.z);
-      sunDir.copy(SUN).sub(cam.position).normalize();
       sun.lookAt(cam.position);
-
-      for (let i = 1; i < la.length; i++) {
-        const a = la[i], b = lb[i];
-        b.position.copy(a.position);
-        b.quaternion.copy(a.quaternion);
-        b.scale.copy(a.scale);
-        b.visible = a.visible;
-      }
+      sunM.lookAt(cam.position);
+      R.follow(cam);
     },
     readout: () => [
       ["LINE", "OPEN SEA"],
