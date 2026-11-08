@@ -30,7 +30,7 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "astral",
     name: "Astral",
-    aria: "Animated night sky: a ringed halo with orbiting glyphs, wireframe polyhedra, a watching eye figure and a moon with a satellite.",
+    aria: "Animated night scene: a tilted halo ring with orbiting chrome glyphs and a chrome core in gimbal rings, chrome and wireframe polyhedra, a star tetrahedron, a great watching eye and a chrome moon with a satellite, hanging over a mirror sea under an indigo sky sprinkled with stars and fading to lilac haze.",
   },
   {
     id: "ruins",
@@ -73,7 +73,7 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "abyss",
     name: "Abyss",
-    aria: "Animated low-poly underground chamber after Hyper Light Drifter: a magenta diamond crystal hangs over a flooded rhombus dais, gripped by black roots that pulse with pink light, ringed by four seal pillars with cyan glyphs and beams, a sunken titan head and arm, ribs, broken columns and stasis tubes, and a small red-cloaked drifter.",
+    aria: "Animated underground chamber in a mirror-floored vault: a faceted rose-chrome crystal hangs over a stepped rhombus dais on flooded checker paving, gripped by black roots that pulse with pink light, ringed by four seal pillars with cyan glyphs and beams, with a sunken titan head and arm, ribs, broken columns, stasis tubes and a small red-cloaked figure, under a vault that runs from black-violet through magenta to a pale pink glow.",
   },
   {
     id: "cliff",
