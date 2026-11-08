@@ -1,6 +1,6 @@
 /** Sheet · Orb: an early raytracer's still life. A chrome planet hangs over a
  *  lone pyramid on a glittering mirror sea that runs out to a white horizon
- *  under a deep ultramarine sky. Two small chrome moons circle it, and
+ *  under a magenta-to-gold sunset sky. Two small chrome moons circle it, and
  *  everything doubles in the water. The orb's chrome carries the sky, the sea
  *  and the pyramids in its reflection, under swirled ink marbling.
  *
@@ -15,14 +15,14 @@ export function buildOrb(kit: PsxKit): SceneDef {
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(50, 16 / 9, 0.1, 520);
   const R = createRay(kit, scene, {
-    zen: "#0d1290", mid: "#2a43d6", low: "#7fa6ee", hor: "#eef6ff", fog: "#c9def4",
-    ice: "#a8e6f0", sea: "#5a8cc4", ink: "#1a2a40",
+    zen: "#3a0a4a", mid: "#b02a6a", low: "#f08048", hor: "#fff0c8", fog: "#f4d4a8",
+    ice: "#ffd8a0", sea: "#b85a48", ink: "#2e0c24",
   });
   R.floor({ fogNear: 60, fogFar: 330 });
 
-  const mPyr = R.flat({ tint: "#cdf4fa", sun: "#c4f2ff" });
-  const mCap = R.flat({ tint: "#cdf4fa", sun: "#c4f2ff", emit: "#e8fcff" });
-  const mFar = R.flat({ tint: "#9cc8e8", amb: "#2a3c80", sun: "#a8d8f0", fogAmt: 1 });
+  const mPyr = R.flat({ tint: "#ffe2b0", amb: "#3a0f2a", sun: "#ffd8a8" });
+  const mCap = R.flat({ tint: "#ffe2b0", amb: "#3a0f2a", sun: "#ffd8a8", emit: "#fff4d8" });
+  const mFar = R.flat({ tint: "#f0b090", amb: "#7a2a4a", sun: "#f8c8a0", fogAmt: 1 });
 
   // Pyramid: four faces, an edge toward the camera so one face catches the light and one falls dark.
   const PZ = -26, PH = 6.8, PR = 1.9;
@@ -41,8 +41,8 @@ export function buildOrb(kit: PsxKit): SceneDef {
 
   // The orb, and two moons on tilted orbits.
   const ORB = new THREE.Vector3(0, 17.2, -34), OR = 5.4;
-  const [orbA, orbB] = R.add(new THREE.SphereGeometry(OR, 48, 32), R.chrome({ cones, marble: 0.85, scale: 1.7 }));
-  const moonMat = R.chrome({ cones, marble: 0.35, scale: 2.4, tint: "#d8e4ec" });
+  const [orbA, orbB] = R.add(new THREE.SphereGeometry(OR, 48, 32), R.chrome({ cones, marble: 0.85, scale: 1.7, tint: "#f4e0d4" }));
+  const moonMat = R.chrome({ cones, marble: 0.35, scale: 2.4, tint: "#f0dcd0" });
   const moonGeo = new THREE.SphereGeometry(1, 20, 14);
   const moons = [
     { r: 9.5, s: 0.85, sp: 0.32, tilt: 0.38, ph: 0 },
@@ -51,7 +51,7 @@ export function buildOrb(kit: PsxKit): SceneDef {
 
   /* ---- apex beam for the egg ---- */
   const beamLen = Math.hypot(ORB.y - PH, ORB.z - PZ) - OR + 1;
-  const beamMat = R.glow("#e8fcff", 0);
+  const beamMat = R.glow("#fff4d8", 0);
   const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.7, beamLen, 6, 1, true), beamMat);
   const tilt = Math.atan2(ORB.z - PZ, ORB.y - PH);
   beam.position.set(0, PH + (Math.cos(tilt) * beamLen) / 2, PZ + (Math.sin(tilt) * beamLen) / 2);
