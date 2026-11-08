@@ -20,12 +20,12 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "ocean",
     name: "Ocean",
-    aria: "Animated low-poly scene in the style of an early raytracer: a glittering mirror sea under a teal sky with a chrome spire and flat slab towers standing drowned in it, palm islands, a red lion-prowed sailboat moored at a pier and two gold suns setting, with a ring of thin spires on the horizon and islands floating upside down overhead, all reflected in the water.",
+    aria: "Animated low-poly scene: an endless ocean with overgrown, half-drowned skyscrapers, palm islands and the King of Red Lions, the lion-headed sailboat from The Wind Waker, moored at a pier, under two setting suns, with a ring of sharp mossed spires on the horizon, wreckage in the swell and upside-down islands overhead.",
   },
   {
     id: "sea",
     name: "Sea",
-    aria: "Animated low-poly scene in the style of an early raytracer: a glittering mirror sea at dusk under a violet-to-peach sky, with a skyline of chrome and flat slab towers standing in the water on the horizon, framed by sharp shard towers in the shallows, stones hanging over the water and upside-down islands above the skyline, under two suns, all reflected in the sea.",
+    aria: "Animated low-poly scene: an endless still sea with a city skyline of towers standing in it on the horizon, framed by sharp shard towers and wreckage standing in the shallows, stone hanging over the water and upside-down islands above the skyline, under two suns.",
   },
   {
     id: "astral",
@@ -35,12 +35,12 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "ruins",
     name: "Ruins",
-    aria: "Animated raytraced scene: a ring of pale monoliths, columns and an obelisk on a jade checker plaza around a stepped round shrine, a glowing green crystal floating over it inside a ring of rune lights, wisps circling, cone and ball trees standing back toward a mint-white horizon under a deep green sky, everything mirrored in the tiles.",
+    aria: "Animated low-poly scene: misty forest ruins, a mossy stone circle around a shrine with a floating glowing crystal, rune lights and drifting wisps.",
   },
   {
     id: "drift",
     name: "Drift",
-    aria: "Animated low-poly dream scene in the style of an early raytracer, seen side-on: far out on a glittering mirror sea under a plum-to-lilac sky, a long train with lit windows and shadowy passengers crosses the horizon on rails just under the surface, past sharp shard towers, slant-cut blades and broken stacks, chrome rings rising half out of the water and doorways to nowhere, with stones hanging in the air and upside-down islands floating under a low sun, all reflected in the sea.",
+    aria: "Animated low-poly dream scene, seen side-on: far out on a still, mirror-like sea, a long train with lit windows and shadowy passengers crosses the horizon on rails just under the surface, past sharp shard towers, slant-cut blades and broken stacks standing in the water, half-sunk debris, rings and doorways to nowhere, stones hanging in the air and upside-down islands floating under a low sun.",
   },
   {
     id: "dunes",
@@ -51,7 +51,7 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "rift",
     name: "Rift",
-    aria: "Animated raytraced mountain valley at dusk: walls of big faceted slabs crowned with spires and leaning blades, stacked-cone conifers on the banks, a winding mirror river of glass down the middle, a colossal chrome shard wedged from wall to wall with glowing gold seams, hanging stones and upside-down islands, falling ash, and a low sun in the notch under a crimson-to-gold sky.",
+    aria: "Animated low-poly forested mountain valley wasteland at dusk: conifers and dead snags filling the floor and climbing the walls to a treeline, spires crowning the ridges and rising out of the canopy, blades as tall as the walls jutting out of them and leaning over the trees, a colossal shard wedged from wall to wall with glowing seams, a river of broken glass down a clearing, mist in the trees, falling ash, hanging stone and upside-down islands against an ember sky, the sun low in the notch at the far end.",
   },
   {
     id: "frost",
@@ -62,23 +62,23 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "field",
     name: "Field",
-    aria: "Interactive relief rendered like an early raytrace: a glossy, hard-lit terrain in cream and apricot contour bands rises out of a checker mirror under an amber sky, with chrome spheres on its peaks; tap or click to send a pulse rippling out through the bands, Shift+drag to pull the relief along, and move the cursor to lift a swell and leave a wake.",
+    aria: "Interactive low-poly relief map that behaves like a living field: tap or click to send a pulse rippling out through the contours, drag to pull the contour fabric and survey grid along, and move the cursor to lift a swell and leave a wake.",
     hint: "CLICK TO PULSE \u00b7 DRAG TO ORBIT \u00b7 SHIFT+DRAG TO WARP",
   },
   {
     id: "matrix",
     name: "Matrix",
-    aria: "Animated phosphor-green raytrace: streams of random glyphs rain down around a slowly turning, edge-lit tesseract over a black and green checker mirror that reflects them, with a ticked ring and survey grid drawn on the floor under a sky that fades from black to a pale mint horizon.",
+    aria: "Animated black void: streams of random glyphs rain down in the dark around a slowly turning wireframe tesseract above a ticked ring and survey grid.",
   },
   {
     id: "abyss",
     name: "Abyss",
-    aria: "Animated underground chamber in a mirror-floored vault: a faceted rose-chrome crystal hangs over a stepped rhombus dais on flooded checker paving, gripped by black roots that pulse with pink light, ringed by four seal pillars with cyan glyphs and beams, with a sunken titan head and arm, ribs, broken columns, stasis tubes and a small red-cloaked figure, under a vault that runs from black-violet through magenta to a pale pink glow.",
+    aria: "Animated low-poly underground chamber after Hyper Light Drifter: a magenta diamond crystal hangs over a flooded rhombus dais, gripped by black roots that pulse with pink light, ringed by four seal pillars with cyan glyphs and beams, a sunken titan head and arm, ribs, broken columns and stasis tubes, and a small red-cloaked drifter.",
   },
   {
     id: "cliff",
     name: "Cliffs",
-    aria: "Animated raytraced flooded valley: a pale tower on a round mesa climbing out of a mirror river through a cloud ceiling, a magenta light at its crown, long arched bridges reaching it from slab cliffs at different heights with one fallen into the water, a dead titan half-sunk below, four seal pillars sending cyan beams into the clouds, birds circling the tower, a small red-cloaked figure on the near bridge, and a clear white horizon past the valley's mouth under a deep teal sky.",
+    aria: "Animated low-poly mountain valley after Shadow of the Colossus and Hyper Light Drifter: layers of mist over a river, a pale stone tower on a mesa that climbs through the cloud ceiling with a magenta light at its crown, long arched bridges reaching it from the cliffs at different heights, one of them fallen in, a dead titan half-sunk in the valley floor, four seal pillars sending cyan beams into the clouds, birds circling the tower, a small red-cloaked drifter on the near bridge, and clear sky on the distant horizon.",
   },
   {
     id: "orb",
