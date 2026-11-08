@@ -62,13 +62,13 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "field",
     name: "Field",
-    aria: "Interactive low-poly relief map that behaves like a living field: tap or click to send a pulse rippling out through the contours, drag to pull the contour fabric and survey grid along, and move the cursor to lift a swell and leave a wake.",
+    aria: "Interactive relief rendered like an early raytrace: a glossy, hard-lit terrain in cream and apricot contour bands rises out of a checker mirror under an amber sky, with chrome spheres on its peaks; tap or click to send a pulse rippling out through the bands, Shift+drag to pull the relief along, and move the cursor to lift a swell and leave a wake.",
     hint: "CLICK TO PULSE \u00b7 DRAG TO ORBIT \u00b7 SHIFT+DRAG TO WARP",
   },
   {
     id: "matrix",
     name: "Matrix",
-    aria: "Animated black void: streams of random glyphs rain down in the dark around a slowly turning wireframe tesseract above a ticked ring and survey grid.",
+    aria: "Animated phosphor-green raytrace: streams of random glyphs rain down around a slowly turning, edge-lit tesseract over a black and green checker mirror that reflects them, with a ticked ring and survey grid drawn on the floor under a sky that fades from black to a pale mint horizon.",
   },
   {
     id: "abyss",
