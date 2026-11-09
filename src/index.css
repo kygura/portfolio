@@ -281,8 +281,51 @@
   --sidebar-accent-foreground: 41 29% 89%;
 }
 
-/* ── Added families: Moss and Jade join Lichen in Grove, Glacier and Iris join
-   Sky in Tide, Phosphor and Vermilion join Graphite in Signal. Each swaps the
+/* Sunset: the Orb's raytraced dusk. Plum ground, warm cream ink, an apricot accent over magenta. */
+:root[data-accent="sunset"] {
+  --bg: #1a0c18;
+  --bg-2: #20101e;
+  --sheet: #2e1629;
+  --code: #130810;
+  --ink: #f8e6d6;
+  --ink-2: #d4b0b0;
+  --ink-3: #a07c88;
+  --rule: #34182e;
+  --rule-2: #4a2440;
+  --grid: rgba(244, 148, 92, 0.045);
+  --scrim: rgba(19, 8, 16, 0.86);
+  --danger: #ff8a8a;
+  --accent: #f4945c;
+  --accent-deep: #b02a6a;
+  --on-accent: #1e0a12;
+  --accent-h: 22 87% 66%;
+  --on-accent-h: 335 50% 8%;
+  --tex: linear-gradient(180deg, rgba(176, 42, 106, 0.14), transparent 45%);
+  --tex-size: auto;
+
+  --background: 309 37% 7%;
+  --foreground: 28 72% 91%;
+  --card: 312 35% 13%;
+  --card-foreground: 28 72% 91%;
+  --popover: 312 35% 13%;
+  --popover-foreground: 28 72% 91%;
+  --secondary: 313 37% 15%;
+  --secondary-foreground: 28 72% 91%;
+  --destructive: 0 100% 77%;
+  --destructive-foreground: 309 37% 7%;
+  --muted: 313 37% 15%;
+  --muted-foreground: 0 31% 76%;
+  --border: 312 37% 15%;
+  --input: 314 35% 22%;
+  --sidebar-background: 312 35% 13%;
+  --sidebar-foreground: 28 72% 91%;
+  --sidebar-border: 312 37% 15%;
+  --sidebar-accent: 313 37% 15%;
+  --sidebar-accent-foreground: 28 72% 91%;
+}
+
+/* ── Added families: Moss and Jade join Lichen in Grove, Iris joins
+   Sky in Tide, Sunset joins Hearth, Phosphor and Vermilion join Graphite in Signal. Each swaps the
    whole sheet like the originals. ── */
 
 /* Moss: a deep forest floor. Green-black ground, sap-pale ink, a fern accent. */
@@ -369,49 +412,6 @@
   --sidebar-border: 172 28% 16%;
   --sidebar-accent: 174 31% 13%;
   --sidebar-accent-foreground: 160 34% 88%;
-}
-
-/* Cobalt: the Orb's raytraced noon. Deep cobalt ground, cold white ink, an ice-cyan accent. */
-:root[data-accent="cobalt"] {
-  --bg: #0a0e2e;
-  --bg-2: #0e1338;
-  --sheet: #161d4c;
-  --code: #070a22;
-  --ink: #e6f0ff;
-  --ink-2: #a9bbe6;
-  --ink-3: #7182b8;
-  --rule: #1c2558;
-  --rule-2: #2b3878;
-  --grid: rgba(168, 230, 240, 0.045);
-  --scrim: rgba(7, 10, 34, 0.86);
-  --danger: #f29a9a;
-  --accent: #a8e6f0;
-  --accent-deep: #2a43d6;
-  --on-accent: #060a2e;
-  --accent-h: 188 69% 80%;
-  --on-accent-h: 233 77% 10%;
-  --tex: linear-gradient(180deg, rgba(42, 67, 214, 0.14), transparent 45%);
-  --tex-size: auto;
-
-  --background: 234 64% 11%;
-  --foreground: 215 100% 95%;
-  --card: 233 54% 14%;
-  --card-foreground: 215 100% 95%;
-  --popover: 233 54% 14%;
-  --popover-foreground: 215 100% 95%;
-  --secondary: 232 52% 20%;
-  --secondary-foreground: 215 100% 95%;
-  --destructive: 0 77% 78%;
-  --destructive-foreground: 234 64% 11%;
-  --muted: 232 52% 20%;
-  --muted-foreground: 222 52% 78%;
-  --border: 231 52% 23%;
-  --input: 229 47% 32%;
-  --sidebar-background: 233 54% 14%;
-  --sidebar-foreground: 215 100% 95%;
-  --sidebar-border: 231 52% 23%;
-  --sidebar-accent: 232 52% 20%;
-  --sidebar-accent-foreground: 215 100% 95%;
 }
 
 /* Iris: an indigo night. Ink-blue ground, lavender ink, a periwinkle accent. */

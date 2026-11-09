@@ -1,12 +1,13 @@
 /** Sheet · Orb: an early raytracer's still life. A chrome planet hangs over a
  *  lone pyramid on a glittering mirror sea that runs out to a white horizon
- *  under a deep cobalt sky. Two small chrome moons circle it, and
- *  everything doubles in the water. The orb's chrome carries the sky, the sea
- *  and the pyramids in its reflection, under swirled ink marbling.
+ *  under a deep sky. Two small chrome moons circle it, and everything
+ *  doubles in the water. The orb's chrome carries the sky, the sea and the
+ *  pyramids in its reflection, under swirled ink marbling.
  *
- *  The colours below are the Cobalt palette's. Other palettes turn the whole
- *  render round the colour wheel to their own deep accent, and mute it to
- *  match a quieter one (Graphite goes fully grey).
+ *  Two hand-set looks: the magenta-to-gold sunset (the Sunset palette) and the
+ *  ultramarine noon (the Sky palette). Any other palette takes whichever of the
+ *  two sits nearer its deep accent on the colour wheel, turned round to that
+ *  accent and muted to match a quieter one (Graphite goes fully grey).
  *  Tap the orb to set it spinning, the pyramid's apex to light it. */
 import * as THREE from "three";
 import { burst, pulse, type PsxKit, type SceneDef } from "./psx";
@@ -64,20 +65,35 @@ export function buildOrb(kit: PsxKit): SceneDef {
   scene.add(beam);
 
   /* ---- palette ----
-     Every colour above is kept as the Cobalt original; a palette change turns
-     each one by the hue gap between the new deep accent and Cobalt's, and scales
-     its saturation by theirs. */
-  const BASE = new THREE.Color("#2a43d6").getHSL({ h: 0, s: 0, l: 0 });
-  const tinted: [THREE.Color, THREE.Color][] = [];
-  const keep = (c: THREE.Color) => {
-    if (!tinted.some(([x]) => x === c)) tinted.push([c, c.clone()]);
-  };
-  for (const u of Object.values(R.uniforms.sky)) keep(u.value);
-  for (const u of [R.uniforms.fog, R.uniforms.ice, R.uniforms.sea, R.uniforms.ink]) keep(u.value);
-  for (const m of [mPyr, mCap, mFar]) for (const k of ["uTint", "uAmbient", "uSun", "uAccent"]) keep(m.uniforms[k].value);
-  for (const m of [orbMat, moonMat]) keep(m.uniforms.uTint.value);
-  keep(beamMat.color);
-  for (const m of shadows) keep((m.material as THREE.MeshBasicMaterial).color);
+     Each recoloured colour with its noon and sunset values. */
+  const shadowMats = [...new Set(shadows.map((m) => m.material as THREE.MeshBasicMaterial))];
+  const sky = R.uniforms.sky;
+  const flatU = (m: THREE.ShaderMaterial, tint: string[], amb: string[], sun: string[], acc: string[]) =>
+    [[m.uniforms.uTint.value, ...tint], [m.uniforms.uAmbient.value, ...amb], [m.uniforms.uSun.value, ...sun], [m.uniforms.uAccent.value, ...acc]] as [THREE.Color, string, string][];
+  const table: [THREE.Color, string, string][] = [
+    [sky.uZen.value, "#0d1290", "#3a0a4a"],
+    [sky.uMid.value, "#2a43d6", "#b02a6a"],
+    [sky.uLow.value, "#7fa6ee", "#f08048"],
+    [sky.uHor.value, "#eef6ff", "#fff0c8"],
+    [R.uniforms.fog.value, "#c9def4", "#f4d4a8"],
+    [R.uniforms.ice.value, "#a8e6f0", "#ffd8a0"],
+    [R.uniforms.sea.value, "#5a8cc4", "#b85a48"],
+    [R.uniforms.ink.value, "#1a2a40", "#2e0c24"],
+    ...flatU(mPyr, ["#cdf4fa", "#ffe2b0"], ["#0e1844", "#3a0f2a"], ["#c4f2ff", "#ffd8a8"], ["#ffffff", "#ffffff"]),
+    ...flatU(mCap, ["#cdf4fa", "#ffe2b0"], ["#0e1844", "#3a0f2a"], ["#c4f2ff", "#ffd8a8"], ["#e8fcff", "#fff4d8"]),
+    ...flatU(mFar, ["#9cc8e8", "#f0b090"], ["#2a3c80", "#7a2a4a"], ["#a8d8f0", "#f8c8a0"], ["#ffffff", "#ffffff"]),
+    [orbMat.uniforms.uTint.value, "#e4f0f4", "#f4e0d4"],
+    [moonMat.uniforms.uTint.value, "#d8e4ec", "#f0dcd0"],
+    [beamMat.color, "#e8fcff", "#fff4d8"],
+    ...shadowMats.map((m): [THREE.Color, string, string] => [m.color, "#1a2a40", "#2e0c24"]),
+  ];
+  // The deep accents the two looks belong to: Sky's and Sunset's.
+  // Warm hues sit close together, so the sunset turns only half as far as the gap.
+  const looks = [
+    { at: new THREE.Color("#2f6f9a").getHSL({ h: 0, s: 0, l: 0 }), turn: 1, cols: table.map((r) => new THREE.Color(r[1])) },
+    { at: new THREE.Color("#b02a6a").getHSL({ h: 0, s: 0, l: 0 }), turn: 0.5, cols: table.map((r) => new THREE.Color(r[2])) },
+  ];
+  const hueGap = (a: number, b: number) => ((((a - b) % 1) + 1.5) % 1) - 0.5;
   const hsl = { h: 0, s: 0, l: 0 };
   let applied = -1;
   const recolour = () => {
@@ -85,12 +101,14 @@ export function buildOrb(kit: PsxKit): SceneDef {
     if (deep.getHex() === applied) return;
     applied = deep.getHex();
     deep.getHSL(hsl);
-    const dh = hsl.h - BASE.h;
-    const k = hsl.s < 0.05 ? 0 : Math.max(0.45, Math.min(1, hsl.s / BASE.s));
-    for (const [c, base] of tinted) {
-      base.getHSL(hsl);
-      c.setHSL((((hsl.h + dh) % 1) + 1) % 1, hsl.s * k, hsl.l);
-    }
+    const { h, s } = hsl;
+    const look = s < 0.05 ? looks[0] : looks.reduce((x, y) => (Math.abs(hueGap(h, y.at.h)) < Math.abs(hueGap(h, x.at.h)) ? y : x));
+    const dh = s < 0.05 ? 0 : hueGap(h, look.at.h) * look.turn;
+    const k = s < 0.05 ? 0 : Math.max(0.45, Math.min(1, s / look.at.s));
+    table.forEach(([c], i) => {
+      look.cols[i].getHSL(hsl);
+      c.setHSL((((hsl.h + dh) % 1) + 1) % 1, Math.min(1, hsl.s * k), hsl.l);
+    });
   };
 
   let tSpin = -99, tApex = -99;
