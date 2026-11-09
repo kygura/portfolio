@@ -97,7 +97,7 @@ export function buildOrb(kit: PsxKit): SceneDef {
       beamMat.opacity = ea * 0.55;
       R.uniforms.flash.value = 0.25 * pulse(t - tApex - 0.6, 1.6);
 
-      cam.position.set(CAM.x + Math.sin(t * 0.045) * 0.6 + view.px * 0.6, CAM.y + Math.sin(t * 0.3) * 0.04 - view.py * 0.3, CAM.z);
+      cam.position.set(CAM.x + Math.sin(t * 0.03) * 0.6 + view.px * 0.6, CAM.y + Math.sin(t * 0.2) * 0.04 - view.py * 0.3, CAM.z);
       cam.lookAt(view.px * 3, 9.6 - view.py * 3, PZ);
       kit.look(cam);
       R.follow(cam);
