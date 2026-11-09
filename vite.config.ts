@@ -5,12 +5,13 @@ import path from "path";
 import { Readable } from "node:stream";
 import { buildShowcase, parseRepoList, type Showcase } from "./api/github/repos";
 import { handleCodebase } from "./api/github/codebase";
+import { handleQuip } from "./api/familiar/quip";
 
 /**
- * Serves /api/github/repos and /api/github/codebase under `vite dev` with the
+ * Serves /api/github/repos, /api/github/codebase and /api/familiar/quip under `vite dev` with the
  * same code the Vercel functions run. The index is cached for ten minutes so
  * reloads stay inside GitHub's unauthenticated rate limit; the codebase chat
- * needs ANTHROPIC_API_KEY, as in production.
+ * and Bit's quips need ANTHROPIC_API_KEY, as in production.
  */
 function devGithubApi(): Plugin {
   let cached: { at: number; body: Showcase } | null = null;
@@ -22,6 +23,20 @@ function devGithubApi(): Plugin {
     name: "dev-github-api",
     apply: "serve",
     configureServer(server) {
+      server.middlewares.use("/api/familiar/quip", async (req, res) => {
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) chunks.push(chunk as Buffer);
+        const response = await handleQuip(
+          new Request(`http://localhost${req.originalUrl ?? req.url}`, {
+            method: req.method,
+            headers: { "content-type": "application/json" },
+            body: req.method === "POST" ? Buffer.concat(chunks) : undefined,
+          })
+        );
+        res.statusCode = response.status;
+        res.setHeader("content-type", "application/json");
+        res.end(await response.text());
+      });
       server.middlewares.use("/api/github/repos", async (_req, res) => {
         res.setHeader("content-type", "application/json");
         try {

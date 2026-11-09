@@ -36,7 +36,8 @@ const LEVEL = 0.06;
 
 let ctx: AudioContext | null = null;
 
-function context(): AudioContext | null {
+/** The shared audio context, created on first use (other synthesised voices reuse it). */
+export function context(): AudioContext | null {
   if (typeof window === "undefined") return null;
   try {
     ctx ??= new (window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
