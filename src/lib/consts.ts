@@ -56,5 +56,5 @@ export const QUOTES_ARRAY = [
     "All the world's a stage, and all the men and women merely players.",
     "You become responsible, forever, for what you have tamed.",
     "Do what you can, with what you have, where you are.",
-    "I live for a blink and I die just the same; I wake every engine and start every flame.<br>A riddle. The answer is a door: nca.ink/_____",
+    "Born of struck flint, dead in a breath, I woke the forge and what sleeps beneath.<br>Speak my name at the sealed door: nca.ink/_____",
 ];

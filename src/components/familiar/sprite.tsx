@@ -1,64 +1,73 @@
 /**
- * Bit, drawn on an 18×18 grid. Each frame is a list of rows; a character is
- * one cell:
- *   o outline   a chassis   l chassis highlight   d chassis shade
- *   m metal (ears, arms, feet, neck)   v visor   e eye glow   w eye shine
- *   c blush   . empty
- * Colours are theme tokens, so Bit changes with the palette like everything
- * else on the site.
+ * Bit, an old stone automaton, drawn on an 18×18 grid. Each frame is a list
+ * of rows; a character is one cell:
+ *   o outline / cracks   s stone   l lit stone   k shaded stone
+ *   m loose stones (ears, hands)   v hollow (eye socket)   g moss
+ *   r rune glow   w glow core   . empty
+ * Stone comes from the ink tokens and the glow and moss from the accent, so
+ * Bit changes with the palette like everything else on the site.
  */
 
 const BASE = [
-  "........ee........",
-  "........oo........",
-  "....oooooooooo....",
-  "...ollaaaaaaado...",
-  "...olvvvvvvvvdo...",
-  ".mmolvwevvwevdomm.",
-  ".mmolveevveevdomm.",
-  "...olvcvvvvcvdo...",
-  "...olaaaaaaaddo...",
-  "....oooooooooo....",
-  ".......mmmm.......",
+  "..........r.......",
+  "..................",
+  "....gggooooo......",
+  "...ogllsssssso....",
+  "...olsssssssskko..",
+  ".m.olsvvvvvvsko.m.",
+  ".m.olsvrwwrvsko.m.",
+  ".m.olsvvrrvvsko.m.",
+  "...olssosssskko...",
+  "....ooooggoooo....",
+  ".......kkkk.......",
+  ".....oooooooo.....",
+  ".....olssssko.....",
+  ".mm..olsrrsko..mm.",
+  ".mm..olrssrko..mm.",
+  ".....ogsrrsko.....",
   "......oooooo......",
-  "....molaaaadom....",
-  "...mmolvvvvdomm...",
-  "...mmolvcevdomm...",
-  ".....olaaaddo.....",
-  "......oooooo......",
-  ".....mm....mm.....",
+  "..................",
 ];
 
 const withRows = (rows: Record<number, string>) => BASE.map((r, i) => rows[i] ?? r);
 
-const EYES_OFF = {
-  0: "........oo........",
-  5: ".mmolvvvvvvvvdomm.",
-  6: ".mmolvmmvvmmvdomm.",
-  7: "...olvvvvvvvvdo...",
+const DARK_EYE = {
+  0: "..................",
+  6: ".m.olsvvvvvvsko.m.",
+  7: ".m.olsvvvvvvsko.m.",
 };
 
 export const FRAMES = {
   idle: BASE,
-  blink: withRows({ 5: ".mmolvvvvvvvvdomm.", 6: ".mmolveevveevdomm." }),
-  step: withRows({ 17: "......mm..mm......" }),
-  sleep: withRows(EYES_OFF),
-  off: withRows({ ...EYES_OFF, 14: "...mmolvvvvdomm..." }),
-  happy: withRows({ 0: "........ww........", 7: "...olvcveevcvdo..." }),
+  blink: withRows({ 6: ".m.olsvvrrvvsko.m.", 7: ".m.olsvvvvvvsko.m." }),
+  step: withRows({ 0: "........r........." }),
+  sleep: withRows(DARK_EYE),
+  off: withRows({
+    ...DARK_EYE,
+    13: ".mm..olskksko..mm.",
+    14: ".mm..olksskko..mm.",
+    15: ".....ogskksko.....",
+  }),
+  happy: withRows({
+    0: "..........w.......",
+    6: ".m.olsvwwwwvsko.m.",
+    7: ".m.olsvrrrrvsko.m.",
+    13: ".mm..olswwsko..mm.",
+  }),
 } as const;
 
 export type FrameName = keyof typeof FRAMES;
 
 const FILL: Record<string, string> = {
-  o: "color-mix(in srgb, var(--accent-deep) 45%, black)",
-  a: "var(--accent)",
-  l: "color-mix(in srgb, var(--accent) 55%, white)",
-  d: "var(--accent-deep)",
-  m: "var(--ink-3)",
+  o: "color-mix(in srgb, var(--ink-3) 22%, black)",
+  s: "color-mix(in srgb, var(--ink-3) 80%, var(--bg))",
+  l: "color-mix(in srgb, var(--ink-2) 75%, var(--bg))",
+  k: "color-mix(in srgb, var(--ink-3) 45%, var(--bg))",
+  m: "color-mix(in srgb, var(--ink-3) 60%, var(--bg))",
   v: "var(--code)",
-  e: "var(--accent)",
-  w: "var(--ink)",
-  c: "color-mix(in srgb, var(--danger) 75%, var(--code))",
+  g: "var(--accent-deep)",
+  r: "var(--accent)",
+  w: "color-mix(in srgb, var(--accent) 45%, white)",
 };
 
 export const SPRITE_W = 18;

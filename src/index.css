@@ -3252,7 +3252,7 @@ kbd {
   .lost__link { grid-template-columns: 5.5rem 1fr auto; }
 }
 
-/* ── Familiar: Bit, unlocked from the hidden route ── */
+/* ── Familiar: Bit, a stone automaton unlocked from the hidden page ── */
 .familiar {
   position: fixed;
   left: 0;
@@ -3269,8 +3269,13 @@ kbd {
   pointer-events: auto;
   cursor: pointer;
   image-rendering: pixelated;
-  filter: drop-shadow(0 2px 0 color-mix(in srgb, var(--bg) 70%, black));
+  filter:
+    drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 30%, transparent))
+    drop-shadow(0 2px 0 color-mix(in srgb, var(--bg) 70%, black));
 }
+
+/* It hovers: an idle drift, stilled while asleep or hopping. */
+.familiar__body svg { animation: familiarFloat 2.8s steps(4) infinite; }
 
 .familiar__body:focus:not(:focus-visible) { outline: none; box-shadow: none; }
 
@@ -3280,7 +3285,8 @@ kbd {
 }
 
 .familiar[data-mode="hop"] .familiar__body svg { animation: familiarHop 0.64s steps(4) both; }
-.familiar[data-mode="sleep"] .familiar__body { opacity: 0.85; }
+.familiar[data-mode="sleep"] .familiar__body { opacity: 0.8; filter: none; }
+.familiar[data-mode="sleep"] .familiar__body svg { animation: none; }
 
 .familiar__bubble {
   position: absolute;
@@ -3291,9 +3297,10 @@ kbd {
   padding: 2px 8px;
   border: 1px solid var(--rule-2);
   background: var(--sheet);
-  color: var(--ink);
-  font-family: var(--f-mono);
-  font-size: 11px;
+  color: var(--ink-2);
+  font-family: var(--f-body);
+  font-style: italic;
+  font-size: 12px;
   line-height: 1.5;
 }
 
@@ -3305,6 +3312,11 @@ kbd {
   margin-left: -3px;
   border: 3px solid transparent;
   border-top-color: var(--rule-2);
+}
+
+@keyframes familiarFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 }
 
 @keyframes familiarHop {
@@ -3345,20 +3357,21 @@ kbd {
   justify-content: flex-end;
 }
 
-.bay__bot { image-rendering: pixelated; animation: bayPop 0.4s steps(3) both; }
-.bay__bot--off { opacity: 0.45; animation: bayFlicker 1.2s steps(2) infinite; }
-
-.bay__bar {
-  width: 112px;
-  height: 6px;
-  border: 1px solid var(--rule-2);
+.bay__bot {
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 14px color-mix(in srgb, var(--accent) 35%, transparent));
+  animation: bayPop 0.5s steps(3) both;
 }
+.bay__bot--off { opacity: 0.5; filter: none; animation: bayFlicker 1.6s steps(2) infinite; }
 
-.bay__bar span {
-  display: block;
-  height: 100%;
-  background: var(--accent);
-  animation: bayBoot 2.4s steps(12) both;
+.bay__runes { display: flex; gap: 12px; padding-left: 6px; }
+
+.bay__runes span {
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+  border: 1px solid var(--rule-2);
+  animation: bayRune 0.3s steps(2) both;
 }
 
 .bay__title {
@@ -3384,9 +3397,12 @@ kbd {
   border-bottom: 1px solid currentColor;
 }
 
-@keyframes bayBoot {
-  from { width: 0; }
-  to { width: 100%; }
+@keyframes bayRune {
+  to {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent);
+  }
 }
 
 @keyframes bayFlicker {
@@ -3401,6 +3417,6 @@ kbd {
 
 @media (prefers-reduced-motion: reduce) {
   .bay__bot,
-  .bay__bar span,
-  .familiar[data-mode="hop"] .familiar__body svg { animation: none; }
+  .familiar__body svg { animation: none; }
+  .bay__runes span { animation-duration: 0s; }
 }

@@ -1,6 +1,6 @@
 /**
  * The hidden page. Nothing links here and its path isn't in the bundle (see
- * familiar/gate.ts); the footer riddle is the way in. Arriving boots Bit, and
+ * familiar/gate.ts); the footer riddle is the way in. Arriving wakes Bit, and
  * the unlock is kept in storage so it follows the visitor around the site
  * from then on.
  */
@@ -34,34 +34,36 @@ const Boot = () => {
 
   return (
     <section className="bay" aria-labelledby="bay-title">
-      <p className="bay__eyebrow">you weren't supposed to find this</p>
+      <p className="bay__eyebrow">the seal is broken</p>
 
       <div className="bay__bay" aria-hidden="true">
         <div className={online ? "bay__bot" : "bay__bot bay__bot--off"}>
           <Sprite frame={online ? "happy" : "off"} scale={6} />
         </div>
         {!online && (
-          <div className="bay__bar">
-            <span />
+          <div className="bay__runes">
+            {[0, 1, 2, 3, 4].map((i) => (
+              <span key={i} style={{ animationDelay: `${i * 0.45}s` }} />
+            ))}
           </div>
         )}
       </div>
 
       <h1 id="bay-title" className="bay__title">
-        {online ? "Bit" : "Booting…"}
+        {online ? "Bit" : "Waking…"}
       </h1>
 
       <p className="bay__line" aria-live="polite">
         {!online
-          ? "Something small is powering on."
+          ? "Something old is stirring under the stone."
           : returning
-            ? "Bit is already with you. It never powered down."
-            : "Bit is online and it's yours now. It will follow you around the site from here on, along the bottom of every page. Press it to say hello."}
+            ? "Bit is already awake. It remembers you."
+            : "It slept under the ruin for a very long time. It's awake now, and it's yours: it will follow you around the site, along the bottom of every page. Touch it to say hello."}
       </p>
 
       {online && (
         <Link to="/" className="bay__back">
-          ← take Bit home
+          ← lead Bit out
         </Link>
       )}
     </section>

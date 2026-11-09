@@ -1,5 +1,6 @@
 /**
- * Bit: a small robot that lives along the bottom edge of the page.
+ * Bit: a small stone automaton, woken from a ruin, that drifts along the
+ * bottom edge of the page.
  * It wanders, drifts toward the pointer when it comes near the floor, dozes
  * off when nothing moves for a while, and hops when pressed. Movement is
  * stepped on a slow tick on purpose, to match the pixel art. With reduced
@@ -18,16 +19,17 @@ const RIGHT_CLEARANCE = 150;
 const WIDTH = 54;
 
 const QUIPS = [
-  "beep.",
+  "…",
   "♥",
   "you found me.",
+  "the old ones are sleeping.",
+  "i remember the forge.",
+  "my maker is dust now.",
+  "*grinding stone noises*",
   "try pressing t.",
-  "0 bugs found. (lie)",
-  "battery: 100%",
   "g then h goes home.",
-  "riddles are my favourite.",
-  "boop?",
-];
+  "a riddle kept me sealed.",
+]
 
 type Mode = "idle" | "walk" | "sleep" | "hop";
 
@@ -141,7 +143,7 @@ export default function Familiar() {
   const pet = () => {
     lastActive.current = Date.now();
     const n = addPet();
-    const line = n % 25 === 0 ? `${n} pats. affection.exe running.` : QUIPS[Math.floor(Math.random() * QUIPS.length)];
+    const line = n % 25 === 0 ? `${n} touches. the stone grows warm.` : QUIPS[Math.floor(Math.random() * QUIPS.length)];
     say(line);
     hopLeft.current = 4;
     setMode("hop");
@@ -159,7 +161,7 @@ export default function Familiar() {
         type="button"
         className="familiar__body"
         onClick={pet}
-        aria-label="Bit, your robot. Press to pat."
+        aria-label="Bit, an old automaton. Press to touch it."
         style={{ transform: `scaleX(${facing})` }}
       >
         <Sprite frame={frame} />
