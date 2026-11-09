@@ -84,7 +84,7 @@ void main(){
 
 const SAND_V = `
 uniform vec2 uSnap; uniform vec3 uLight; uniform vec3 uAmb; uniform vec3 uSunCol;
-varying vec3 vAff; varying vec3 vLit; varying float vDepth; varying vec3 vWP;
+varying vec3 vAff; varying vec3 vAmb; varying vec3 vSun; varying float vDepth; varying vec3 vWP;
 void main(){
   vec4 wp = modelMatrix * vec4(position, 1.0);
   vec3 n = normalize(mat3(modelMatrix) * normal);
@@ -93,22 +93,60 @@ void main(){
   vec4 p = projectionMatrix * mv;
   ${SNAP}
   gl_Position = p;
-  vLit = uAmb + uSunCol * max(dot(n, uLight), 0.0);
+  vAmb = uAmb;
+  vSun = uSunCol * max(dot(n, uLight), 0.0);
   vAff = vec3(uv * p.w, p.w);
   vDepth = -mv.z;
 }`;
 const SAND_F = `${SHORE}
-uniform sampler2D uMap; uniform float uFogNear; uniform float uFogFar;
-varying vec3 vAff; varying vec3 vLit; varying float vDepth; varying vec3 vWP;
+uniform sampler2D uMap; uniform sampler2D uShadow; uniform vec4 uShadowBox; uniform float uFogNear; uniform float uFogFar;
+varying vec3 vAff; varying vec3 vAmb; varying vec3 vSun; varying float vDepth; varying vec3 vWP;
 void main(){
-  vec3 c = texture2D(uMap, vAff.xy / vAff.z).rgb * vLit;
+  // baked cast shadows: palms, driftwood and rocks, stretched long toward the camera by the low sun
+  vec2 suv = (vWP.xz - uShadowBox.xy) / uShadowBox.zw;
+  float sh = all(greaterThan(suv, vec2(0.0))) && all(lessThan(suv, vec2(1.0))) ? texture2D(uShadow, suv).r : 0.0;
+  vec3 c = texture2D(uMap, vAff.xy / vAff.z).rgb * (vAmb + vSun * (1.0 - 0.88 * sh));
   float wl = wetLevel(vWP.x);
   float wet = sstep(wl + 0.004, wl - 0.025, vWP.y);
   vec3 v = normalize(vWP - cameraPosition);
-  c = mix(c, c * vec3(0.66, 0.62, 0.66) + horizon(v) * 0.16, wet);
+  // wet sand goes dark and turns into a soft mirror: the sky, and a hot streak of sun where it lines up
+  vec3 r = reflect(v, vec3(0.0, 1.0, 0.0));
+  float spec = pow(max(dot(r, uSunDir), 0.0), 90.0) * 1.4 + pow(max(dot(r, uSunDir), 0.0), 12.0) * 0.25;
+  c = mix(c, c * vec3(0.6, 0.56, 0.62) + horizon(r) * 0.22 + vec3(1.0, 0.8, 0.52) * spec * (1.0 - 0.8 * sh), wet);
   // a thin dark rim where the last wave stopped
   c *= 1.0 - 0.18 * sstep(0.012, 0.0, abs(vWP.y - wl)) * (1.0 - sstep(0.0, 0.02, eta(vWP.x) - vWP.y));
   gl_FragColor = vec4(mix(c, horizon(v), sstep(uFogNear, uFogFar, vDepth)), 1.0);
+}`;
+
+// Props: hemisphere ambient (violet sky above, warm sand bounce below), the sun from behind, light through
+// thin leaves when they hang between the eye and the sun, and a bright rim on edges seen against it.
+const PROP_V = `
+uniform vec2 uSnap; uniform vec3 uLight; uniform vec3 uSky; uniform vec3 uGround; uniform vec3 uSunCol;
+uniform float uTrans; uniform float uRim; uniform float uUv;
+varying vec3 vAff; varying vec3 vLit; varying float vDepth; varying vec3 vWP;
+void main(){
+  vec4 wp = modelMatrix * vec4(position, 1.0);
+  vec3 n = normalize(mat3(modelMatrix) * normal);
+  vWP = wp.xyz;
+  vec3 v = normalize(wp.xyz - cameraPosition);
+  float dif = max(dot(n, uLight), 0.0);
+  float tr = max(dot(-n, uLight), 0.0) * uTrans * max(dot(v, uLight), 0.0);
+  float rim = pow(1.0 - abs(dot(n, v)), 3.0) * pow(max(dot(v, uLight), 0.0), 2.0) * uRim;
+  vLit = mix(uGround, uSky, n.y * 0.5 + 0.5) + uSunCol * (dif + tr + rim);
+  vec4 mv = viewMatrix * wp;
+  vec4 p = projectionMatrix * mv;
+  ${SNAP}
+  gl_Position = p;
+  vAff = vec3(uv * uUv * p.w, p.w);
+  vDepth = -mv.z;
+}`;
+const PROP_F = `${SHORE}
+uniform sampler2D uMap; uniform vec3 uTint; uniform float uFogNear; uniform float uFogFar; uniform float uFogAmt;
+varying vec3 vAff; varying vec3 vLit; varying float vDepth; varying vec3 vWP;
+void main(){
+  vec3 c = texture2D(uMap, vAff.xy / vAff.z).rgb * uTint * vLit;
+  vec3 v = normalize(vWP - cameraPosition);
+  gl_FragColor = vec4(mix(c, horizon(v), sstep(uFogNear, uFogFar, vDepth) * uFogAmt), 1.0);
 }`;
 
 const WATER_V = `${SHORE}
@@ -161,6 +199,53 @@ void main(){
   gl_FragColor = vec4(mix(c, hz, fg), mix(a, 1.0, fg));
 }`;
 
+/* Cast shadows, baked once (nothing that casts one moves): every caster triangle is pushed along the
+   sunlight onto the sand, filled into a top-down mask, then softened. The sand samples it by world x/z.
+   Filling a mask, not drawing dark geometry, keeps overlapping shadows from stacking darker. */
+const SHADOW_BOX: [number, number, number, number] = [-48, -14, 96, 52]; // x0, z0, width, depth
+function bakeShadows(casters: THREE.BufferGeometry[]) {
+  const W = 1024, H = 512, [x0, z0, bw, bd] = SHADOW_BOX;
+  const make = () => {
+    const c = document.createElement("canvas");
+    c.width = W;
+    c.height = H;
+    const g = c.getContext("2d");
+    if (!g) throw new Error("2d canvas unavailable");
+    return [c, g] as const;
+  };
+  const [sharp, g] = make();
+  g.fillStyle = "#000";
+  g.fillRect(0, 0, W, H);
+  g.fillStyle = "#fff";
+  const dx = -LIGHT.x, dy = -LIGHT.y, dz = -LIGHT.z;
+  const proj = (x: number, y: number, z: number): [number, number] => {
+    let t = 0;
+    for (let i = 0; i < 6; i++) t = Math.max(0, (y - hs(x + dx * t, z + dz * t)) / -dy);
+    return [((x + dx * t - x0) / bw) * W, ((z + dz * t - z0) / bd) * H];
+  };
+  for (const geo of casters) {
+    const p = (geo.index ? geo.toNonIndexed() : geo).attributes.position;
+    for (let i = 0; i + 2 < p.count; i += 3) {
+      g.beginPath();
+      for (let j = 0; j < 3; j++) {
+        const [u, v] = proj(p.getX(i + j), p.getY(i + j), p.getZ(i + j));
+        if (j) g.lineTo(u, v);
+        else g.moveTo(u, v);
+      }
+      g.closePath();
+      g.fill();
+    }
+  }
+  const [soft, g2] = make();
+  g2.filter = "blur(2px)";
+  g2.drawImage(sharp, 0, 0);
+  const t = new THREE.CanvasTexture(soft);
+  t.flipY = false;
+  t.generateMipmaps = false;
+  t.minFilter = t.magFilter = THREE.LinearFilter;
+  return t;
+}
+
 // White sand: near-white grains, a few darker and a few bright ones. 32px, nearest-filtered.
 function sandTex() {
   const S = 32, c = document.createElement("canvas");
@@ -182,7 +267,7 @@ function sandTex() {
 }
 
 export function buildBeach(k: PsxKit): SceneDef {
-  const { rnd, facet, psx, tex, view, U } = k;
+  const { rnd, facet, tex, view, U } = k;
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(56, 16 / 9, 0.1, 760);
 
@@ -198,27 +283,33 @@ export function buildBeach(k: PsxKit): SceneDef {
   sky.renderOrder = -1;
   scene.add(sky);
 
-  /* ---- materials for props: the kit's PS1 shader, lit by the low sun, fogged into the haze ---- */
-  const fogU = { value: new THREE.Color("#f0a07c") }, lightU = { value: LIGHT };
-  const mat = (o: Parameters<typeof psx>[0]) => {
-    const m = psx({ amb: "#7a5a86", sun: "#ffb27a", ...o });
-    m.uniforms.uFogColor = fogU;
-    m.uniforms.uLightDir = lightU;
-    return m;
-  };
+  /* ---- light: one low sun behind the scene, a violet sky above, warm bounce off the sand ---- */
+  const lightU = { value: LIGHT };
+  const SKY = new THREE.Color("#a890c0"), GROUND = new THREE.Color("#e0bc9c"), SUNC = new THREE.Color("#ffc888").multiplyScalar(1.35);
+  const mat = (o: { map: THREE.Texture; tint: string; uv?: number; amb?: number; trans?: number; rim?: number; fogAmt?: number }) =>
+    new THREE.ShaderMaterial({
+      uniforms: {
+        ...shared, uSnap: U.uSnap, uLight: lightU, uMap: { value: o.map }, uTint: { value: new THREE.Color(o.tint) }, uUv: { value: o.uv ?? 1 },
+        uSky: { value: SKY.clone().multiplyScalar(o.amb ?? 1) }, uGround: { value: GROUND.clone().multiplyScalar(o.amb ?? 1) },
+        uSunCol: { value: SUNC }, uTrans: { value: o.trans ?? 0 }, uRim: { value: o.rim ?? 0.5 },
+        uFogNear: U.uFogNear, uFogFar: U.uFogFar, uFogAmt: { value: o.fogAmt ?? 1 },
+      },
+      vertexShader: PROP_V,
+      fragmentShader: PROP_F,
+    });
   const m = {
-    trunk: mat({ map: tex.tBark, tint: "#ffe0c0", amb: "#f0dce4" }),
-    frond: mat({ map: tex.tPlain, tint: "#dcff9c", amb: "#ece0e8", sun: "#ffd090" }),
-    frond2: mat({ map: tex.tPlain, tint: "#bcec88", amb: "#e0d4e0", sun: "#ffd090" }),
-    drift: mat({ map: tex.tPlain, tint: "#e8d8c8", amb: "#a08aa0" }),
-    rock: mat({ map: tex.tStone, tint: "#b8a4b0", amb: "#8a6a90", uv: 1.5 }),
-    shell: mat({ map: tex.tPlain, tint: "#ffd6c8" }),
-    shell2: mat({ map: tex.tPlain, tint: "#f4e8dc" }),
-    star: mat({ map: tex.tPlain, tint: "#ff8a5c" }),
-    print: mat({ map: tex.tPlain, tint: "#c8b8ae", amb: "#6a5070" }),
-    bottle: mat({ map: tex.tPlain, tint: "#7cc6a0", amb: "#4a6a6a" }),
-    cork: mat({ map: tex.tBark, tint: "#c89a6a" }),
-    head: mat({ map: tex.tStone, tint: "#6a4c74", amb: "#5a3c66", fogAmt: 0.8 }),
+    trunk: mat({ map: tex.tBark, tint: "#ffe4c8", amb: 1.25, rim: 1.2 }),
+    frond: mat({ map: tex.tPlain, tint: "#c4e894", trans: 0.75, rim: 0.8 }),
+    frond2: mat({ map: tex.tPlain, tint: "#a6d484", trans: 0.75, rim: 0.8 }),
+    drift: mat({ map: tex.tPlain, tint: "#ecdccc", rim: 1 }),
+    rock: mat({ map: tex.tStone, tint: "#c4b0bc", uv: 1.5, amb: 0.85, rim: 0.8 }),
+    shell: mat({ map: tex.tPlain, tint: "#ffd6c8", rim: 1.5 }),
+    shell2: mat({ map: tex.tPlain, tint: "#f4e8dc", rim: 1.5 }),
+    star: mat({ map: tex.tPlain, tint: "#ff8a5c", amb: 0.9 }),
+    print: mat({ map: tex.tPlain, tint: "#b8a8a4", amb: 0.8, rim: 0 }),
+    bottle: mat({ map: tex.tPlain, tint: "#7cc6a0", trans: 0.8, rim: 1.5 }),
+    cork: mat({ map: tex.tBark, tint: "#e0aa78" }),
+    head: mat({ map: tex.tStone, tint: "#7a5a84", amb: 0.55, rim: 0.3, fogAmt: 0.8 }),
   };
   m.print.polygonOffset = true;
   m.print.polygonOffsetFactor = -2;
@@ -240,7 +331,8 @@ export function buildBeach(k: PsxKit): SceneDef {
   const sandMat = new THREE.ShaderMaterial({
     uniforms: {
       ...shared, uSnap: U.uSnap, uMap: { value: sandTex() }, uLight: lightU,
-      uAmb: { value: new THREE.Color("#c4b0bc") }, uSunCol: { value: new THREE.Color("#ffc890") },
+      uAmb: { value: new THREE.Color("#a898b8") }, uSunCol: { value: new THREE.Color("#ffc890").multiplyScalar(1.25) },
+      uShadow: { value: null as THREE.Texture | null }, uShadowBox: { value: new THREE.Vector4(...SHADOW_BOX) },
       uFogNear: U.uFogNear, uFogFar: U.uFogFar,
     },
     vertexShader: SAND_V,
@@ -290,6 +382,14 @@ export function buildBeach(k: PsxKit): SceneDef {
 
   /* ---- props ---- */
   const { add, flush } = k.batcher();
+  // Everything that casts a shadow on the sand goes through here as well, already placed in the world.
+  const casters: THREE.BufferGeometry[] = [];
+  const cm = new THREE.Matrix4(), cq = new THREE.Quaternion(), ce = new THREE.Euler(), cp = new THREE.Vector3(), cs = new THREE.Vector3();
+  const addC = (geo: THREE.BufferGeometry, mt: THREE.Material, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, sc = 1) => {
+    cm.compose(cp.set(x, y, z), cq.setFromEuler(ce.set(rx, ry, rz)), cs.set(sc, sc, sc));
+    casters.push(geo.clone().applyMatrix4(cm));
+    add(geo, mt, x, y, z, rx, ry, rz, sc);
+  };
   const up = new THREE.Vector3(0, 1, 0);
   const seg = (a: V3, b: V3, r0: number, r1: number, n = 5) => {
     const g = new THREE.CylinderGeometry(r1, r0, a.distanceTo(b) * 1.08, n, 1);
@@ -308,11 +408,11 @@ export function buildBeach(k: PsxKit): SceneDef {
     const H = 5.5 + rnd() * 2, n = 7;
     const xf = new THREE.Matrix4().compose(new THREE.Vector3(x, hs(x, z) - 0.2, z), new THREE.Quaternion().setFromAxisAngle(up, ry), new THREE.Vector3(s, s, s));
     const P = (i: number) => new THREE.Vector3(lean * (i / n) ** 2, (H * i) / n, 0);
-    for (let i = 0; i < n; i++) add(seg(P(i), P(i + 1), 0.24 - i * 0.014, 0.23 - (i + 1) * 0.014).applyMatrix4(xf), m.trunk);
+    for (let i = 0; i < n; i++) addC(seg(P(i), P(i + 1), 0.24 - i * 0.014, 0.23 - (i + 1) * 0.014).applyMatrix4(xf), m.trunk);
     const top = P(n).applyMatrix4(xf);
     for (let f = 0; f < 9; f++) {
       const a = ry + (f / 9) * Math.PI * 2 + rnd() * 0.3, droop = f % 2 ? 0.25 : 0.6 + rnd() * 0.3;
-      add(frond.clone().rotateZ(-Math.PI / 2 - droop).rotateY(a), f % 2 ? m.frond2 : m.frond, top.x, top.y, top.z, 0, 0, 0, s);
+      addC(frond.clone().rotateZ(-Math.PI / 2 - droop).rotateY(a), f % 2 ? m.frond2 : m.frond, top.x, top.y, top.z, 0, 0, 0, s);
     }
     for (let c = 0; c < 3; c++) {
       const a = c * 2.1;
@@ -332,16 +432,16 @@ export function buildBeach(k: PsxKit): SceneDef {
   const dA = new THREE.Vector3(3.8, 0, 3.6), dB = new THREE.Vector3(7.6, 0, 4.4);
   dA.y = hs(dA.x, dA.z) + 0.12;
   dB.y = hs(dB.x, dB.z) + 0.1;
-  add(seg(dA, dB, 0.17, 0.11, 6), m.drift);
+  addC(seg(dA, dB, 0.17, 0.11, 6), m.drift);
   const dC = dA.clone().lerp(dB, 0.35), dD = dC.clone().add(new THREE.Vector3(0.4, 0.75, -1.1));
-  add(seg(dC, dD, 0.1, 0.05, 5), m.drift);
+  addC(seg(dC, dD, 0.1, 0.05, 5), m.drift);
   const stump = facet(new THREE.DodecahedronGeometry(0.34, 0), 0.08);
   add(stump, m.drift, dB.x + 0.15, dB.y, dB.z + 0.05, 0, 0, 0, 0.7);
 
   // rocks at the water's edge, half buried
   const rock = facet(new THREE.DodecahedronGeometry(1, 0), 0.32);
   ([[-15, -0.6, 1.3], [-13.4, 0.4, 0.8], [-16.6, 0.9, 0.6], [16, -2.4, 0.9], [17.2, -1.5, 0.55]] as const).forEach(([x, z, s]) =>
-    add(rock, m.rock, x, hs(x, z) + s * 0.25, z, rnd() * 3, rnd() * 3, rnd() * 3, s),
+    addC(rock, m.rock, x, hs(x, z) + s * 0.25, z, rnd() * 3, rnd() * 3, rnd() * 3, s),
   );
 
   // shells and starfish on the dry sand
@@ -349,11 +449,11 @@ export function buildBeach(k: PsxKit): SceneDef {
   const starArm = facet(new THREE.ConeGeometry(0.05, 0.2, 3).rotateX(Math.PI / 2).translate(0, 0, 0.1).scale(1, 0.4, 1));
   for (let i = 0; i < 26; i++) {
     const x = (rnd() - 0.5) * 26, z = 2.8 + rnd() * 5.5;
-    add(shellG, rnd() > 0.5 ? m.shell : m.shell2, x, hs(x, z) + 0.02, z, 0, rnd() * 6, 0, 0.8 + rnd() * 0.8);
+    addC(shellG, rnd() > 0.5 ? m.shell : m.shell2, x, hs(x, z) + 0.02, z, 0, rnd() * 6, 0, 0.8 + rnd() * 0.8);
   }
   for (let i = 0; i < 3; i++) {
     const x = -4 + i * 5.5 + rnd(), z = 3.2 + rnd() * 3, ry = rnd() * 6, y = hs(x, z) + 0.02;
-    for (let a = 0; a < 5; a++) add(starArm, m.star, x, y, z, 0, ry + (a / 5) * Math.PI * 2, 0, 1.4);
+    for (let a = 0; a < 5; a++) addC(starArm, m.star, x, y, z, 0, ry + (a / 5) * Math.PI * 2, 0, 1.4);
   }
 
   // footprints walking down to the water, gone below the wet line
@@ -373,6 +473,7 @@ export function buildBeach(k: PsxKit): SceneDef {
     add(g, m.head, x, -sy * 0.25, z, 0, rnd() * 3, 0);
   });
   flush(scene);
+  sandMat.uniforms.uShadow.value = bakeShadows(casters);
 
   /* ---- the bottle, adrift in the shallows ---- */
   const bottle = new THREE.Group();
