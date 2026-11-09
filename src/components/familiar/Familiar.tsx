@@ -1,96 +1,99 @@
 /**
- * Bit: a small stone automaton, woken from a ruin, that drifts along the
- * bottom edge of the page.
- * It wanders, drifts toward the pointer when it comes near the floor, dozes
- * off when nothing moves for a while, and hops when pressed. Movement is
- * stepped on a slow tick on purpose, to match the pixel art. With reduced
- * motion it stays put and only reacts to presses.
+ * Bit: a small stone automaton, woken from a ruin, that keeps to the
+ * bottom-left corner of the page. It reads whatever page you open and says
+ * something about it (see quips.ts), mutters now and then while you read,
+ * dozes when nothing moves for a while, and hops when pressed. With reduced
+ * motion it doesn't hover or hop, but it still talks.
  */
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Sprite, type FrameName } from "./sprite";
 import { addPet } from "./store";
+import { fallbackQuips, pageQuips, pick } from "./quips";
 
 const TICK = 160;
-const STEP = 4;
 const SLEEP_AFTER = 40_000;
-const NEAR_FLOOR = 180;
-// Keep clear of the tape deck in the bottom-right corner.
-const RIGHT_CLEARANCE = 150;
-const WIDTH = 54;
+/** Let the new page render before reading it. */
+const READ_DELAY = 1400;
+/** How often Bit mutters on its own while you're on a page. */
+const CHATTER_EVERY = 45_000;
+const BUBBLE_MS = 6500;
 
-const QUIPS = [
-  "…",
-  "♥",
-  "you found me.",
-  "the old ones are sleeping.",
-  "i remember the forge.",
-  "my maker is dust now.",
-  "*grinding stone noises*",
-  "try pressing t.",
-  "g then h goes home.",
-  "a riddle kept me sealed.",
-]
-
-type Mode = "idle" | "walk" | "sleep" | "hop";
-
-const maxX = () => Math.max(12, window.innerWidth - RIGHT_CLEARANCE - WIDTH);
-const clamp = (x: number) => Math.min(maxX(), Math.max(12, x));
+type Mode = "idle" | "sleep" | "hop";
 
 export default function Familiar() {
-  const reduced = useRef(
-    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  ).current;
-
-  const [x, setX] = useState(() => clamp(window.innerWidth * 0.2));
+  const { pathname } = useLocation();
   const [mode, setMode] = useState<Mode>("idle");
   const [frame, setFrame] = useState<FrameName>("idle");
-  const [facing, setFacing] = useState<1 | -1>(1);
   const [bubble, setBubble] = useState<string | null>(null);
 
-  const target = useRef(x);
   const lastActive = useRef(Date.now());
   const hopLeft = useRef(0);
   const tick = useRef(0);
   const bubbleTimer = useRef<number>();
-  const xRef = useRef(x);
   const modeRef = useRef(mode);
-  xRef.current = x;
   modeRef.current = mode;
 
-  const say = (text: string, ms = 2600) => {
+  // Lines for the current page: the model's when it answered, then stock ones.
+  const lines = useRef<string[]>(fallbackQuips(pathname));
+  const said = useRef(new Set<string>());
+
+  const say = useCallback((text: string, ms = BUBBLE_MS) => {
     setBubble(text);
     window.clearTimeout(bubbleTimer.current);
     bubbleTimer.current = window.setTimeout(() => setBubble(null), ms);
-  };
+  }, []);
 
-  // Pointer activity keeps Bit awake; near the floor it comes over to look.
+  /** Next line not yet said on this page; stock lines once the page's run out. */
+  const nextLine = useCallback(() => {
+    const fresh = lines.current.filter((l) => !said.current.has(l));
+    const line = fresh.length ? fresh[0] : pick(fallbackQuips(pathname));
+    said.current.add(line);
+    return line;
+  }, [pathname]);
+
+  // A new page: read it, then remark on it.
   useEffect(() => {
-    const onMove = (e: PointerEvent) => {
+    const ctrl = new AbortController();
+    lines.current = fallbackQuips(pathname);
+    said.current = new Set();
+    const id = window.setTimeout(async () => {
+      const fromModel = await pageQuips(pathname, ctrl.signal);
+      if (ctrl.signal.aborted) return;
+      if (fromModel) lines.current = [...fromModel, ...lines.current];
+      // Stock lines start at a random point so the fallback doesn't always open the same way.
+      else lines.current = [pick(lines.current), ...lines.current];
+      if (modeRef.current !== "sleep") say(nextLine());
+    }, READ_DELAY);
+    return () => {
+      ctrl.abort();
+      window.clearTimeout(id);
+    };
+  }, [pathname, say, nextLine]);
+
+  // Mutter now and then while the visitor reads.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (modeRef.current === "idle" && !document.hidden) say(nextLine());
+    }, CHATTER_EVERY);
+    return () => window.clearInterval(id);
+  }, [say, nextLine]);
+
+  // Any pointer movement keeps Bit awake.
+  useEffect(() => {
+    const onMove = () => {
       lastActive.current = Date.now();
       if (modeRef.current === "sleep") {
         setMode("idle");
         say("!", 900);
       }
-      if (reduced || modeRef.current === "hop") return;
-      if (window.innerHeight - e.clientY < NEAR_FLOOR) {
-        const dx = e.clientX - (xRef.current + WIDTH / 2);
-        if (Math.abs(dx) > 30) {
-          target.current = clamp(e.clientX - WIDTH / 2 - Math.sign(dx) * 36);
-          setMode("walk");
-        } else {
-          setFacing(dx < 0 ? -1 : 1);
-        }
-      }
     };
-    const onResize = () => setX((v) => clamp(v));
     window.addEventListener("pointermove", onMove, { passive: true });
-    window.addEventListener("resize", onResize);
     return () => {
       window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("resize", onResize);
       window.clearTimeout(bubbleTimer.current);
     };
-  }, [reduced]);
+  }, [say]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -116,42 +119,22 @@ export default function Familiar() {
         return;
       }
 
-      if (m === "walk" && !reduced) {
-        const dx = target.current - xRef.current;
-        if (Math.abs(dx) <= STEP) {
-          setX(target.current);
-          setMode("idle");
-          setFrame("idle");
-        } else {
-          setFacing(dx < 0 ? -1 : 1);
-          setX((v) => clamp(v + Math.sign(dx) * STEP));
-          setFrame(tick.current % 2 ? "step" : "idle");
-        }
-        return;
-      }
-
-      // Idle: blink now and then, sometimes wander off.
-      setFrame(tick.current % 30 === 0 ? "blink" : "idle");
-      if (!reduced && Math.random() < 0.012) {
-        target.current = clamp(12 + Math.random() * maxX());
-        setMode("walk");
-      }
+      setFrame(tick.current % 30 === 0 ? "blink" : tick.current % 2 ? "step" : "idle");
     }, TICK);
     return () => window.clearInterval(id);
-  }, [reduced]);
+  }, [say]);
 
   const pet = () => {
     lastActive.current = Date.now();
     const n = addPet();
-    const line = n % 25 === 0 ? `${n} touches. the stone grows warm.` : QUIPS[Math.floor(Math.random() * QUIPS.length)];
-    say(line);
+    say(n % 25 === 0 ? `${n} touches. the stone grows warm.` : nextLine());
     hopLeft.current = 4;
     setMode("hop");
     setFrame("happy");
   };
 
   return (
-    <div className="familiar" style={{ transform: `translateX(${x}px)` }} data-mode={mode}>
+    <div className="familiar" data-mode={mode}>
       {bubble && (
         <span className="familiar__bubble" role="status">
           {bubble}
@@ -162,7 +145,6 @@ export default function Familiar() {
         className="familiar__body"
         onClick={pet}
         aria-label="Bit, an old automaton. Press to touch it."
-        style={{ transform: `scaleX(${facing})` }}
       >
         <Sprite frame={frame} />
       </button>

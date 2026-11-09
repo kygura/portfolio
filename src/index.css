@@ -3253,10 +3253,11 @@ kbd {
 }
 
 /* ── Familiar: Bit, a stone automaton unlocked from the hidden page ── */
+/* Pinned to the bottom-left corner, mirroring the tape deck on the right. */
 .familiar {
   position: fixed;
-  left: 0;
-  bottom: 10px;
+  left: var(--hero-gutter);
+  bottom: 12px;
   z-index: 40;
   pointer-events: none;
 }
@@ -3290,11 +3291,11 @@ kbd {
 
 .familiar__bubble {
   position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  white-space: nowrap;
-  padding: 2px 8px;
+  bottom: calc(100% + 8px);
+  left: 0;
+  width: max-content;
+  max-width: min(250px, calc(100vw - 2 * var(--hero-gutter)));
+  padding: 4px 10px;
   border: 1px solid var(--rule-2);
   background: var(--sheet);
   color: var(--ink-2);
@@ -3308,8 +3309,7 @@ kbd {
   content: "";
   position: absolute;
   top: 100%;
-  left: 50%;
-  margin-left: -3px;
+  left: 24px;
   border: 3px solid transparent;
   border-top-color: var(--rule-2);
 }
