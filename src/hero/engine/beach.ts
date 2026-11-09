@@ -17,9 +17,9 @@ import { pulse, type PsxKit, type SceneDef } from "./psx";
 const T = 6.5; // seconds between waves
 const L = 21; // metres between crests out past the break
 const RUN = 0.28; // runup height of an average wave, metres
-// The sun sits in the middle of the view, over open water just right of the headland; the key light
+// The sun sits dead ahead, straight out to sea from where you stand; the key light
 // comes from the same bearing, so the glow, the road on the water and the palm shadows all agree.
-const SUN = new THREE.Vector3(-250, 3.2, -440);
+const SUN = new THREE.Vector3(0, 3.2, -440);
 const LIGHT = (() => {
   const h = Math.hypot(SUN.x, SUN.z);
   return new THREE.Vector3((SUN.x / h) * 0.95, 0.32, (SUN.z / h) * 0.95).normalize();
@@ -569,8 +569,8 @@ export function buildBeach(k: PsxKit): SceneDef {
   // close by, leaning out over the beach toward the water; their shadows reach back up the sand.
   // Three frame the left of the view, two the right, leaning in toward the middle.
   const near = [
-    palm2(-7, 11.5, 0.9, 3.6, 1.86), palm2(-13.5, 13.2, 0.9, 2.6, 2.25), palm2(-10.2, 15.6, 0.82, 1.6, 1.3),
-    palm2(1.8, 9.2, 0.88, 3.2, 2.5), palm2(1.2, 6.8, 0.72, 1.8, 2.0),
+    palm2(-4.6, 10, 0.9, 3.4, 0.95), palm2(-9, 12.5, 0.9, 2.6, 0.75), palm2(-7, 15.4, 0.8, 1.6, 1.1),
+    palm2(4.8, 9.8, 0.88, 3.2, 2.2), palm2(8.6, 12.8, 0.78, 2, 2.4),
   ];
   near.forEach(({ base, top, s: sc }, i) => {
     const toGround = (p: THREE.Vector3) => {
@@ -581,7 +581,16 @@ export function buildBeach(k: PsxKit): SceneDef {
     shA.push(new THREE.Vector4(base.x, base.z, tx, tz));
     shB.push(new THREE.Vector3(i * 1.7, 0, 3.4 * sc));
   });
-  // The feathered palms are background foliage. On the left, a stand just behind the near palms, then a
+  // The feathered palms are background foliage. A few stand near the water at either edge of the view,
+  for (const [x0, x1, ry] of [[-16, -9, 0.9], [9, 16, 2.25]] as const) {
+    for (let i = 0; i < 4; i++) palm(x0 + rnd() * (x1 - x0), 1.5 + rnd() * 4.5, 0.85 + rnd() * 0.35, 1 + rnd() * 2, ry + (rnd() - 0.5) * 0.6);
+  }
+  // and the beach running off to the right is lined with them.
+  for (let i = 0; i < 34; i++) {
+    const x = 13 + Math.pow(rnd(), 0.8) * 90, zs = (x < 22 ? 18 : 5) + rnd() * 22;
+    palm(x, zs, 0.95 + rnd() * 0.5, 0.8 + rnd() * 2.6, Math.PI * 0.75 + (rnd() - 0.5) * 1.6);
+  }
+  // On the left, a stand just behind the near palms, then a
   // fringe running off down the bay toward the headland.
   for (let i = 0; i < 20; i++) {
     const x = -18 - Math.pow(rnd(), 0.8) * 60;
@@ -628,15 +637,15 @@ export function buildBeach(k: PsxKit): SceneDef {
     g.scale(sx, sy, sz);
     add(g, m.head, end.x + dx, -sy * 0.35, end.z + dz, 0, rnd() * 3, 0);
   });
-  ([[70, -420, 46, 8, 18], [112, -436, 16, 4.5, 9]] as const).forEach(([x, z, sx, sy, sz]) => {
+  ([[170, -420, 46, 8, 18], [212, -436, 16, 4.5, 9]] as const).forEach(([x, z, sx, sy, sz]) => {
     const g = lump.clone();
     g.scale(sx, sy, sz);
     add(g, m.isle, x, -sy * 0.3, z, 0, rnd() * 3, 0);
   });
   // a stand of palms on the far island, drawn large enough to read at this distance
   for (let i = 0; i < 9; i++) {
-    const x = 38 + rnd() * 60, z = -420 + (rnd() - 0.5) * 10;
-    palm(0, 0, 1.6 + rnd() * 0.6, 1 + rnd() * 2.5, rnd() * 6.28, new THREE.Vector3(x, 8 * 0.7 * (1 - ((x - 70) / 46) ** 2) - 2.4, z));
+    const x = 138 + rnd() * 60, z = -420 + (rnd() - 0.5) * 10;
+    palm(0, 0, 1.6 + rnd() * 0.6, 1 + rnd() * 2.5, rnd() * 6.28, new THREE.Vector3(x, 8 * 0.7 * (1 - ((x - 170) / 46) ** 2) - 2.4, z));
   }
   flush(scene);
 
