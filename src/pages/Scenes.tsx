@@ -74,6 +74,16 @@ const Scenes = () => {
           )}
         </div>
 
+        <div className="scenes__caption" aria-hidden="true">
+          <p className="scenes__count">
+            {String(sheet + 1).padStart(2, "0")} / {String(SHEETS.length).padStart(2, "0")}
+          </p>
+          <p key={cur.id} className="scenes__title">
+            {cur.name}
+          </p>
+          <p className="scenes__hint">{cur.hint ?? "DRAG TO LOOK \u00b7 SCROLL TO ZOOM \u00b7 [ ] TO CHANGE"}</p>
+        </div>
+
         <nav ref={railRef} className="scenes__rail" aria-label="Scenes">
           {SHEETS.map((s, i) => (
             <Link
@@ -83,6 +93,7 @@ const Scenes = () => {
               className="scenes__name"
               aria-current={i === sheet ? "page" : undefined}
             >
+              <i>{String(i + 1).padStart(2, "0")}</i>
               {s.name}
             </Link>
           ))}

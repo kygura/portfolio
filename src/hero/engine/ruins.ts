@@ -209,7 +209,12 @@ export function buildRuins(k: PsxKit): SceneDef {
   const glow = new THREE.Group();
   glow.position.set(0, CY, 0);
   scene.add(glow);
-  [1.4, 2.6].forEach((r) => glow.add(new THREE.Mesh(new THREE.CircleGeometry(r, 12), glowMat)));
+  // Five stacked discs: the additive overlap steps the falloff, so the dither reads it as a soft halo rather than two plates.
+  [0.5, 0.8, 1.15, 1.6, 2.2].forEach((r, i) => {
+    const d = new THREE.Mesh(new THREE.CircleGeometry(r, 28), glowMat);
+    d.position.z = -i * 0.01;
+    glow.add(d);
+  });
 
   /* ---- mist: drifting translucent layers, plus shafts of light ---- */
   const mc = document.createElement("canvas");
@@ -241,9 +246,21 @@ export function buildRuins(k: PsxKit): SceneDef {
     scene.add(m);
     return { t, h, sp: 0.004 + i * 0.002, dir: i % 2 ? 1 : -1 };
   });
-  const shaftMat = new THREE.MeshBasicMaterial({ color: "#d9e6c4", transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending, depthWrite: false });
-  [[-4, 3, 0.35, 0.2], [3.5, -5, -0.3, 0.25], [6, -1, 0.28, -0.3], [-7, -4, -0.2, -0.35]].forEach(([x, z, rx, rz]) => {
-    mesh(new THREE.BoxGeometry(1.3, 26, 1.3), shaftMat, scene, x, 12, z, rx, rnd(), rz).renderOrder = 3;
+  // Shafts of light: parallel rays from one sun, each a narrow open cone that is brightest
+  // in the canopy and spent before it reaches the ground (vertex colour fades the add).
+  const shaftMat = new THREE.MeshBasicMaterial({ color: "#d9e6c4", vertexColors: true, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+  const shaftGeo = (top: number, foot: number, len: number) => {
+    const g = new THREE.CylinderGeometry(top, foot, len, 6, 4, true);
+    const p = g.attributes.position, c = new Float32Array(p.count * 3);
+    for (let i = 0; i < p.count; i++) {
+      const f = Math.pow(Math.min(1, Math.max(0, p.getY(i) / len + 0.5)), 1.6);
+      c[i * 3] = c[i * 3 + 1] = c[i * 3 + 2] = f;
+    }
+    g.setAttribute("color", new THREE.BufferAttribute(c, 3));
+    return g;
+  };
+  [[-5, 4, 0.35, 1.1], [4.5, -6, 0.28, 0.9], [8, 2, 0.4, 1.3], [-9, -5, 0.3, 1], [1, 9, 0.22, 0.8]].forEach(([x, z, top, foot]) => {
+    mesh(shaftGeo(top, foot, 22), shaftMat, scene, x + 2.4, 11, z + 1.6, 0.14, rnd(), -0.22).renderOrder = 3;
   });
 
   /* ---- wisps ---- */
@@ -308,7 +325,7 @@ export function buildRuins(k: PsxKit): SceneDef {
       runeRing.rotation.x = Math.sin(t * 0.3) * 0.12;
       glow.lookAt(cam.position);
       glowMat.color.copy(U.uAccent.value);
-      glowMat.opacity = 0.13 + Math.sin(t * 1.3) * 0.04 + 0.3 * pulse(ew, 1.6);
+      glowMat.opacity = 0.045 + Math.sin(t * 1.3) * 0.012 + 0.12 * pulse(ew, 1.6);
       for (const m of mists) {
         m.t.offset.set((t * m.sp * m.dir) % 1, (t * m.sp * 0.6) % 1);
       }

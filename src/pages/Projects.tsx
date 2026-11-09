@@ -108,9 +108,9 @@ const Projects = () => {
       )}
 
       {error && (
-        <div className="border border-dashed border-foreground/30 px-6 py-8 text-sm uppercase tracking-[0.2em] text-muted-foreground">
+        <div className="border border-dashed border-[var(--rule-2)] px-6 py-8 font-mono text-[12px] leading-relaxed tracking-[0.06em] text-muted-foreground">
           Couldn't reach GitHub ({error.message}).{" "}
-          <a href="https://github.com/kygura" className="underline text-foreground">
+          <a href="https://github.com/kygura" className="underline underline-offset-4 text-foreground hover:text-accent">
             Browse the repositories there
           </a>
           .
