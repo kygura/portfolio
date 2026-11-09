@@ -364,7 +364,6 @@ export function buildBeach(k: PsxKit): SceneDef {
     print: mat({ map: tex.tPlain, tint: "#d8ccd0", amb: "#a8a0b8" }),
     head: mat({ map: tex.tLeaf, tint: "#7a8a70", amb: "#5a4a6c", fogAmt: 0.85, uv: 3 }),
     isle: mat({ map: tex.tStone, tint: "#6c5878", amb: "#5a4468", fogAmt: 0.9 }),
-    islet: mat({ map: tex.tPlain, tint: "#f6eadc", amb: "#c8b0bc", fogAmt: 0.7 }),
     bird: mat({ map: tex.tPlain, tint: "#d8c0a8", amb: "#b09aa8" }),
     belly: mat({ map: tex.tPlain, tint: "#fff6ee", amb: "#b8a4b4" }),
     beak: mat({ map: tex.tPlain, tint: "#3a2c34", amb: "#3a2c34" }),
@@ -634,30 +633,6 @@ export function buildBeach(k: PsxKit): SceneDef {
     g.scale(sx, sy, sz);
     add(g, m.isle, x, -sy * 0.3, z, 0, rnd() * 3, 0);
   });
-  // On the right the view is open sea, so the feathered palms there stand on a low sandy islet ninety
-  // metres out, between the sun and the near palms, ringed with foam, with scrub on its crown.
-  const ISX = -25, ISZ = -90, IRX = 15, IRZ = 8, IH = 2.6;
-  {
-    const g = lump.clone();
-    g.scale(IRX, IH, IRZ);
-    add(g, m.islet, ISX, -0.55, ISZ, 0, 0.15, 0);
-    const scrub = lump.clone();
-    scrub.scale(IRX * 0.55, 1.1, IRZ * 0.5);
-    add(scrub, m.head, ISX + 1, 0.2, ISZ - 0.5, 0, 0.3, 0);
-  }
-  const isletY = (dx: number, dz: number) => -0.55 + IH * Math.sqrt(Math.max(0, 1 - (dx / IRX) ** 2 - (dz / IRZ) ** 2)) - 0.2;
-  for (let i = 0; i < 16; i++) {
-    const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * 0.72, dx = Math.cos(a) * r * IRX, dz = Math.sin(a) * r * IRZ;
-    palm(0, 0, 1.2 + rnd() * 0.5, 0.8 + rnd() * 2.8, rnd() * 6.28, new THREE.Vector3(ISX + dx, isletY(dx, dz), ISZ + dz));
-  }
-  {
-    const ring = new THREE.RingGeometry(1.0, 1.12, 40).rotateX(-Math.PI / 2).scale(IRX, 1, IRZ);
-    const foam = new THREE.Mesh(ring, new THREE.MeshBasicMaterial({ color: "#fff4ea", transparent: true, opacity: 0.55, depthWrite: false }));
-    foam.position.set(ISX, 0.06, ISZ);
-    foam.rotation.y = 0.15;
-    foam.renderOrder = 3;
-    scene.add(foam);
-  }
   // a stand of palms on the far island, drawn large enough to read at this distance
   for (let i = 0; i < 9; i++) {
     const x = 38 + rnd() * 60, z = -420 + (rnd() - 0.5) * 10;
