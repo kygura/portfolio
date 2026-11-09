@@ -405,24 +405,52 @@ export function buildBeach(k: PsxKit): SceneDef {
   };
 
   // palms leaning out toward the water
-  const frondG = new THREE.ConeGeometry(0.42, 3.2, 4);
-  frondG.scale(0.22, 1, 1);
-  frondG.translate(0, 1.6, 0);
-  const frond = facet(frondG, 0.04);
-  const nut = facet(new THREE.IcosahedronGeometry(0.18, 0), 0.03);
+  /* A frond: a spine arching up and out then drooping, folded into a shallow V, with a saw-tooth edge
+     for the leaflets. Both faces are built (flat-shaded apart) so light through the leaf reads from
+     either side. Built along +x from the crown. */
+  const frondGeo = (L: number, arch: number) => {
+    const N = 22, pos: number[] = [], idx: number[] = [];
+    for (let i = 0; i <= N; i++) {
+      const u = i / N, x = L * u, y = L * (0.34 * u - arch * u * u);
+      const w = 0.62 * Math.sin(Math.PI * Math.min(1, u * 1.08)) ** 0.7 * (1 - 0.35 * u) * (i % 2 ? 0.45 : 1);
+      const dip = 0.22 * w + 0.12 * u;
+      pos.push(x, y - dip, -w, x, y, 0, x, y - dip, w);
+    }
+    for (let i = 0; i < N; i++) {
+      const b = i * 3;
+      idx.push(b, b + 1, b + 3, b + 1, b + 4, b + 3, b + 1, b + 2, b + 4, b + 2, b + 5, b + 4);
+      idx.push(b, b + 3, b + 1, b + 1, b + 3, b + 4, b + 1, b + 4, b + 2, b + 2, b + 4, b + 5);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute("uv", new THREE.Float32BufferAttribute(new Array((pos.length / 3) * 2).fill(0), 2));
+    g.setIndex(idx);
+    return facet(g, 0.015);
+  };
+  const fronds = [0, 1, 2, 3].map((i) => frondGeo(3.3 + i * 0.25, 0.75 + i * 0.18));
+  const crownG = facet(new THREE.IcosahedronGeometry(0.3, 1), 0.04);
+  const nut = facet(new THREE.IcosahedronGeometry(0.17, 1), 0.02);
   const palm = (x: number, z: number, s: number, ry: number, lean: number) => {
-    const H = 5.5 + rnd() * 2, n = 7;
+    const H = 5.5 + rnd() * 2, n = 12;
     const xf = new THREE.Matrix4().compose(new THREE.Vector3(x, hs(x, z) - 0.2, z), new THREE.Quaternion().setFromAxisAngle(up, ry), new THREE.Vector3(s, s, s));
     const P = (i: number) => new THREE.Vector3(lean * (i / n) ** 2, (H * i) / n, 0);
-    for (let i = 0; i < n; i++) addC(seg(P(i), P(i + 1), 0.24 - i * 0.014, 0.23 - (i + 1) * 0.014).applyMatrix4(xf), m.trunk);
-    const top = P(n).applyMatrix4(xf);
-    for (let f = 0; f < 9; f++) {
-      const a = ry + (f / 9) * Math.PI * 2 + rnd() * 0.3, droop = f % 2 ? 0.25 : 0.6 + rnd() * 0.3;
-      addC(frond.clone().rotateZ(-Math.PI / 2 - droop).rotateY(a), f % 2 ? m.frond2 : m.frond, top.x, top.y, top.z, 0, 0, 0, s);
+    // ringed trunk: each segment flares a little at its foot, like the scars of old fronds
+    for (let i = 0; i < n; i++) {
+      const r = 0.26 - 0.07 * (i / n);
+      addC(seg(P(i), P(i + 1), r * 1.08, r * 0.94, 8).applyMatrix4(xf), m.trunk);
     }
-    for (let c = 0; c < 3; c++) {
-      const a = c * 2.1;
-      add(nut, m.trunk, top.x + Math.cos(a) * 0.22 * s, top.y - 0.2 * s, top.z + Math.sin(a) * 0.22 * s, 0, 0, 0, s);
+    const top = P(n).applyMatrix4(xf);
+    add(crownG, m.frond2, top.x, top.y, top.z, rnd() * 3, rnd() * 3, 0, s);
+    // an upright inner ring and a drooping outer ring
+    for (let f = 0; f < 12; f++) {
+      const inner = f < 4, a = ry + (inner ? f / 4 + 0.12 : (f - 4) / 8) * Math.PI * 2 + (rnd() - 0.5) * 0.35;
+      const lift = inner ? 0.55 + rnd() * 0.25 : 0.05 + rnd() * 0.25;
+      const g = fronds[inner ? Math.floor(rnd() * 2) : 1 + Math.floor(rnd() * 3)].clone().rotateX((rnd() - 0.5) * 0.5).rotateZ(lift).rotateY(a);
+      addC(g, f % 2 ? m.frond2 : m.frond, top.x, top.y, top.z, 0, 0, 0, s * (inner ? 0.8 : 1));
+    }
+    for (let c = 0; c < 4; c++) {
+      const a = c * 1.6 + rnd() * 0.4;
+      add(nut, m.cork, top.x + Math.cos(a) * 0.24 * s, top.y - 0.22 * s, top.z + Math.sin(a) * 0.24 * s, 0, 0, 0, s);
     }
   };
   // the camera sees a narrow strip of shore, so the palms stand near its edges and lean in over the water
