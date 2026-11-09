@@ -6,7 +6,8 @@
  *  Indigo zenith down to a lilac haze, a sparse sprinkle of stars, and
  *  everything doubled in the water.
  *
- *  The palette is fixed (night, not the site accent).
+ *  The night follows the site palette: the hand-set look below is Iris's, and
+ *  any other palette turns it round to its own deep accent (Graphite goes grey).
  *  Tap the core to spin it, the eye to blink, the satellite to send it round,
  *  the star tetrahedron to counter-turn it, the moon to lift it. */
 import * as THREE from "three";
@@ -179,11 +180,48 @@ export function buildAstral(k: PsxKit): SceneDef {
 
   // A few far pyramids on the horizon so the sea has scale.
   const mFar = R.flat({ tint: "#9a88d0", amb: "#2a1c66", sun: "#d8ccf4", fogAmt: 1 });
+  const shadowMats = new Set<THREE.MeshBasicMaterial>();
   for (let i = 0; i < 6; i++) {
     const a = (i / 6) * Math.PI * 2 + rnd() * 0.6, r = 150 + rnd() * 60, h = 6 + rnd() * 10;
     R.add(facet(new THREE.ConeGeometry(h * 0.32, h, 4)), mFar, Math.cos(a) * r, h / 2, Math.sin(a) * r, 0, rnd(), 0);
-    R.shadow(Math.cos(a) * r, Math.sin(a) * r, h * 0.3, h * 5, 0.35);
+    shadowMats.add(R.shadow(Math.cos(a) * r, Math.sin(a) * r, h * 0.3, h * 5, 0.35).material as THREE.MeshBasicMaterial);
   }
+
+  /* ---- palette ----
+     Every colour above is Iris's look. Another palette turns each one round the
+     wheel by the gap between its deep accent and Iris's, and mutes it to match
+     a quieter accent. Lightness stays, so the night stays a night. */
+  const sky = R.uniforms.sky;
+  const flatCols = (m: THREE.ShaderMaterial) => [m.uniforms.uTint.value, m.uniforms.uAmbient.value, m.uniforms.uSun.value] as THREE.Color[];
+  const cols: THREE.Color[] = [
+    sky.uZen.value, sky.uMid.value, sky.uLow.value, sky.uHor.value,
+    R.uniforms.fog.value, R.uniforms.ice.value, R.uniforms.sea.value, R.uniforms.ink.value,
+    starMat.color, chrome.uniforms.uTint.value, clean.uniforms.uTint.value,
+    ...flatCols(mDark), ...flatCols(mRing), ...flatCols(mFar),
+    lilac.uniforms.uColor.value, violet.uniforms.uColor.value,
+    eyeWhite.color, eyeIris.color, eyeRay.color,
+    ...[...shadowMats].map((m) => m.color),
+  ];
+  const base = cols.map((c) => c.clone());
+  const IRIS = new THREE.Color("#5543b0").getHSL({ h: 0, s: 0, l: 0 });
+  const hueGap = (a: number, b: number) => ((((a - b) % 1) + 1.5) % 1) - 0.5;
+  const hsl = { h: 0, s: 0, l: 0 };
+  let applied = -1;
+  const recolour = () => {
+    const deep = k.U.uAccent2.value;
+    if (deep.getHex() === applied) return;
+    applied = deep.getHex();
+    deep.getHSL(hsl);
+    const grey = hsl.s < 0.05;
+    const dh = grey ? 0 : hueGap(hsl.h, IRIS.h);
+    const sk = grey ? 0 : Math.max(0.45, Math.min(1, hsl.s / IRIS.s));
+    cols.forEach((c, i) => {
+      // The chrome tints run past white; turn their hue at unit brightness, then scale back.
+      const b = base[i], top = Math.max(1, b.r, b.g, b.b);
+      c.copy(b).multiplyScalar(1 / top).getHSL(hsl);
+      c.setHSL((((hsl.h + dh) % 1) + 1) % 1, Math.min(1, hsl.s * sk), hsl.l).multiplyScalar(top);
+    });
+  };
 
   const dir = new THREE.Vector3();
   let tCore = -99, tWatch = -99, tSat = -99, tMoon = -99, tStella = -99;
@@ -204,6 +242,7 @@ export function buildAstral(k: PsxKit): SceneDef {
       { id: "astral-moon", r: 46, at: (v) => { v.copy(moon[0].position); }, fire: (t) => { tMoon = t; } },
     ],
     update(t) {
+      recolour();
       const a = 1.4 + t * 0.02 + view.px * 0.2 + view.yaw, r = 38;
       cam.position.set(Math.cos(a) * r, 6.5 + Math.sin(t * 0.09) * 1.5 - view.py * 3, Math.sin(a) * r);
       cam.lookAt(0, PIVOT.y + 1 - view.py * 2, 0);
