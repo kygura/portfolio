@@ -3251,3 +3251,172 @@ kbd {
 @media (max-width: 560px) {
   .lost__link { grid-template-columns: 5.5rem 1fr auto; }
 }
+
+/* ── Familiar: Bit, a stone automaton unlocked from the hidden page ── */
+.familiar {
+  position: fixed;
+  left: 0;
+  bottom: 10px;
+  z-index: 40;
+  pointer-events: none;
+}
+
+.familiar__body {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  pointer-events: auto;
+  cursor: pointer;
+  image-rendering: pixelated;
+  filter:
+    drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 30%, transparent))
+    drop-shadow(0 2px 0 color-mix(in srgb, var(--bg) 70%, black));
+}
+
+/* It hovers: an idle drift, stilled while asleep or hopping. */
+.familiar__body svg { animation: familiarFloat 2.8s steps(4) infinite; }
+
+.familiar__body:focus:not(:focus-visible) { outline: none; box-shadow: none; }
+
+.familiar__body:focus-visible {
+  outline: 1px dashed var(--accent);
+  outline-offset: 4px;
+}
+
+.familiar[data-mode="hop"] .familiar__body svg { animation: familiarHop 0.64s steps(4) both; }
+.familiar[data-mode="sleep"] .familiar__body { opacity: 0.8; filter: none; }
+.familiar[data-mode="sleep"] .familiar__body svg { animation: none; }
+
+.familiar__bubble {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 2px 8px;
+  border: 1px solid var(--rule-2);
+  background: var(--sheet);
+  color: var(--ink-2);
+  font-family: var(--f-body);
+  font-style: italic;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.familiar__bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -3px;
+  border: 3px solid transparent;
+  border-top-color: var(--rule-2);
+}
+
+@keyframes familiarFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes familiarHop {
+  0%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-10px); }
+  50% { transform: translateY(-14px); }
+  75% { transform: translateY(-6px); }
+}
+
+@media print {
+  .familiar { display: none; }
+}
+
+.bay {
+  max-width: 34rem;
+  min-height: calc(100svh - var(--nav-h));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: var(--page-block) var(--page-gutter);
+}
+
+.bay__eyebrow {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
+}
+
+.bay__bay {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 124px;
+  justify-content: flex-end;
+}
+
+.bay__bot {
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 14px color-mix(in srgb, var(--accent) 35%, transparent));
+  animation: bayPop 0.5s steps(3) both;
+}
+.bay__bot--off { opacity: 0.5; filter: none; animation: bayFlicker 1.6s steps(2) infinite; }
+
+.bay__runes { display: flex; gap: 12px; padding-left: 6px; }
+
+.bay__runes span {
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+  border: 1px solid var(--rule-2);
+  animation: bayRune 0.3s steps(2) both;
+}
+
+.bay__title {
+  font-family: var(--f-body);
+  font-size: clamp(2.5rem, 9vw, 4.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+
+.bay__line {
+  font-style: italic;
+  font-size: clamp(1.05rem, 2.2vw, 1.2rem);
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.bay__back {
+  align-self: flex-start;
+  font-family: var(--f-mono);
+  font-size: 13px;
+  color: var(--accent);
+  border-bottom: 1px solid currentColor;
+}
+
+@keyframes bayRune {
+  to {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent);
+  }
+}
+
+@keyframes bayFlicker {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.3; }
+}
+
+@keyframes bayPop {
+  from { transform: scale(0.4) translateY(20px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bay__bot,
+  .familiar__body svg { animation: none; }
+  .bay__runes span { animation-duration: 0s; }
+}

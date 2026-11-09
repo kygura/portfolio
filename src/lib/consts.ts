@@ -55,5 +55,6 @@ export const QUOTES_ARRAY = [
     "He who fears he will suffer, already suffers from his fear.",
     "All the world's a stage, and all the men and women merely players.",
     "You become responsible, forever, for what you have tamed.",
-    "Do what you can, with what you have, where you are."
+    "Do what you can, with what you have, where you are.",
+    "Born of struck flint, dead in a breath, I woke the forge and what sleeps beneath.<br>Speak my name at the sealed door: nca.ink/_____",
 ];
