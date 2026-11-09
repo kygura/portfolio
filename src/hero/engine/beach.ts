@@ -207,8 +207,9 @@ export function buildBeach(k: PsxKit): SceneDef {
     return m;
   };
   const m = {
-    trunk: mat({ map: tex.tBark, tint: "#f0d0b0", amb: "#a08aa0" }),
-    frond: mat({ map: tex.tLeaf, tint: "#d8e0a8", amb: "#a08aa8", uv: 1.5 }),
+    trunk: mat({ map: tex.tBark, tint: "#ffe0c0", amb: "#f0dce4" }),
+    frond: mat({ map: tex.tPlain, tint: "#dcff9c", amb: "#ece0e8", sun: "#ffd090" }),
+    frond2: mat({ map: tex.tPlain, tint: "#bcec88", amb: "#e0d4e0", sun: "#ffd090" }),
     drift: mat({ map: tex.tPlain, tint: "#e8d8c8", amb: "#a08aa0" }),
     rock: mat({ map: tex.tStone, tint: "#b8a4b0", amb: "#8a6a90", uv: 1.5 }),
     shell: mat({ map: tex.tPlain, tint: "#ffd6c8" }),
@@ -311,7 +312,7 @@ export function buildBeach(k: PsxKit): SceneDef {
     const top = P(n).applyMatrix4(xf);
     for (let f = 0; f < 9; f++) {
       const a = ry + (f / 9) * Math.PI * 2 + rnd() * 0.3, droop = f % 2 ? 0.25 : 0.6 + rnd() * 0.3;
-      add(frond.clone().rotateZ(-Math.PI / 2 - droop).rotateY(a), m.frond, top.x, top.y, top.z, 0, 0, 0, s);
+      add(frond.clone().rotateZ(-Math.PI / 2 - droop).rotateY(a), f % 2 ? m.frond2 : m.frond, top.x, top.y, top.z, 0, 0, 0, s);
     }
     for (let c = 0; c < 3; c++) {
       const a = c * 2.1;
@@ -323,6 +324,9 @@ export function buildBeach(k: PsxKit): SceneDef {
   palm(-9, 5, 0.85, 0.7, 2.4);
   palm(8.8, 3.8, 0.95, 2.05, 3.8);
   palm(12.5, 5.6, 0.8, 2.4, 2.2);
+  palm(-7.6, 1.8, 0.75, 0.95, 3.2);
+  palm(6.4, 2.6, 0.7, 2.3, 2.6);
+  palm(-12, 6.2, 0.9, 0.5, 1.4);
 
   // driftwood: a bleached trunk with a broken limb, lying across the slope
   const dA = new THREE.Vector3(3.8, 0, 3.6), dB = new THREE.Vector3(7.6, 0, 4.4);
