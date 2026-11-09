@@ -10,6 +10,8 @@ import { useLocation } from "react-router-dom";
 import { Sprite, type FrameName } from "./sprite";
 import { addPet } from "./store";
 import { fallbackQuips, pageQuips, pick } from "./quips";
+import { Bubble } from "./Bubble";
+import { CHAR_MS, babble, chirp, isMuted, setMuted } from "./voice";
 
 const TICK = 160;
 const SLEEP_AFTER = 40_000;
@@ -17,7 +19,8 @@ const SLEEP_AFTER = 40_000;
 const READ_DELAY = 1400;
 /** How often Bit mutters on its own while you're on a page. */
 const CHATTER_EVERY = 45_000;
-const BUBBLE_MS = 6500;
+/** How long a line stays up once it has finished typing. */
+const LINGER_MS = 5000;
 
 type Mode = "idle" | "sleep" | "hop";
 
@@ -25,7 +28,8 @@ export default function Familiar() {
   const { pathname } = useLocation();
   const [mode, setMode] = useState<Mode>("idle");
   const [frame, setFrame] = useState<FrameName>("idle");
-  const [bubble, setBubble] = useState<string | null>(null);
+  const [bubble, setBubble] = useState<{ text: string; id: number } | null>(null);
+  const [muted, setMutedState] = useState(isMuted);
 
   const lastActive = useRef(Date.now());
   const hopLeft = useRef(0);
@@ -38,11 +42,17 @@ export default function Familiar() {
   const lines = useRef<string[]>(fallbackQuips(pathname));
   const said = useRef(new Set<string>());
 
-  const say = useCallback((text: string, ms = BUBBLE_MS) => {
-    setBubble(text);
+  const say = useCallback((text: string, linger = LINGER_MS, silent = false) => {
+    setBubble({ text, id: Date.now() });
+    if (!silent) babble(text);
     window.clearTimeout(bubbleTimer.current);
-    bubbleTimer.current = window.setTimeout(() => setBubble(null), ms);
+    bubbleTimer.current = window.setTimeout(() => setBubble(null), text.length * CHAR_MS + linger);
   }, []);
+
+  const toggleMute = () => {
+    setMuted(!muted);
+    setMutedState(!muted);
+  };
 
   /** Next line not yet said on this page; stock lines once the page's run out. */
   const nextLine = useCallback(() => {
@@ -85,6 +95,7 @@ export default function Familiar() {
       lastActive.current = Date.now();
       if (modeRef.current === "sleep") {
         setMode("idle");
+        chirp("wake");
         say("!", 900);
       }
     };
@@ -115,7 +126,7 @@ export default function Familiar() {
 
       if (m === "sleep") {
         setFrame("sleep");
-        if (tick.current % 25 === 0) say("z", 1400);
+        if (tick.current % 25 === 0) say("z", 1400, true);
         return;
       }
 
@@ -127,6 +138,7 @@ export default function Familiar() {
   const pet = () => {
     lastActive.current = Date.now();
     const n = addPet();
+    chirp("touch");
     say(n % 25 === 0 ? `${n} touches. the stone grows warm.` : nextLine());
     hopLeft.current = 4;
     setMode("hop");
@@ -136,9 +148,7 @@ export default function Familiar() {
   return (
     <div className="familiar" data-mode={mode}>
       {bubble && (
-        <span className="familiar__bubble" role="status">
-          {bubble}
-        </span>
+        <Bubble key={bubble.id} text={bubble.text} muted={muted} onToggleMute={toggleMute} />
       )}
       <button
         type="button"
