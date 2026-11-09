@@ -15,7 +15,7 @@ const SLEEP_AFTER = 40_000;
 const NEAR_FLOOR = 180;
 // Keep clear of the tape deck in the bottom-right corner.
 const RIGHT_CLEARANCE = 150;
-const WIDTH = 42;
+const WIDTH = 54;
 
 const QUIPS = [
   "beep.",
@@ -25,7 +25,7 @@ const QUIPS = [
   "0 bugs found. (lie)",
   "battery: 100%",
   "g then h goes home.",
-  "don't tell anyone about the hollow.",
+  "riddles are my favourite.",
   "boop?",
 ];
 

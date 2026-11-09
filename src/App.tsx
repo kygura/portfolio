@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
 import SmoothScroll from "./components/SmoothScroll";
@@ -11,6 +11,7 @@ import CommandHost from "./components/CommandHost";
 import Keys from "./theme/Keys";
 import LofiPlayer from "./components/player/LofiPlayer";
 import FamiliarHost from "./components/familiar/FamiliarHost";
+import { isGate } from "./components/familiar/gate";
 
 // Toast viewports render nothing until something fires a toast, and only
 // two lazily-routed pages ever do — no reason to ship them up front.
@@ -29,8 +30,14 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Artifacts = lazy(() => import("./pages/Artifacts"));
 const CV = lazy(() => import("./pages/CV"));
 const Scenes = lazy(() => import("./pages/Scenes"));
-// Unlisted on purpose: nothing on the site links to it.
-const Hollow = lazy(() => import("./pages/Hollow"));
+const Boot = lazy(() => import("./pages/Boot"));
+
+// Unknown paths land here. One of them, matched by hash so it never appears
+// in the bundle, is the hidden page; the rest are a 404.
+const Fallthrough = () => {
+  const { pathname } = useLocation();
+  return isGate(pathname) ? <Boot /> : <NotFound />;
+};
 
 const queryClient = new QueryClient();
 
@@ -109,18 +116,10 @@ const App = () => (
               }
             />
             <Route
-              path="/hollow"
-              element={
-                <Layout>
-                  <Hollow />
-                </Layout>
-              }
-            />
-            <Route
               path="*"
               element={
                 <Layout>
-                  <NotFound />
+                  <Fallthrough />
                 </Layout>
               }
             />

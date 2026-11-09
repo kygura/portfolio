@@ -3318,7 +3318,7 @@ kbd {
   .familiar { display: none; }
 }
 
-.hollow {
+.bay {
   max-width: 34rem;
   min-height: calc(100svh - var(--nav-h));
   display: flex;
@@ -3328,7 +3328,7 @@ kbd {
   padding: var(--page-block) var(--page-gutter);
 }
 
-.hollow__eyebrow {
+.bay__eyebrow {
   font-family: var(--f-mono);
   font-size: 11px;
   text-transform: uppercase;
@@ -3336,32 +3336,32 @@ kbd {
   color: var(--ink-3);
 }
 
-.hollow__bay {
+.bay__bay {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 12px;
-  min-height: 112px;
+  min-height: 124px;
   justify-content: flex-end;
 }
 
-.hollow__bot { image-rendering: pixelated; animation: hollowPop 0.4s steps(3) both; }
-.hollow__bot--off { opacity: 0.45; animation: hollowFlicker 1.2s steps(2) infinite; }
+.bay__bot { image-rendering: pixelated; animation: bayPop 0.4s steps(3) both; }
+.bay__bot--off { opacity: 0.45; animation: bayFlicker 1.2s steps(2) infinite; }
 
-.hollow__bar {
+.bay__bar {
   width: 112px;
   height: 6px;
   border: 1px solid var(--rule-2);
 }
 
-.hollow__bar span {
+.bay__bar span {
   display: block;
   height: 100%;
   background: var(--accent);
-  animation: hollowBoot 2.4s steps(12) both;
+  animation: bayBoot 2.4s steps(12) both;
 }
 
-.hollow__title {
+.bay__title {
   font-family: var(--f-body);
   font-size: clamp(2.5rem, 9vw, 4.5rem);
   line-height: 0.95;
@@ -3369,14 +3369,14 @@ kbd {
   color: var(--ink);
 }
 
-.hollow__line {
+.bay__line {
   font-style: italic;
   font-size: clamp(1.05rem, 2.2vw, 1.2rem);
   line-height: 1.5;
   color: var(--ink-2);
 }
 
-.hollow__back {
+.bay__back {
   align-self: flex-start;
   font-family: var(--f-mono);
   font-size: 13px;
@@ -3384,23 +3384,23 @@ kbd {
   border-bottom: 1px solid currentColor;
 }
 
-@keyframes hollowBoot {
+@keyframes bayBoot {
   from { width: 0; }
   to { width: 100%; }
 }
 
-@keyframes hollowFlicker {
+@keyframes bayFlicker {
   0%, 100% { opacity: 0.45; }
   50% { opacity: 0.3; }
 }
 
-@keyframes hollowPop {
+@keyframes bayPop {
   from { transform: scale(0.4) translateY(20px); opacity: 0; }
   to { transform: none; opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hollow__bot,
-  .hollow__bar span,
+  .bay__bot,
+  .bay__bar span,
   .familiar[data-mode="hop"] .familiar__body svg { animation: none; }
 }
