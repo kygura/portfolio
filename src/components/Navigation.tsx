@@ -252,7 +252,7 @@ const Navigation = () => {
         </ul>
 
         <div className="flex items-center gap-2 md:gap-5 flex-shrink-0">
-          <span className="nav-micro hidden lg:inline font-mono tracking-[0.16em] text-[var(--text-secondary)] whitespace-nowrap">
+          <span className="nav-micro hidden xl:inline font-mono tracking-[0.16em] text-[var(--text-secondary)] whitespace-nowrap">
             {clock}
           </span>
           <SwatchStrip />
