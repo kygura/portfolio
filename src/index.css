@@ -1843,6 +1843,17 @@
   .nav-bar .nav-link { font-size: 11.5px; letter-spacing: 0.05em; }
   .nav-bar .wordmark em, .nav-bar .wordmark i { display: none; }
 }
+/* Small desktops carry all five links plus the swatch strip: tighten the
+   tracking and gaps until 1400px, and under 1200px also shrink the links and
+   drop "// Ventures" (checked 1024–1600px). */
+@media (min-width: 1024px) and (max-width: 1399px) {
+  .nav-bar .nav-link { letter-spacing: 0.08em; }
+  .nav-bar .nav-items { gap: clamp(12px, 4vw - 30px, 24px); }
+}
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .nav-bar .nav-link { font-size: 12px; }
+  .nav-bar .wordmark em, .nav-bar .wordmark i { display: none; }
+}
 
 /* ─────────────────────────────────────────────
    PAGE SHELL — shared gutters + vertical rhythm
