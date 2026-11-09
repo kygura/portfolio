@@ -364,6 +364,7 @@ export function buildBeach(k: PsxKit): SceneDef {
     print: mat({ map: tex.tPlain, tint: "#d8ccd0", amb: "#a8a0b8" }),
     head: mat({ map: tex.tLeaf, tint: "#7a8a70", amb: "#5a4a6c", fogAmt: 0.85, uv: 3 }),
     isle: mat({ map: tex.tStone, tint: "#6c5878", amb: "#5a4468", fogAmt: 0.9 }),
+    islet: mat({ map: tex.tPlain, tint: "#f6eadc", amb: "#c8b0bc", fogAmt: 0.7 }),
     bird: mat({ map: tex.tPlain, tint: "#d8c0a8", amb: "#b09aa8" }),
     belly: mat({ map: tex.tPlain, tint: "#fff6ee", amb: "#b8a4b4" }),
     beak: mat({ map: tex.tPlain, tint: "#3a2c34", amb: "#3a2c34" }),
@@ -581,10 +582,21 @@ export function buildBeach(k: PsxKit): SceneDef {
     shA.push(new THREE.Vector4(base.x, base.z, tx, tz));
     shB.push(new THREE.Vector3(i * 1.7, 0, 3.4 * sc));
   });
-  for (let i = 0; i < 44; i++) {
-    const x = -28 - Math.pow(rnd(), 0.75) * 340;
-    // the feathered palms stand back from the beach as a fringe of background foliage
-    palm(x - 6, 26 + rnd() * 20, 1 + rnd() * 0.5, 0.8 + rnd() * 2.6, Math.PI * 0.25 + (rnd() - 0.5) * 1.6);
+  // The feathered palms are background foliage. On the left, a stand just behind the near palms, then a
+  // fringe running off down the bay toward the headland.
+  for (let i = 0; i < 20; i++) {
+    const x = -18 - Math.pow(rnd(), 0.8) * 60;
+    palm(x, 16 + rnd() * 12, 0.9 + rnd() * 0.4, 0.8 + rnd() * 2.6, Math.PI * 0.25 + (rnd() - 0.5) * 1.6);
+  }
+  for (let i = 0; i < 30; i++) {
+    const x = -70 - Math.pow(rnd(), 0.75) * 300;
+    palm(x, 18 + rnd() * 18, 1 + rnd() * 0.5, 0.8 + rnd() * 2.6, Math.PI * 0.25 + (rnd() - 0.5) * 1.6);
+  }
+  // The far arm of the bay is what fills the left of the view, so its palms come down toward the water
+  // and are drawn larger, a thick treeline from the middle of the arm out to the headland.
+  for (let i = 0; i < 46; i++) {
+    const x = -150 - rnd() * 230;
+    palm(x, 4 + rnd() * 16, 1.3 + rnd() * 0.6, 0.8 + rnd() * 2.6, Math.PI * 0.25 + (rnd() - 0.5) * 1.8);
   }
 
   // dune grass on the berm
@@ -622,7 +634,31 @@ export function buildBeach(k: PsxKit): SceneDef {
     g.scale(sx, sy, sz);
     add(g, m.isle, x, -sy * 0.3, z, 0, rnd() * 3, 0);
   });
-  // a stand of palms on the island, drawn large enough to read at this distance
+  // On the right the view is open sea, so the feathered palms there stand on a low sandy islet ninety
+  // metres out, between the sun and the near palms, ringed with foam, with scrub on its crown.
+  const ISX = -25, ISZ = -90, IRX = 15, IRZ = 8, IH = 2.6;
+  {
+    const g = lump.clone();
+    g.scale(IRX, IH, IRZ);
+    add(g, m.islet, ISX, -0.55, ISZ, 0, 0.15, 0);
+    const scrub = lump.clone();
+    scrub.scale(IRX * 0.55, 1.1, IRZ * 0.5);
+    add(scrub, m.head, ISX + 1, 0.2, ISZ - 0.5, 0, 0.3, 0);
+  }
+  const isletY = (dx: number, dz: number) => -0.55 + IH * Math.sqrt(Math.max(0, 1 - (dx / IRX) ** 2 - (dz / IRZ) ** 2)) - 0.2;
+  for (let i = 0; i < 16; i++) {
+    const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * 0.72, dx = Math.cos(a) * r * IRX, dz = Math.sin(a) * r * IRZ;
+    palm(0, 0, 1.2 + rnd() * 0.5, 0.8 + rnd() * 2.8, rnd() * 6.28, new THREE.Vector3(ISX + dx, isletY(dx, dz), ISZ + dz));
+  }
+  {
+    const ring = new THREE.RingGeometry(1.0, 1.12, 40).rotateX(-Math.PI / 2).scale(IRX, 1, IRZ);
+    const foam = new THREE.Mesh(ring, new THREE.MeshBasicMaterial({ color: "#fff4ea", transparent: true, opacity: 0.55, depthWrite: false }));
+    foam.position.set(ISX, 0.06, ISZ);
+    foam.rotation.y = 0.15;
+    foam.renderOrder = 3;
+    scene.add(foam);
+  }
+  // a stand of palms on the far island, drawn large enough to read at this distance
   for (let i = 0; i < 9; i++) {
     const x = 38 + rnd() * 60, z = -420 + (rnd() - 0.5) * 10;
     palm(0, 0, 1.6 + rnd() * 0.6, 1 + rnd() * 2.5, rnd() * 6.28, new THREE.Vector3(x, 8 * 0.7 * (1 - ((x - 70) / 46) ** 2) - 2.4, z));
