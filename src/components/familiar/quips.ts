@@ -5,6 +5,8 @@
  * of page, then general ones.
  */
 
+import type { Accent } from "@/theme/accent";
+
 const GENERAL = [
   "…",
   "♥",
@@ -25,6 +27,24 @@ const BY_SECTION: Record<string, string[]> = {
   artifacts: ["relics. like me, but shinier.", "a fine collection. i'd fit right in."],
   cv: ["a list of deeds. mine would be shorter.", "i have no references. only ruins."],
 };
+
+/** What Bit says when the palette changes, one line per palette. */
+const ON_PALETTE: Record<Accent["id"], string> = {
+  manuscript: "old vellum light. i remember scriptoriums.",
+  torch: "amber. like the forge that made me.",
+  madder: "rose dust. the ruin had roses once.",
+  sunset: "sunset already? i only just woke.",
+  lichen: "lichen. my old coat. it suits me.",
+  moss: "moss. i feel younger already.",
+  jade: "jade. deep water and old coins.",
+  astral: "sky. i only ever saw it through cracks.",
+  iris: "iris. the stars wore this the night i slept.",
+  mono: "graphite. very serious. i'll stand up straight.",
+  phosphor: "phosphor. i feel like a terminal now.",
+  vermilion: "vermilion. is something on fire?",
+};
+
+export const paletteQuip = (id: Accent["id"]) => ON_PALETTE[id] ?? "new colours. the stone takes them in.";
 
 const section = (path: string) => path.split("/").filter(Boolean)[0] ?? "";
 

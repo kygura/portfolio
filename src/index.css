@@ -3400,6 +3400,16 @@ kbd {
   50% { opacity: 0; }
 }
 
+/* A palette change: the runes flare and settle into the new colour. */
+.familiar[data-shift] .familiar__body { animation: familiarShift 0.9s steps(6) both; }
+
+@keyframes familiarShift {
+  0% { filter: brightness(1.9) drop-shadow(0 0 10px var(--accent)); }
+  50% { filter: brightness(0.8) drop-shadow(0 0 2px var(--accent)); }
+  70% { filter: brightness(1.4) drop-shadow(0 0 8px var(--accent)); }
+  100% { filter: drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 30%, transparent)); }
+}
+
 @keyframes familiarFloat {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-3px); }
@@ -3504,6 +3514,7 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   .bay__bot,
   .familiar__body svg,
+  .familiar[data-shift] .familiar__body,
   .familiar__bubble,
   .familiar__caret { animation: none; }
   .bay__runes span { animation-duration: 0s; }
