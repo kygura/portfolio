@@ -2,14 +2,16 @@
  * Bit: a small stone automaton, woken from a ruin, that keeps to the
  * bottom-left corner of the page. It reads whatever page you open and says
  * something about it (see quips.ts), mutters now and then while you read,
- * dozes when nothing moves for a while, and hops when pressed. With reduced
+ * dozes when nothing moves for a while, hops when pressed, and has an
+ * opinion on every colour palette you switch to. With reduced
  * motion it doesn't hover or hop, but it still talks.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Sprite, type FrameName } from "./sprite";
 import { addPet } from "./store";
-import { fallbackQuips, pageQuips, pick } from "./quips";
+import { fallbackQuips, pageQuips, paletteQuip, pick } from "./quips";
+import { ACCENTS, useAccent } from "@/theme/accent";
 import { Bubble } from "./Bubble";
 import { CHAR_MS, chirp, hush, nextVoiceMode, setVoiceMode, voice, voiceMode, type VoiceMode } from "./voice";
 
@@ -21,6 +23,8 @@ const READ_DELAY = 1400;
 const CHATTER_EVERY = 45_000;
 /** How long a line stays up once it has finished typing. */
 const LINGER_MS = 5000;
+/** Palette switches in quick succession (holding `t`) get one reaction, to the last. */
+const PALETTE_SETTLE = 450;
 
 type Mode = "idle" | "sleep" | "hop";
 
@@ -137,18 +141,43 @@ export default function Familiar() {
     return () => window.clearInterval(id);
   }, [say]);
 
+  // A new palette: wake, flicker the runes, hop, and say what Bit thinks of it.
+  const accent = useAccent();
+  const seenAccent = useRef(accent);
+  const [shifting, setShifting] = useState(false);
+  useEffect(() => {
+    if (accent === seenAccent.current) return;
+    seenAccent.current = accent;
+    const id = window.setTimeout(() => {
+      lastActive.current = Date.now();
+      chirp("wake");
+      say(paletteQuip(ACCENTS[accent].id));
+      hopLeft.current = 4;
+      setMode("hop");
+      setFrame("happy");
+      setShifting(true);
+    }, PALETTE_SETTLE);
+    return () => window.clearTimeout(id);
+  }, [accent, say]);
+
+  useEffect(() => {
+    if (!shifting) return;
+    const id = window.setTimeout(() => setShifting(false), 900);
+    return () => window.clearTimeout(id);
+  }, [shifting]);
+
   const pet = () => {
     lastActive.current = Date.now();
     const n = addPet();
     chirp("touch");
-    say(n % 25 === 0 ? `${n} touches. the stone grows warm.` : nextLine());
+    say(n % 25 === 0 ? `${n} touches. stone remembers every one.` : nextLine());
     hopLeft.current = 4;
     setMode("hop");
     setFrame("happy");
   };
 
   return (
-    <div className="familiar" data-mode={mode}>
+    <div className="familiar" data-mode={mode} data-shift={shifting || undefined}>
       {bubble && (
         <Bubble key={bubble.id} text={bubble.text} voiceMode={voiceSetting} onCycleVoice={cycleVoice} />
       )}
