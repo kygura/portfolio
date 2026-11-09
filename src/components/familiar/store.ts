@@ -2,7 +2,7 @@ import { readStored, writeStored } from "@/theme/accent";
 
 /** Set once the hidden route has been visited; never cleared by the site. */
 export const FAMILIAR_KEY = "nca-familiar";
-export const FAMILIAR_EVENT = "nca-familiar-hatched";
+export const FAMILIAR_EVENT = "nca-familiar-booted";
 export const PETS_KEY = "nca-familiar-pets";
 
 export const isUnlocked = () => readStored(FAMILIAR_KEY) === "1";

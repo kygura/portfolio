@@ -3252,7 +3252,7 @@ kbd {
   .lost__link { grid-template-columns: 5.5rem 1fr auto; }
 }
 
-/* ── Familiar: Moss, unlocked from the hidden route ── */
+/* ── Familiar: Bit, unlocked from the hidden route ── */
 .familiar {
   position: fixed;
   left: 0;
@@ -3336,26 +3336,30 @@ kbd {
   color: var(--ink-3);
 }
 
-.hollow__nest {
-  display: grid;
-  place-items: end start;
-  height: 112px;
+.hollow__bay {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 112px;
+  justify-content: flex-end;
 }
 
-.hollow__egg {
-  width: 72px;
-  height: 92px;
-  border-radius: 50% 50% 46% 46% / 58% 58% 42% 42%;
-  background:
-    radial-gradient(circle at 34% 30%, color-mix(in srgb, var(--ink) 30%, transparent) 0 10%, transparent 11%),
-    radial-gradient(circle at 62% 64%, var(--accent-deep) 0 7%, transparent 8%),
-    radial-gradient(circle at 30% 72%, var(--accent-deep) 0 5%, transparent 6%),
-    var(--accent);
-  transform-origin: 50% 100%;
-  animation: hollowWobble 0.8s ease-in-out infinite;
+.hollow__bot { image-rendering: pixelated; animation: hollowPop 0.4s steps(3) both; }
+.hollow__bot--off { opacity: 0.45; animation: hollowFlicker 1.2s steps(2) infinite; }
+
+.hollow__bar {
+  width: 112px;
+  height: 6px;
+  border: 1px solid var(--rule-2);
 }
 
-.hollow__moss { animation: hollowPop 0.4s steps(3) both; image-rendering: pixelated; }
+.hollow__bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  animation: hollowBoot 2.4s steps(12) both;
+}
 
 .hollow__title {
   font-family: var(--f-body);
@@ -3380,11 +3384,14 @@ kbd {
   border-bottom: 1px solid currentColor;
 }
 
-@keyframes hollowWobble {
-  0%, 100% { transform: rotate(0); }
-  20% { transform: rotate(-6deg); }
-  40% { transform: rotate(5deg); }
-  60% { transform: rotate(-3deg); }
+@keyframes hollowBoot {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes hollowFlicker {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.3; }
 }
 
 @keyframes hollowPop {
@@ -3393,7 +3400,7 @@ kbd {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hollow__egg,
-  .hollow__moss,
+  .hollow__bot,
+  .hollow__bar span,
   .familiar[data-mode="hop"] .familiar__body svg { animation: none; }
 }

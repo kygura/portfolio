@@ -1,5 +1,5 @@
 /**
- * Moss: a small lichen sprite that lives along the bottom edge of the page.
+ * Bit: a small robot that lives along the bottom edge of the page.
  * It wanders, drifts toward the pointer when it comes near the floor, dozes
  * off when nothing moves for a while, and hops when pressed. Movement is
  * stepped on a slow tick on purpose, to match the pixel art. With reduced
@@ -18,14 +18,15 @@ const RIGHT_CLEARANCE = 150;
 const WIDTH = 42;
 
 const QUIPS = [
-  "mrrp.",
+  "beep.",
   "♥",
   "you found me.",
   "try pressing t.",
-  "i ate a bug. a real one.",
-  "the dunes are warm today.",
+  "0 bugs found. (lie)",
+  "battery: 100%",
   "g then h goes home.",
   "don't tell anyone about the hollow.",
+  "boop?",
 ];
 
 type Mode = "idle" | "walk" | "sleep" | "hop";
@@ -60,7 +61,7 @@ export default function Familiar() {
     bubbleTimer.current = window.setTimeout(() => setBubble(null), ms);
   };
 
-  // Pointer activity keeps Moss awake; near the floor it comes over to look.
+  // Pointer activity keeps Bit awake; near the floor it comes over to look.
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
       lastActive.current = Date.now();
@@ -140,7 +141,7 @@ export default function Familiar() {
   const pet = () => {
     lastActive.current = Date.now();
     const n = addPet();
-    const line = n % 25 === 0 ? `${n} pets. we're close now.` : QUIPS[Math.floor(Math.random() * QUIPS.length)];
+    const line = n % 25 === 0 ? `${n} pats. affection.exe running.` : QUIPS[Math.floor(Math.random() * QUIPS.length)];
     say(line);
     hopLeft.current = 4;
     setMode("hop");
@@ -158,7 +159,7 @@ export default function Familiar() {
         type="button"
         className="familiar__body"
         onClick={pet}
-        aria-label="Moss, your familiar. Press to pet."
+        aria-label="Bit, your robot. Press to pat."
         style={{ transform: `scaleX(${facing})` }}
       >
         <Sprite frame={frame} />
