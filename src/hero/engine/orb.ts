@@ -1,10 +1,13 @@
 /** Sheet · Orb: an early raytracer's still life. A chrome planet hangs over a
  *  lone pyramid on a glittering mirror sea that runs out to a white horizon
- *  under a magenta-to-gold sunset sky. Two small chrome moons circle it, and
- *  everything doubles in the water. The orb's chrome carries the sky, the sea
- *  and the pyramids in its reflection, under swirled ink marbling.
+ *  under a deep sky. Two small chrome moons circle it, and everything
+ *  doubles in the water. The orb's chrome carries the sky, the sea and the
+ *  pyramids in its reflection, under swirled ink marbling.
  *
- *  The palette is fixed (the render's, not the site accent).
+ *  Two hand-set looks: the magenta-to-gold sunset (the Sunset palette) and the
+ *  ultramarine noon (the Sky palette). Any other palette takes whichever of the
+ *  two sits nearer its deep accent on the colour wheel, turned round to that
+ *  accent and muted to match a quieter one (Graphite goes fully grey).
  *  Tap the orb to set it spinning, the pyramid's apex to light it. */
 import * as THREE from "three";
 import { burst, pulse, type PsxKit, type SceneDef } from "./psx";
@@ -15,20 +18,21 @@ export function buildOrb(kit: PsxKit): SceneDef {
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(50, 16 / 9, 0.1, 520);
   const R = createRay(kit, scene, {
-    zen: "#3a0a4a", mid: "#b02a6a", low: "#f08048", hor: "#fff0c8", fog: "#f4d4a8",
-    ice: "#ffd8a0", sea: "#b85a48", ink: "#2e0c24",
+    zen: "#0d1290", mid: "#2a43d6", low: "#7fa6ee", hor: "#eef6ff", fog: "#c9def4",
+    ice: "#a8e6f0", sea: "#5a8cc4", ink: "#1a2a40",
   });
   R.floor({ fogNear: 60, fogFar: 330 });
 
-  const mPyr = R.flat({ tint: "#ffe2b0", amb: "#3a0f2a", sun: "#ffd8a8" });
-  const mCap = R.flat({ tint: "#ffe2b0", amb: "#3a0f2a", sun: "#ffd8a8", emit: "#fff4d8" });
-  const mFar = R.flat({ tint: "#f0b090", amb: "#7a2a4a", sun: "#f8c8a0", fogAmt: 1 });
+  const mPyr = R.flat({ tint: "#cdf4fa", sun: "#c4f2ff" });
+  const mCap = R.flat({ tint: "#cdf4fa", sun: "#c4f2ff", emit: "#e8fcff" });
+  const mFar = R.flat({ tint: "#9cc8e8", amb: "#2a3c80", sun: "#a8d8f0", fogAmt: 1 });
+  const shadows: THREE.Mesh[] = [];
 
   // Pyramid: four faces, an edge toward the camera so one face catches the light and one falls dark.
   const PZ = -26, PH = 6.8, PR = 1.9;
   R.add(kit.facet(new THREE.ConeGeometry(PR, PH, 4, 1, true)), mPyr, 0, PH / 2, PZ);
   R.add(kit.facet(new THREE.ConeGeometry(PR * 0.16, PH * 0.16, 4, 1, true)), mCap, 0, PH - PH * 0.08 + 0.01, PZ);
-  R.shadow(0, PZ, PR * 1.1, 34, 0.55);
+  shadows.push(R.shadow(0, PZ, PR * 1.1, 34, 0.55));
 
   // Small pyramids far out, near the haze.
   const cones: [number, number, number, number][] = [[0, PZ, PR, PH]];
@@ -36,13 +40,14 @@ export function buildOrb(kit: PsxKit): SceneDef {
     const x = (rnd() > 0.5 ? 1 : -1) * (40 + rnd() * 120), z = -150 - rnd() * 140, h = 4 + rnd() * 8;
     R.add(kit.facet(new THREE.ConeGeometry(h * 0.3, h, 4)), mFar, x, h / 2, z, 0, rnd() * 0.6, 0);
     cones.push([x, z, h * 0.3, h]);
-    if (i < 2) R.shadow(x, z, h * 0.3, h * 6, 0.3);
+    if (i < 2) shadows.push(R.shadow(x, z, h * 0.3, h * 6, 0.3));
   }
 
   // The orb, and two moons on tilted orbits.
   const ORB = new THREE.Vector3(0, 17.2, -34), OR = 5.4;
-  const [orbA, orbB] = R.add(new THREE.SphereGeometry(OR, 48, 32), R.chrome({ cones, marble: 0.85, scale: 1.7, tint: "#f4e0d4" }));
-  const moonMat = R.chrome({ cones, marble: 0.35, scale: 2.4, tint: "#f0dcd0" });
+  const [orbA, orbB] = R.add(new THREE.SphereGeometry(OR, 48, 32), R.chrome({ cones, marble: 0.85, scale: 1.7 }));
+  const orbMat = orbA.material as THREE.ShaderMaterial;
+  const moonMat = R.chrome({ cones, marble: 0.35, scale: 2.4, tint: "#d8e4ec" });
   const moonGeo = new THREE.SphereGeometry(1, 20, 14);
   const moons = [
     { r: 9.5, s: 0.85, sp: 0.32, tilt: 0.38, ph: 0 },
@@ -51,7 +56,7 @@ export function buildOrb(kit: PsxKit): SceneDef {
 
   /* ---- apex beam for the egg ---- */
   const beamLen = Math.hypot(ORB.y - PH, ORB.z - PZ) - OR + 1;
-  const beamMat = R.glow("#fff4d8", 0);
+  const beamMat = R.glow("#e8fcff", 0);
   const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.7, beamLen, 6, 1, true), beamMat);
   const tilt = Math.atan2(ORB.z - PZ, ORB.y - PH);
   beam.position.set(0, PH + (Math.cos(tilt) * beamLen) / 2, PZ + (Math.sin(tilt) * beamLen) / 2);
@@ -59,7 +64,56 @@ export function buildOrb(kit: PsxKit): SceneDef {
   beam.visible = false;
   scene.add(beam);
 
+  /* ---- palette ----
+     Each recoloured colour with its noon and sunset values. */
+  const shadowMats = [...new Set(shadows.map((m) => m.material as THREE.MeshBasicMaterial))];
+  const sky = R.uniforms.sky;
+  const flatU = (m: THREE.ShaderMaterial, tint: string[], amb: string[], sun: string[], acc: string[]) =>
+    [[m.uniforms.uTint.value, ...tint], [m.uniforms.uAmbient.value, ...amb], [m.uniforms.uSun.value, ...sun], [m.uniforms.uAccent.value, ...acc]] as [THREE.Color, string, string][];
+  const table: [THREE.Color, string, string][] = [
+    [sky.uZen.value, "#0d1290", "#3a0a4a"],
+    [sky.uMid.value, "#2a43d6", "#b02a6a"],
+    [sky.uLow.value, "#7fa6ee", "#f08048"],
+    [sky.uHor.value, "#eef6ff", "#fff0c8"],
+    [R.uniforms.fog.value, "#c9def4", "#f4d4a8"],
+    [R.uniforms.ice.value, "#a8e6f0", "#ffd8a0"],
+    [R.uniforms.sea.value, "#5a8cc4", "#b85a48"],
+    [R.uniforms.ink.value, "#1a2a40", "#2e0c24"],
+    ...flatU(mPyr, ["#cdf4fa", "#ffe2b0"], ["#0e1844", "#3a0f2a"], ["#c4f2ff", "#ffd8a8"], ["#ffffff", "#ffffff"]),
+    ...flatU(mCap, ["#cdf4fa", "#ffe2b0"], ["#0e1844", "#3a0f2a"], ["#c4f2ff", "#ffd8a8"], ["#e8fcff", "#fff4d8"]),
+    ...flatU(mFar, ["#9cc8e8", "#f0b090"], ["#2a3c80", "#7a2a4a"], ["#a8d8f0", "#f8c8a0"], ["#ffffff", "#ffffff"]),
+    [orbMat.uniforms.uTint.value, "#e4f0f4", "#f4e0d4"],
+    [moonMat.uniforms.uTint.value, "#d8e4ec", "#f0dcd0"],
+    [beamMat.color, "#e8fcff", "#fff4d8"],
+    ...shadowMats.map((m): [THREE.Color, string, string] => [m.color, "#1a2a40", "#2e0c24"]),
+  ];
+  // The deep accents the two looks belong to: Sky's and Sunset's.
+  // Warm hues sit close together, so the sunset turns only half as far as the gap.
+  const looks = [
+    { at: new THREE.Color("#2f6f9a").getHSL({ h: 0, s: 0, l: 0 }), turn: 1, cols: table.map((r) => new THREE.Color(r[1])) },
+    { at: new THREE.Color("#b02a6a").getHSL({ h: 0, s: 0, l: 0 }), turn: 0.5, cols: table.map((r) => new THREE.Color(r[2])) },
+  ];
+  const hueGap = (a: number, b: number) => ((((a - b) % 1) + 1.5) % 1) - 0.5;
+  const hsl = { h: 0, s: 0, l: 0 };
+  let applied = -1;
+  const recolour = () => {
+    const deep = kit.U.uAccent2.value;
+    if (deep.getHex() === applied) return;
+    applied = deep.getHex();
+    deep.getHSL(hsl);
+    const { h, s } = hsl;
+    const look = s < 0.05 ? looks[0] : looks.reduce((x, y) => (Math.abs(hueGap(h, y.at.h)) < Math.abs(hueGap(h, x.at.h)) ? y : x));
+    const dh = s < 0.05 ? 0 : hueGap(h, look.at.h) * look.turn;
+    const k = s < 0.05 ? 0 : Math.max(0.45, Math.min(1, s / look.at.s));
+    table.forEach(([c], i) => {
+      look.cols[i].getHSL(hsl);
+      c.setHSL((((hsl.h + dh) % 1) + 1) % 1, Math.min(1, hsl.s * k), hsl.l);
+    });
+  };
+
   let tSpin = -99, tApex = -99;
+  // The camera answers the pointer through its own slow follow, on top of the engine's.
+  let sx = 0, sy = 0, lastNow = 0;
   const CAM = new THREE.Vector3(0, 2.7, 4);
   const mp = new THREE.Vector3();
 
@@ -78,6 +132,7 @@ export function buildOrb(kit: PsxKit): SceneDef {
       { id: "orb-apex", r: 28, at: (v) => { v.set(0, PH, PZ); }, fire: (t) => { tApex = t; } },
     ],
     update(t) {
+      recolour();
       // Slow turn, plus an eased burst after a tap; the moons speed up with it.
       const spin = t * 0.08 + burst(t - tSpin, 6, 3);
       const y = ORB.y + Math.sin(t * 0.5) * 0.35;
@@ -97,8 +152,14 @@ export function buildOrb(kit: PsxKit): SceneDef {
       beamMat.opacity = ea * 0.55;
       R.uniforms.flash.value = 0.25 * pulse(t - tApex - 0.6, 1.6);
 
-      cam.position.set(CAM.x + Math.sin(t * 0.03) * 0.6 + view.px * 0.6, CAM.y + Math.sin(t * 0.2) * 0.04 - view.py * 0.3, CAM.z);
-      cam.lookAt(view.px * 3, 9.6 - view.py * 3, PZ);
+      const now = performance.now();
+      const dt = lastNow ? Math.min(0.05, (now - lastNow) / 1000) : 0;
+      lastNow = now;
+      const f = 1 - Math.exp(-dt * 0.9);
+      sx += (view.px - sx) * f;
+      sy += (view.py - sy) * f;
+      cam.position.set(CAM.x + Math.sin(t * 0.018) * 0.5 + sx * 0.3, CAM.y + Math.sin(t * 0.11) * 0.03 - sy * 0.15, CAM.z);
+      cam.lookAt(sx * 1.4, 9.6 - sy * 1.4, PZ);
       kit.look(cam);
       R.follow(cam);
     },

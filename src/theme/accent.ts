@@ -6,7 +6,7 @@
  * scene. `bg`/`ink` only paint the chips in the picker; the page itself reads
  * the CSS tokens.
  *
- * Palettes come in four families of three. Keys 1–4 pick a family and pressing
+ * Palettes come in four families (Hearth has four, Tide two). Keys 1–4 pick a family and pressing
  * the same key again steps through it; `t` walks every palette in order.
  */
 import { useSyncExternalStore } from "react";
@@ -16,9 +16,9 @@ export type FamilyId = "hearth" | "grove" | "tide" | "signal";
 
 export interface Accent {
   id:
-    | "manuscript" | "torch" | "madder"
+    | "manuscript" | "torch" | "madder" | "sunset"
     | "lichen" | "moss" | "jade"
-    | "astral" | "glacier" | "iris"
+    | "astral" | "iris"
     | "mono" | "phosphor" | "vermilion";
   name: string;
   family: FamilyId;
@@ -53,13 +53,13 @@ export const ACCENTS: Accent[] = [
   { id: "manuscript", name: "Manuscript", family: "hearth", hex: "#e08a62", deep: "#9a4524", fog: "#4a4038", zen: "#14110e", bg: "#1b1a17", ink: "#ebe6db" },
   { id: "torch", name: "Amber", family: "hearth", hex: "#eaa24c", deep: "#a24e1c", fog: "#4d4046", zen: "#130f16", bg: "#17121a", ink: "#f0e1cd" },
   { id: "madder", name: "Rose", family: "hearth", hex: "#e5787f", deep: "#7e2638", fog: "#4d343c", zen: "#150b10", bg: "#1a0f14", ink: "#f2dfdc" },
+  { id: "sunset", name: "Sunset", family: "hearth", hex: "#f4945c", deep: "#b02a6a", fog: "#4a2a3c", zen: "#14060f", bg: "#1a0c18", ink: "#f8e6d6" },
   // Grove
   { id: "lichen", name: "Lichen", family: "grove", hex: "#bcc77c", deep: "#5d7a3a", fog: "#3b4c4b", zen: "#0f171b", bg: "#111617", ink: "#e0d9c8" },
   { id: "moss", name: "Moss", family: "grove", hex: "#7fcf8a", deep: "#2f7a45", fog: "#2e4637", zen: "#07110b", bg: "#0e1611", ink: "#dde8d4" },
   { id: "jade", name: "Jade", family: "grove", hex: "#5ad6ad", deep: "#1d7a63", fog: "#2b4844", zen: "#061110", bg: "#0b1615", ink: "#d6ebe4" },
   // Tide
   { id: "astral", name: "Sky", family: "tide", hex: "#86d3dc", deep: "#2f6f9a", fog: "#2f4562", zen: "#08101e", bg: "#0b1424", ink: "#d6e6f2" },
-  { id: "glacier", name: "Glacier", family: "tide", hex: "#c3d9ef", deep: "#4f7398", fog: "#3a4757", zen: "#0a0f16", bg: "#10151c", ink: "#e4ecf4" },
   { id: "iris", name: "Iris", family: "tide", hex: "#a99cf5", deep: "#5543b0", fog: "#38335c", zen: "#0b0a1c", bg: "#111024", ink: "#e6e2f6" },
   // Signal
   { id: "mono", name: "Graphite", family: "signal", hex: "#d4d4d4", deep: "#6b6b6b", fog: "#3f3f3f", zen: "#0e0e0e", bg: "#121212", ink: "#e2e2e2" },
@@ -124,7 +124,8 @@ function storedAccent(): number {
   const id =
     readStored(ACCENT_KEY) ??
     LEGACY_ACCENT_ORDER[Number.parseInt(readStored(LEGACY_ACCENT_KEY) ?? "", 10)];
-  const i = ACCENTS.findIndex((a) => a.id === id);
+  // Glacier was replaced by Sunset.
+  const i = ACCENTS.findIndex((a) => a.id === (id === "glacier" ? "sunset" : id));
   return i >= 0 ? i : DEFAULT_ACCENT;
 }
 
