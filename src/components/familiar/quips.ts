@@ -8,40 +8,64 @@
 import type { Accent } from "@/theme/accent";
 
 const GENERAL = [
+  "four centuries underground. i do not recommend it.",
+  "i was carved to guard a door. the door is gone. i guard this corner now.",
+  "the moss on my shoulder is older than your language.",
+  "i counted the stones of the old wall once. nine thousand. i was the best one.",
+  "my maker said i would serve kings. this will do.",
+  "i have no lungs. i breathe anyway, out of habit.",
+  "the last scholar who read this far was eaten by wolves. unrelated, probably.",
+  "press t. the runes change. i stay the same. such is stone.",
+  "i dreamed for four hundred years. mostly about doors.",
+  "g, then h. a spell for going home. it was longer in my day.",
+  "i do not sleep. i wait with my eyes closed.",
+  "rain. i miss rain.",
+  "the kingdom that made me had no word for scroll. lucky them.",
+  "people touch the rune on my chest. nothing happens. they keep trying.",
   "…",
-  "♥",
-  "the old ones are sleeping.",
-  "i remember the forge.",
-  "my maker is dust now.",
-  "*grinding stone noises*",
-  "try pressing t.",
-  "g then h goes home.",
-  "a riddle kept me sealed.",
 ];
 
 const BY_SECTION: Record<string, string[]> = {
-  "": ["a strange landscape. i approve.", "the horizon moves when you're not looking."],
-  writings: ["so many words. i read them all, once.", "ink lasts longer than stone, sometimes."],
-  projects: ["machines building machines. familiar.", "i was a project once."],
-  scenes: ["these vistas remind me of home.", "i have seen this light before."],
-  artifacts: ["relics. like me, but shinier.", "a fine collection. i'd fit right in."],
-  cv: ["a list of deeds. mine would be shorter.", "i have no references. only ruins."],
+  "": [
+    "the land behind me shifts when unwatched. i respect that.",
+    "i was a doorstop for a century. this is a promotion.",
+  ],
+  writings: [
+    "so much ink. in my day a scribe died for less.",
+    "i read slowly. a word a decade. i'm nearly through the first post.",
+  ],
+  projects: [
+    "machines that build machines. the old masters would be worried. i am only curious.",
+    "i was a project once. eleven men and a mule.",
+  ],
+  scenes: [
+    "i stood in a view like this for two hundred years. it was mostly weather.",
+    "the old kingdom had a valley like this. and a dragon. the dragon was the problem.",
+  ],
+  artifacts: [
+    "relics. we should form a guild.",
+    "i'll wait here until someone catalogues me.",
+  ],
+  cv: [
+    "a ledger of deeds. mine reads: stood. waited. stood.",
+    "in my day this was carved on a tomb. progress.",
+  ],
 };
 
 /** What Bit says when the palette changes, one line per palette. */
 const ON_PALETTE: Record<Accent["id"], string> = {
-  manuscript: "old vellum light. i remember scriptoriums.",
-  torch: "amber. like the forge that made me.",
-  madder: "rose dust. the ruin had roses once.",
-  sunset: "sunset already? i only just woke.",
-  lichen: "lichen. my old coat. it suits me.",
-  moss: "moss. i feel younger already.",
-  jade: "jade. deep water and old coins.",
-  astral: "sky. i only ever saw it through cracks.",
-  iris: "iris. the stars wore this the night i slept.",
-  mono: "graphite. very serious. i'll stand up straight.",
-  phosphor: "phosphor. i feel like a terminal now.",
-  vermilion: "vermilion. is something on fire?",
+  manuscript: "manuscript. monastery candlelight. and soup.",
+  torch: "amber. the light of the forge that made me.",
+  madder: "rose. the ruin had roses once. they won.",
+  sunset: "sunset. the hour the old guards changed. i'll keep watch.",
+  lichen: "lichen. my true colour. i was waiting for you to notice.",
+  moss: "moss. it grows on me. it always has.",
+  jade: "jade. a king once paid his weight in it for me. he was short.",
+  astral: "sky. i saw it through a crack for four hundred years. about this much.",
+  iris: "iris. the colour wizards wore before they stopped coming back.",
+  mono: "graphite. colourless. like a tax collector.",
+  phosphor: "phosphor. a green fire with no heat. sorcery, plainly.",
+  vermilion: "vermilion. the old warning colour. i'll stand ready.",
 };
 
 export const paletteQuip = (id: Accent["id"]) => ON_PALETTE[id] ?? "new colours. the stone takes them in.";

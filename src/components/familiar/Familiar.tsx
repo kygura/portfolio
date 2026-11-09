@@ -170,7 +170,7 @@ export default function Familiar() {
     lastActive.current = Date.now();
     const n = addPet();
     chirp("touch");
-    say(n % 25 === 0 ? `${n} touches. the stone grows warm.` : nextLine());
+    say(n % 25 === 0 ? `${n} touches. stone remembers every one.` : nextLine());
     hopLeft.current = 4;
     setMode("hop");
     setFrame("happy");
