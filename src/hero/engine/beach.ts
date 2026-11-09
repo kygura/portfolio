@@ -11,8 +11,13 @@ import * as THREE from "three";
 import { pulse, type PsxKit, type SceneDef, type V3 } from "./psx";
 
 const T = 7.5; // seconds per wave
-const SUN = new THREE.Vector3(-38, 5, -420);
-const LIGHT = new THREE.Vector3(-0.18, 0.38, -0.9).normalize();
+// The sun sits well off to the left of straight out to sea, so the palms' shadows rake sideways across
+// the sand instead of running straight at the camera. The light comes from the same bearing.
+const SUN_AZ = 1.0; // radians left of -z
+const SUN = new THREE.Vector3(-420 * Math.sin(SUN_AZ), 5, -420 * Math.cos(SUN_AZ));
+const LIGHT = new THREE.Vector3(-0.92 * Math.sin(SUN_AZ), 0.38, -0.92 * Math.cos(SUN_AZ)).normalize();
+// Where the camera looks, radians left of -z: part way to the sun, further on narrow (portrait) screens.
+const VIEW_AZ = [0.42, 0.8] as const;
 
 /* ---- the shoreline model, JS side ---- */
 const sstep = (a: number, b: number, x: number) => {
@@ -372,8 +377,9 @@ export function buildBeach(k: PsxKit): SceneDef {
     const y = 14 + Math.pow(rnd(), 1.4) * 80, near = Math.max(0, 1 - y / 70);
     const col = new THREE.Color("#7e4f86").lerp(new THREE.Color("#ffb07a"), near * near).lerp(new THREE.Color("#ffd8a0"), rnd() * 0.15);
     const c = new THREE.Mesh(cloudGeo, new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.55 + rnd() * 0.35, depthWrite: false }));
-    const x = SUN.x + (rnd() - 0.5) * 620;
-    c.position.set(x, y, -330 - rnd() * 90);
+    const a = SUN_AZ + (rnd() - 0.5) * 1.6, r = 340 + rnd() * 90;
+    const x = -r * Math.sin(a);
+    c.position.set(x, y, -r * Math.cos(a));
     c.scale.set(30 + rnd() * 70, 1.2 + rnd() * 2.8, 1);
     c.renderOrder = 0;
     scene.add(c);
@@ -517,7 +523,7 @@ export function buildBeach(k: PsxKit): SceneDef {
   return {
     scene, cam, fog: [70, 560], fov: [56, 70], limits: { pitch: [-0.4, 0.3], zoom: [0.8, 2.4], yaw: 0.75 },
     labels: [
-      { name: "Sunset", sub: "going down, west", at: (v) => { v.copy(SUN).y += 30; } },
+      { name: "Sunset", sub: "going down, southwest", at: (v) => { v.copy(SUN).y += 30; } },
       { name: "Shoreline", sub: "the tide, turning", at: (v) => { v.set(0, 1.2, 0); } },
     ],
     eggs: [
@@ -561,7 +567,8 @@ export function buildBeach(k: PsxKit): SceneDef {
 
       // standing on the sand, a slow sway; looking out past the surf to the sun
       cam.position.set(CX + Math.sin(t * 0.05) * 0.3 + view.px * 0.6, camY + Math.sin(t * 0.5) * 0.02 - view.py * 0.3, CZ + Math.sin(t * 0.031) * 0.3);
-      cam.lookAt(SUN.x * 0.25 + view.px * 6 + Math.sin(t * 0.04) * 2, 2 - view.py * 4, -200);
+      const va = VIEW_AZ[cam.aspect < 1 ? 1 : 0] + Math.sin(t * 0.04) * 0.01 - view.px * 0.03;
+      cam.lookAt(cam.position.x - Math.sin(va) * 200, 2 - view.py * 4, cam.position.z - Math.cos(va) * 200);
       k.look(cam);
       sky.position.copy(cam.position);
     },
