@@ -3350,18 +3350,25 @@ kbd {
   text-shadow: 0 0 6px color-mix(in srgb, var(--accent) 70%, transparent);
 }
 
-.familiar__bubble-mute {
-  padding: 0 2px;
-  border: 0;
+.familiar__bubble-voice {
+  padding: 1px 4px;
+  border: 1px solid transparent;
   background: none;
-  font-size: 11px;
-  line-height: 1;
+  font-family: var(--f-pixel);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.2;
   color: var(--ink-3);
   cursor: pointer;
 }
-.familiar__bubble-mute:hover,
-.familiar__bubble-mute:focus-visible { color: var(--accent); outline: none; }
-.familiar__bubble-mute--off { text-decoration: line-through; opacity: 0.6; }
+.familiar__bubble-voice:hover,
+.familiar__bubble-voice:focus-visible {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  outline: none;
+}
+.familiar__bubble-voice--off { opacity: 0.6; }
 
 .familiar__bubble-text {
   margin: 0;

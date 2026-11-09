@@ -11,7 +11,7 @@ import { Sprite, type FrameName } from "./sprite";
 import { addPet } from "./store";
 import { fallbackQuips, pageQuips, pick } from "./quips";
 import { Bubble } from "./Bubble";
-import { CHAR_MS, babble, chirp, isMuted, setMuted } from "./voice";
+import { CHAR_MS, chirp, hush, nextVoiceMode, setVoiceMode, voice, voiceMode, type VoiceMode } from "./voice";
 
 const TICK = 160;
 const SLEEP_AFTER = 40_000;
@@ -29,7 +29,7 @@ export default function Familiar() {
   const [mode, setMode] = useState<Mode>("idle");
   const [frame, setFrame] = useState<FrameName>("idle");
   const [bubble, setBubble] = useState<{ text: string; id: number } | null>(null);
-  const [muted, setMutedState] = useState(isMuted);
+  const [voiceSetting, setVoiceSetting] = useState<VoiceMode>(voiceMode);
 
   const lastActive = useRef(Date.now());
   const hopLeft = useRef(0);
@@ -44,14 +44,16 @@ export default function Familiar() {
 
   const say = useCallback((text: string, linger = LINGER_MS, silent = false) => {
     setBubble({ text, id: Date.now() });
-    if (!silent) babble(text);
+    if (!silent) voice(text);
     window.clearTimeout(bubbleTimer.current);
     bubbleTimer.current = window.setTimeout(() => setBubble(null), text.length * CHAR_MS + linger);
   }, []);
 
-  const toggleMute = () => {
-    setMuted(!muted);
-    setMutedState(!muted);
+  const cycleVoice = () => {
+    const next = nextVoiceMode(voiceSetting);
+    hush();
+    setVoiceMode(next);
+    setVoiceSetting(next);
   };
 
   /** Next line not yet said on this page; stock lines once the page's run out. */
@@ -148,7 +150,7 @@ export default function Familiar() {
   return (
     <div className="familiar" data-mode={mode}>
       {bubble && (
-        <Bubble key={bubble.id} text={bubble.text} muted={muted} onToggleMute={toggleMute} />
+        <Bubble key={bubble.id} text={bubble.text} voiceMode={voiceSetting} onCycleVoice={cycleVoice} />
       )}
       <button
         type="button"

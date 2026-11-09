@@ -5,8 +5,11 @@
  * the letters it stands for, so a line always "sounds" the same way, and the
  * blips land in step with the bubble's typewriter.
  *
- * Audio only plays once the browser allows it (after any click or key), and
- * the bubble has a mute toggle that's remembered.
+ * There's also a spoken mode: the browser's own text-to-speech, pitched
+ * right down and slowed, for a flat machine voice. The bubble's header
+ * cycles babble → voice → off, and the choice is remembered.
+ *
+ * Audio only plays once the browser allows it (after any click or key).
  */
 import { readStored, writeStored } from "@/theme/accent";
 import { context } from "@/theme/sfx";
@@ -19,10 +22,31 @@ const BASE_HZ = 150;
 const LEVEL = 0.05;
 const HOLD = 6; // sample-and-hold factor: 48 kHz → 8 kHz
 const LEVELS = 16; // 4-bit amplitude
-const MUTE_KEY = "nca-familiar-mute";
+const MODE_KEY = "nca-familiar-voice";
+/** Before the voice modes there was only a mute switch. */
+const LEGACY_MUTE_KEY = "nca-familiar-mute";
 
-export const isMuted = () => readStored(MUTE_KEY) === "1";
-export const setMuted = (muted: boolean) => writeStored(MUTE_KEY, muted ? "1" : "0");
+export type VoiceMode = "babble" | "speech" | "off";
+export const VOICE_MODES: VoiceMode[] = ["babble", "speech", "off"];
+
+export const speechAvailable = () => typeof window !== "undefined" && "speechSynthesis" in window;
+
+export function voiceMode(): VoiceMode {
+  const stored = readStored(MODE_KEY);
+  if (stored === "babble" || stored === "off") return stored;
+  if (stored === "speech") return speechAvailable() ? "speech" : "babble";
+  return readStored(LEGACY_MUTE_KEY) === "1" ? "off" : "babble";
+}
+
+export const setVoiceMode = (mode: VoiceMode) => writeStored(MODE_KEY, mode);
+
+/** The next mode for the toggle, skipping speech where the browser has none. */
+export function nextVoiceMode(mode: VoiceMode): VoiceMode {
+  const modes = speechAvailable() ? VOICE_MODES : VOICE_MODES.filter((m) => m !== "speech");
+  return modes[(modes.indexOf(mode) + 1) % modes.length];
+}
+
+const isMuted = () => voiceMode() === "off";
 
 const crush = (v: number) => Math.round(v * (LEVELS / 2)) / (LEVELS / 2);
 
@@ -86,9 +110,44 @@ function withAudio(play: (ac: AudioContext) => void) {
   );
 }
 
-/** Babble along with `text` as it types out. Silent when muted or not yet allowed. */
-export function babble(text: string) {
-  withAudio((ac) => speak(ac, text));
+/** Say `text` in the chosen voice. Silent when off or before audio is allowed. */
+export function voice(text: string) {
+  const mode = voiceMode();
+  if (mode === "babble") withAudio((ac) => speak(ac, text));
+  else if (mode === "speech") say(text);
+}
+
+// ---- Spoken mode --------------------------------------------------------------
+
+/** Prefer a plain English voice; robotic comes from pitch and rate, not the voice. */
+function pickVoice(): SpeechSynthesisVoice | null {
+  const voices = window.speechSynthesis.getVoices();
+  return (
+    voices.find((v) => /^en(-|_)/i.test(v.lang) && /google|daniel|alex|fred|zarvox|robot/i.test(v.name)) ??
+    voices.find((v) => /^en(-|_)/i.test(v.lang)) ??
+    null
+  );
+}
+
+function say(text: string) {
+  if (!speechAvailable()) return;
+  // Words only: skip stage directions like *grinding stone noises* and lone punctuation.
+  const words = text.replace(/\*[^*]*\*/g, " ").replace(/[♥…]/g, " ").trim();
+  if (!/[a-z0-9]/i.test(words)) return;
+  const synth = window.speechSynthesis;
+  synth.cancel();
+  const line = new SpeechSynthesisUtterance(words);
+  const v = pickVoice();
+  if (v) line.voice = v;
+  line.pitch = 0.1;
+  line.rate = 0.82;
+  line.volume = 0.7;
+  synth.speak(line);
+}
+
+/** Stop anything Bit is saying (used when switching modes). */
+export function hush() {
+  if (speechAvailable()) window.speechSynthesis.cancel();
 }
 
 function speak(ac: AudioContext, text: string) {

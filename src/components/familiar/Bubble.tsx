@@ -4,18 +4,25 @@
  * readers get the whole line at once; the typing is visual only.
  */
 import { useEffect, useState } from "react";
-import { CHAR_MS } from "./voice";
+import { CHAR_MS, type VoiceMode } from "./voice";
 
 interface Props {
   text: string;
-  muted: boolean;
-  onToggleMute: () => void;
+  voiceMode: VoiceMode;
+  onCycleVoice: () => void;
 }
 
 const reducedMotion = () =>
   typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-export function Bubble({ text, muted, onToggleMute }: Props) {
+const MODE_LABEL: Record<VoiceMode, string> = { babble: "babble", speech: "voice", off: "mute" };
+const MODE_HINT: Record<VoiceMode, string> = {
+  babble: "Bit babbles in bitcrushed blips. Press for a spoken voice.",
+  speech: "Bit speaks with a robotic voice. Press to mute.",
+  off: "Bit is silent. Press for the babble.",
+};
+
+export function Bubble({ text, voiceMode, onCycleVoice }: Props) {
   const [shown, setShown] = useState(() => (reducedMotion() ? text.length : 0));
   const typing = shown < text.length;
 
@@ -33,13 +40,12 @@ export function Bubble({ text, muted, onToggleMute }: Props) {
         </span>
         <button
           type="button"
-          className={muted ? "familiar__bubble-mute familiar__bubble-mute--off" : "familiar__bubble-mute"}
-          onClick={onToggleMute}
-          aria-pressed={muted}
-          aria-label={muted ? "Unmute Bit's voice" : "Mute Bit's voice"}
-          title={muted ? "Unmute" : "Mute"}
+          className={`familiar__bubble-voice familiar__bubble-voice--${voiceMode}`}
+          onClick={onCycleVoice}
+          aria-label={`Voice: ${MODE_LABEL[voiceMode]}. ${MODE_HINT[voiceMode]}`}
+          title={MODE_HINT[voiceMode]}
         >
-          ♪
+          <span aria-hidden="true">{voiceMode === "off" ? "♪̶" : "♪"}</span> {MODE_LABEL[voiceMode]}
         </button>
       </div>
       <p className="familiar__bubble-text" aria-hidden="true">
