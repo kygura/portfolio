@@ -1,130 +1,101 @@
-import {
-  Download, MapPin, Mail, Globe, GitBranch
-} from "lucide-react";
+import type { ReactNode } from "react";
+import { ArrowDown } from "lucide-react";
 
 import { cv } from "../../content/cv";
+
+/**
+ * CV as a survey sheet: the same header as the other index pages, then
+ * numbered sections on a label column, with hairlines instead of chips.
+ */
+
+const Section = ({ n, label, children }: { n: number; label: string; children: ReactNode }) => (
+  <section className="sheet__section" aria-labelledby={`cv-${n}`}>
+    <h2 id={`cv-${n}`} className="sheet__label">
+      <span aria-hidden="true">( {String(n).padStart(2, "0")} — </span>
+      {label}
+      <span aria-hidden="true"> )</span>
+    </h2>
+    <div className="sheet__content">{children}</div>
+  </section>
+);
 
 const CV = () => {
   const { contact, summary, education, projects, languages, skills } = cv;
 
-  const downloadPDF = () => {
-    // Create a link element and trigger download
-    const link = document.createElement('a');
-    link.href = cv.pdf;
-    link.download = 'CV_NCA.pdf';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   return (
-    <div className="px-6 md:px-12 lg:px-16 py-16 md:py-24 max-w-4xl animate-fade-in mx-auto">
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-8">
-        <div>
-          <h1 className="text-5xl md:text-6xl font-display font-light tracking-[-0.01em] leading-[0.9] mb-4">
-            Curriculum Vitae
-          </h1>
-          <p className="text-xl font-display mb-1">{contact.name}</p>
-          <p className="font-pixel text-[10.5px] tracking-[0.08em] uppercase text-muted-foreground mb-6">
-            {contact.headline}
-          </p>
-          <div className="text-lg text-muted-foreground space-y-2">
-            <p className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" /> {contact.location}
-            </p>
-            <div className="flex flex-wrap gap-4 text-sm md:text-base">
-              <a href={`mailto:${contact.email}`} className="flex items-center gap-2 hover:text-primary transition-colors">
-                <Mail className="w-4 h-4" /> {contact.email}
-              </a>
-              <a href={`https://${contact.website}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
-                <Globe className="w-4 h-4" /> {contact.website}
-              </a>
-              <a href={`https://${contact.github}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-primary transition-colors">
-                <GitBranch className="w-4 h-4" /> {contact.github}
-              </a>
-            </div>
-          </div>
-        </div>
-        <button
-          onClick={downloadPDF}
-          className="cv-download-btn mt-4 md:mt-0 self-start shrink-0"
-        >
-          <Download className="w-4 h-4" />
-          Download PDF
-        </button>
+    <div className="page-shell page-shell--wide animate-fade-in">
+      <div className="mb-10 sm:mb-14 pb-6 sm:pb-8 border-b border-[var(--border-muted)]">
+        <h1 className="text-5xl md:text-7xl font-display text-foreground tracking-[-0.01em] leading-[0.85] uppercase mb-4">
+          Curriculum Vitae
+        </h1>
+        <p className="text-lg md:text-xl text-foreground max-w-2xl leading-relaxed">
+          {contact.name}. {contact.headline}.
+        </p>
+        <p className="sheet__stamp">
+          <span>{contact.location}</span>
+          <a href={`mailto:${contact.email}`}>{contact.email}</a>
+          <a href={`https://${contact.website}`} target="_blank" rel="noopener noreferrer">
+            {contact.website}
+          </a>
+          <a href={`https://${contact.github}`} target="_blank" rel="noopener noreferrer">
+            {contact.github}
+          </a>
+          <a href={cv.pdf} download="CV_NCA.pdf" className="sheet__pdf">
+            PDF <ArrowDown size={12} aria-hidden="true" />
+          </a>
+        </p>
       </div>
 
-      <section className="mb-12">
-        <h2 className="text-2xl font-display font-light mb-4 text-foreground/90">About</h2>
-        <p className="text-muted-foreground leading-relaxed">
-          {summary}
-        </p>
-      </section>
+      <div className="sheet">
+        <Section n={1} label="About">
+          <p className="sheet__lead">{summary}</p>
+        </Section>
 
-      <section className="mb-12">
-        <h2 className="text-3xl font-display font-light mb-8">Technical Projects</h2>
-        <div className="space-y-8">
-          {projects.map((project, index) => (
-            <div key={index} className="border-l border-border pl-6">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-                <h3 className="text-xl font-display">{project.title}</h3>
-                <span className="text-sm px-2 py-0.5 border border-foreground/40 text-foreground bg-foreground/5 w-fit">
-                  {project.tech}
-                </span>
+        <Section n={2} label="Work">
+          {projects.map((project) => (
+            <article key={project.title} className="sheet__entry">
+              <h3 className="sheet__title">{project.title}</h3>
+              <p className="sheet__tech">{project.tech}</p>
+              <p className="sheet__text">{project.description}</p>
+            </article>
+          ))}
+        </Section>
+
+        <Section n={3} label="Education">
+          {education.map((edu) => (
+            <article key={edu.degree} className="sheet__entry sheet__entry--dated">
+              <div>
+                <h3 className="sheet__title">{edu.degree}</h3>
+                <p className="sheet__text">{edu.institution}</p>
+                {edu.description && <p className="sheet__note">{edu.description}</p>}
               </div>
-              <p className="text-muted-foreground leading-relaxed">{project.description}</p>
-            </div>
+              <p className="sheet__period">{edu.period}</p>
+            </article>
           ))}
-        </div>
-      </section>
+        </Section>
 
-      <section className="mb-12">
-        <h2 className="text-3xl font-display font-light mb-8">Education</h2>
-        <div className="space-y-8">
-          {education.map((edu, index) => (
-            <div key={index} className="border-l border-border pl-6">
-              <h3 className="text-xl font-display mb-2">{edu.degree}</h3>
-              <p className="text-muted-foreground mb-2">
-                {edu.institution} • {edu.period}
-              </p>
-              {edu.description && <p className="text-muted-foreground italic text-sm">{edu.description}</p>}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="mb-12">
-        <h2 className="text-3xl font-display font-light mb-8">Technical Skills</h2>
-        <div className="space-y-8">
-          {Object.entries(skills).map(([category, items]) => (
-            <div key={category}>
-              <h3 className="text-xl font-display mb-4">{category}</h3>
-              <div className="flex flex-wrap gap-2">
-                {items.map((skill) => (
-                  <span
-                    key={skill}
-                    className="px-4 py-2 text-sm border border-foreground/40 text-foreground bg-foreground/5"
-                  >
-                    {skill}
-                  </span>
-                ))}
+        <Section n={4} label="Skills">
+          <dl className="sheet__list">
+            {Object.entries(skills).map(([category, items]) => (
+              <div key={category}>
+                <dt>{category}</dt>
+                <dd>{items.join(" · ")}</dd>
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </dl>
+        </Section>
 
-      <section className="mb-16">
-        <h2 className="text-3xl font-display font-light mb-8">Languages</h2>
-        <div className="grid md:grid-cols-2 gap-6">
-          {languages.map((lang, index) => (
-            <div key={index} className="border-l border-border pl-6">
-              <h3 className="text-xl font-display mb-1">{lang.name}</h3>
-              <p className="text-muted-foreground">{lang.proficiency}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+        <Section n={5} label="Languages">
+          <dl className="sheet__list">
+            {languages.map((lang) => (
+              <div key={lang.name}>
+                <dt>{lang.name}</dt>
+                <dd>{lang.proficiency}</dd>
+              </div>
+            ))}
+          </dl>
+        </Section>
+      </div>
     </div>
   );
 };

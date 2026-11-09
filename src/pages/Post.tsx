@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
-import { ArrowLeft, Clock } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useMarkdownPost } from "../hooks/useMarkdownPosts";
@@ -88,29 +88,31 @@ const Post = () => {
       replace />;
   }
 
+  const published = post.date ? new Date(post.date) : null;
+  const postDate =
+    published && Number.isFinite(published.getTime())
+      ? published.toLocaleString("en", { day: "2-digit", month: "long", year: "numeric", timeZone: "UTC" })
+      : null;
+
   return (
     <div className="page-shell page-shell--narrow animate-fade-in">
       <div className="mb-12 pb-6 border-b border-[var(--border-muted)] relative">
         <Link
           to="/writings"
-          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-300 mb-8 mt-2"
+          className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-muted-foreground hover:text-accent transition-colors duration-300 mb-8 mt-2"
         >
-          <ArrowLeft className="w-4 h-4" />
-          BACK TO WRITINGS
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Writings
         </Link>
 
-        <h1 className="text-2xl md:text-4xl font-display tracking-[-0.01em] text-foreground uppercase leading-[0.95] mb-6">
+        <h1 className="text-4xl md:text-6xl font-display tracking-[-0.015em] text-foreground leading-[1] mb-2 text-balance">
           {post.title}
         </h1>
 
-        {post.readTime && (
-          <div className="flex items-center gap-6 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            <span className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              {post.readTime} read
-            </span>
-          </div>
-        )}
+        <p className="ledger__stats">
+          {postDate && <time dateTime={post.date}>{postDate}</time>}
+          {post.readTime ? <span>{post.readTime} min read</span> : null}
+        </p>
       </div>
 
       <PostToc articleRef={articleRef} contentKey={post.content} />

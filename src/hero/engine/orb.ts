@@ -4,9 +4,10 @@
  *  doubles in the water. The orb's chrome carries the sky, the sea and the
  *  pyramids in its reflection, under swirled ink marbling.
  *
- *  Two hand-set looks: the magenta-to-gold sunset (the Sunset palette) and the
- *  ultramarine noon (the Sky palette). Any other palette takes whichever of the
- *  two sits nearer its deep accent on the colour wheel, turned round to that
+ *  Three hand-set looks: the magenta-to-gold sunset (the Sunset palette), the
+ *  ultramarine noon (the Sky palette) and a verdigris dusk, teal overhead to
+ *  pale gold, for the greens. Any other palette takes whichever of the
+ *  three sits nearer its deep accent on the colour wheel, turned round to that
  *  accent and muted to match a quieter one (Graphite goes fully grey).
  *  Tap the orb to set it spinning, the pyramid's apex to light it. */
 import * as THREE from "three";
@@ -68,30 +69,34 @@ export function buildOrb(kit: PsxKit): SceneDef {
      Each recoloured colour with its noon and sunset values. */
   const shadowMats = [...new Set(shadows.map((m) => m.material as THREE.MeshBasicMaterial))];
   const sky = R.uniforms.sky;
+  type Row = [THREE.Color, string, string, string];
   const flatU = (m: THREE.ShaderMaterial, tint: string[], amb: string[], sun: string[], acc: string[]) =>
-    [[m.uniforms.uTint.value, ...tint], [m.uniforms.uAmbient.value, ...amb], [m.uniforms.uSun.value, ...sun], [m.uniforms.uAccent.value, ...acc]] as [THREE.Color, string, string][];
-  const table: [THREE.Color, string, string][] = [
-    [sky.uZen.value, "#0d1290", "#3a0a4a"],
-    [sky.uMid.value, "#2a43d6", "#b02a6a"],
-    [sky.uLow.value, "#7fa6ee", "#f08048"],
-    [sky.uHor.value, "#eef6ff", "#fff0c8"],
-    [R.uniforms.fog.value, "#c9def4", "#f4d4a8"],
-    [R.uniforms.ice.value, "#a8e6f0", "#ffd8a0"],
-    [R.uniforms.sea.value, "#5a8cc4", "#b85a48"],
-    [R.uniforms.ink.value, "#1a2a40", "#2e0c24"],
-    ...flatU(mPyr, ["#cdf4fa", "#ffe2b0"], ["#0e1844", "#3a0f2a"], ["#c4f2ff", "#ffd8a8"], ["#ffffff", "#ffffff"]),
-    ...flatU(mCap, ["#cdf4fa", "#ffe2b0"], ["#0e1844", "#3a0f2a"], ["#c4f2ff", "#ffd8a8"], ["#e8fcff", "#fff4d8"]),
-    ...flatU(mFar, ["#9cc8e8", "#f0b090"], ["#2a3c80", "#7a2a4a"], ["#a8d8f0", "#f8c8a0"], ["#ffffff", "#ffffff"]),
-    [orbMat.uniforms.uTint.value, "#e4f0f4", "#f4e0d4"],
-    [moonMat.uniforms.uTint.value, "#d8e4ec", "#f0dcd0"],
-    [beamMat.color, "#e8fcff", "#fff4d8"],
-    ...shadowMats.map((m): [THREE.Color, string, string] => [m.color, "#1a2a40", "#2e0c24"]),
+    [[m.uniforms.uTint.value, ...tint], [m.uniforms.uAmbient.value, ...amb], [m.uniforms.uSun.value, ...sun], [m.uniforms.uAccent.value, ...acc]] as Row[];
+  // Columns: noon, sunset, verdigris.
+  const table: Row[] = [
+    [sky.uZen.value, "#0d1290", "#3a0a4a", "#031a1c"],
+    [sky.uMid.value, "#2a43d6", "#b02a6a", "#0c5a52"],
+    [sky.uLow.value, "#7fa6ee", "#f08048", "#6cc09a"],
+    [sky.uHor.value, "#eef6ff", "#fff0c8", "#fbf6cc"],
+    [R.uniforms.fog.value, "#c9def4", "#f4d4a8", "#d6e8c0"],
+    [R.uniforms.ice.value, "#a8e6f0", "#ffd8a0", "#e0f4b8"],
+    [R.uniforms.sea.value, "#5a8cc4", "#b85a48", "#2c7a6c"],
+    [R.uniforms.ink.value, "#1a2a40", "#2e0c24", "#04221e"],
+    ...flatU(mPyr, ["#cdf4fa", "#ffe2b0", "#eaf6c4"], ["#0e1844", "#3a0f2a", "#082a26"], ["#c4f2ff", "#ffd8a8", "#e6f4b4"], ["#ffffff", "#ffffff", "#ffffff"]),
+    ...flatU(mCap, ["#cdf4fa", "#ffe2b0", "#eaf6c4"], ["#0e1844", "#3a0f2a", "#082a26"], ["#c4f2ff", "#ffd8a8", "#e6f4b4"], ["#e8fcff", "#fff4d8", "#f6ffd8"]),
+    ...flatU(mFar, ["#9cc8e8", "#f0b090", "#a4d4b0"], ["#2a3c80", "#7a2a4a", "#1a5048"], ["#a8d8f0", "#f8c8a0", "#c4e4b8"], ["#ffffff", "#ffffff", "#ffffff"]),
+    [orbMat.uniforms.uTint.value, "#e4f0f4", "#f4e0d4", "#e6f0de"],
+    [moonMat.uniforms.uTint.value, "#d8e4ec", "#f0dcd0", "#d8e6d4"],
+    [beamMat.color, "#e8fcff", "#fff4d8", "#f6ffd8"],
+    ...shadowMats.map((m): Row => [m.color, "#1a2a40", "#2e0c24", "#04221e"]),
   ];
-  // The deep accents the two looks belong to: Sky's and Sunset's.
-  // Warm hues sit close together, so the sunset turns only half as far as the gap.
+  // The deep accents the looks belong to: Sky's, Sunset's and Moss's.
+  // Warm hues sit close together, so the sunset turns only half as far as the gap;
+  // the verdigris dusk barely turns, so its teal-to-gold spread survives every green.
   const looks = [
     { at: new THREE.Color("#2f6f9a").getHSL({ h: 0, s: 0, l: 0 }), turn: 1, cols: table.map((r) => new THREE.Color(r[1])) },
     { at: new THREE.Color("#b02a6a").getHSL({ h: 0, s: 0, l: 0 }), turn: 0.5, cols: table.map((r) => new THREE.Color(r[2])) },
+    { at: new THREE.Color("#2f8a4a").getHSL({ h: 0, s: 0, l: 0 }), turn: 0.25, cols: table.map((r) => new THREE.Color(r[3])) },
   ];
   const hueGap = (a: number, b: number) => ((((a - b) % 1) + 1.5) % 1) - 0.5;
   const hsl = { h: 0, s: 0, l: 0 };
