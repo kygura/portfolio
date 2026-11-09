@@ -232,6 +232,65 @@ void main(){
   gl_FragColor = vec4(mix(c, hz, fg), mix(a, 1.0, fg));
 }`;
 
+// Palms: lit for a low sun behind them. Leaves are two-sided and let the light through, so the fronds glow
+// gold-green where they hang between you and the sun; the sky fills everything from above and the trunk
+// edges catch a warm rim. Same vertex snap, affine UVs and haze as the rest of the scene.
+const PALM_V = `
+uniform vec2 uSnap; uniform vec3 uLight; uniform vec3 uSunCol; uniform vec3 uSky; uniform vec3 uGround; uniform float uLeaf;
+varying vec3 vAff; varying vec3 vLit; varying float vDepth; varying vec3 vWP;
+void main(){
+  vec4 wp = modelMatrix * vec4(position, 1.0);
+  vec3 n = normalize(mat3(modelMatrix) * normal);
+  vWP = wp.xyz;
+  vec3 v = normalize(cameraPosition - wp.xyz);
+  if (uLeaf > 0.5 && dot(n, v) < 0.0) n = -n;
+  float ndl = dot(n, uLight);
+  float key = uLeaf > 0.5 ? max(ndl * 0.6 + 0.4, 0.0) : max(ndl * 0.5 + 0.5, 0.0) * 0.8;
+  float hemi = n.y * 0.5 + 0.5;
+  vec3 amb = mix(uGround, uSky, hemi);
+  // light through the leaf when the sun is behind it
+  float back = pow(max(dot(-v, uLight), 0.0), 3.0);
+  float trans = uLeaf * back * (0.55 + 0.45 * max(-ndl, 0.0));
+  // warm rim on edges turned side-on to the camera
+  float rim = (1.0 - uLeaf) * pow(1.0 - abs(dot(n, v)), 2.0) * (0.4 + 0.6 * back);
+  vLit = amb + uSunCol * (key + rim * 0.9) + uSunCol * vec3(1.0, 0.92, 0.6) * trans * 0.75;
+  vec4 mv = viewMatrix * wp;
+  vec4 p = projectionMatrix * mv;
+  ${SNAP}
+  gl_Position = p;
+  vAff = vec3(uv * p.w, p.w);
+  vDepth = -mv.z;
+}`;
+const PALM_F = `${SHORE}
+uniform sampler2D uMap; uniform vec3 uTint; uniform float uFogNear; uniform float uFogFar;
+varying vec3 vAff; varying vec3 vLit; varying float vDepth; varying vec3 vWP;
+void main(){
+  vec3 c = texture2D(uMap, vAff.xy / vAff.z).rgb * uTint * vLit;
+  vec3 v = normalize(vWP - cameraPosition);
+  gl_FragColor = vec4(mix(c, horizon(v), sstep(uFogNear, uFogFar, vDepth)), 1.0);
+}`;
+
+// Palm textures, brighter than the kit's: frond green with paler leaflet midribs, grey-tan ringed bark.
+function palmTex(kind: "leaf" | "bark") {
+  const S = 32, c = document.createElement("canvas");
+  c.width = c.height = S;
+  const g = c.getContext("2d");
+  if (!g) throw new Error("2d canvas unavailable");
+  let seed = kind === "leaf" ? 23 : 31;
+  const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const k = 0.85 + r() * 0.2;
+    if (kind === "leaf") g.fillStyle = x % 8 === 0 ? `rgb(${190 * k},${200 * k},${120 * k})` : `rgb(${104 * k},${138 * k},${76 * k})`;
+    else g.fillStyle = y % 5 === 0 ? `rgb(${120 * k},${104 * k},${90 * k})` : `rgb(${176 * k},${156 * k},${132 * k})`;
+    g.fillRect(x, y, 1, 1);
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.magFilter = t.minFilter = THREE.NearestFilter;
+  t.generateMipmaps = false;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+
 // White sand with a warm cast: near-white grains, a few bright ones, a few shell-pink and grey. 32px, nearest.
 function sandTex() {
   const S = 32, c = document.createElement("canvas");
@@ -277,11 +336,22 @@ export function buildBeach(k: PsxKit): SceneDef {
     m.uniforms.uLightDir = lightU;
     return m;
   };
+  const palmMat = (map: THREE.Texture, tint: string, leaf: number) =>
+    new THREE.ShaderMaterial({
+      side: leaf ? THREE.DoubleSide : THREE.FrontSide,
+      uniforms: {
+        ...shared, uSnap: U.uSnap, uMap: { value: map }, uTint: { value: new THREE.Color(tint) }, uLight: lightU, uLeaf: { value: leaf },
+        uSunCol: { value: new THREE.Color("#ffc890") }, uSky: { value: new THREE.Color("#a8a4c8") }, uGround: { value: new THREE.Color("#d8c4b8") },
+        uFogNear: U.uFogNear, uFogFar: U.uFogFar,
+      },
+      vertexShader: PALM_V,
+      fragmentShader: PALM_F,
+    });
   const m = {
-    trunk: mat({ map: tex.tBark, tint: "#e8cbb0", amb: "#9a8698", sun: "#ffc890" }),
-    frond: mat({ map: tex.tLeaf, tint: "#d0e4a8", amb: "#7a8a84", sun: "#ffd090", uv: 1.5, side: THREE.DoubleSide }),
-    nut: mat({ map: tex.tPlain, tint: "#8a7a48", amb: "#6a5a60" }),
-    grass: mat({ map: tex.tLeaf, tint: "#e8e0a8", amb: "#c8b8b8", sun: "#ffd8a0" }),
+    trunk: palmMat(palmTex("bark"), "#f4e2d0", 0),
+    frond: palmMat(palmTex("leaf"), "#eef6d8", 1),
+    nut: palmMat(tex.tPlain, "#b0a060", 0),
+    grass: palmMat(palmTex("leaf"), "#f4ecc8", 1),
     shell: mat({ map: tex.tPlain, tint: "#ffe2d6", amb: "#e8d4d8" }),
     shell2: mat({ map: tex.tPlain, tint: "#f6ece0", amb: "#d8c8cc" }),
     print: mat({ map: tex.tPlain, tint: "#d8ccd0", amb: "#a8a0b8" }),
