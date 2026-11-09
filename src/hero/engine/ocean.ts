@@ -1,11 +1,9 @@
-/** Sheet 01 · Ocean: endless swell, overgrown drowned towers, palm islands, the King of Red Lions moored at a pier, twin suns.
+/** Sheet 01 · Ocean: endless swell, palm islands, the King of Red Lions moored at a pier, twin suns.
  *  Out past the islands the wasteland rings the horizon: mossed shard towers and blades, wreckage in the swell,
  *  stone hanging around the spire and islands floating upside down. */
 import * as THREE from "three";
 import { pulse, type PsxKit, type SceneDef, type V3 } from "./psx";
 import { createWaste } from "./wasteland";
-
-type Kind = "box" | "cyl" | "taper";
 
 // Sail cloth with the Wind Waker crest (a hooked S curling into a spiral) near the luff.
 // u runs luff to leech, v foot to head; 64px, nearest-filtered like the kit's textures.
@@ -38,7 +36,7 @@ function sailTex() {
 
 export function buildOcean(k: PsxKit): SceneDef {
   const { rnd, facet, mesh, psx, M, tex, view } = k;
-  const PIVOT = new THREE.Vector3(0, 8, 0);
+  const PIVOT = new THREE.Vector3(0, 6, 0);
   const scene = new THREE.Scene();
   const cam = new THREE.PerspectiveCamera(64, 16 / 9, 0.1, 320);
   const sky = k.skyDome(0, 0.3, 2.2);
@@ -54,7 +52,6 @@ export function buildOcean(k: PsxKit): SceneDef {
     foam: psx({ map: tex.tPlain, tint: "#d4e2dc", amb: "#7d8c90" }),
     sand: psx({ map: tex.tSand, uv: 3 }),
     grass: psx({ map: tex.tGround, tint: "#d0dca8", moss: 0.5, uv: 2 }),
-    glass: psx({ map: tex.tGlass, tint: "#c3cfcf", moss: 0.9 }),
     glass2: psx({ map: tex.tGlass, tint: "#a9b9c4", moss: 0.9 }),
     trunk: psx({ map: tex.tBark, tint: "#b8a488" }),
     frond: psx({ map: tex.tLeaf, tint: "#a8c47c", uv: 1.5 }),
@@ -72,7 +69,6 @@ export function buildOcean(k: PsxKit): SceneDef {
     g.translate((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
     return facet(g, 0.03);
   };
-  const { wallUV } = k;
 
   /* ---- ocean: a grid denser near the camera, displaced every frame ---- */
   const WN = 72, WH = 170, WCX = 10, WCZ = -18;
@@ -118,98 +114,8 @@ export function buildOcean(k: PsxKit): SceneDef {
     }
   };
 
-  /* ---- drowned towers ---- */
   const blob = [0, 1, 2].map((i) => facet(new THREE.IcosahedronGeometry(1, 0), 0.25 + i * 0.05));
   const leaf = () => M.leaf[Math.floor(rnd() * 3)];
-  const towers: [number, number, number, number, Kind, number, number, THREE.Material][] = [
-    [0, 0, 5.2, 27, "taper", 0, 0, mat.glass],
-    [-7.5, 4, 4.4, 21, "box", 0.04, -0.05, M.stone],
-    [6.5, 6, 3.8, 18, "cyl", 0, 0, mat.glass],
-    [-3.5, -7.5, 3.6, 14, "box", -0.06, 0.08, mat.glass2],
-    [9.5, -2.5, 3.2, 11, "box", 0.03, 0.02, M.stone],
-    [-13, -3, 4, 16, "cyl", 0, 0.05, mat.glass2],
-    [2, 12, 5.5, 23, "box", 0, 0, mat.glass],
-    [-9.5, 13, 3.4, 13, "taper", 0.1, 0.06, M.stone],
-    [13.5, 9.5, 3, 9, "box", -0.04, 0, mat.glass2],
-    [-1, 22, 6, 19, "cyl", 0, 0, M.stone],
-  ];
-  const BASE = -3;
-  let spireTop = 0;
-  towers.forEach(([x, z, w, h, kind, tx, tz, clad]) => {
-    const g = new THREE.Group();
-    g.position.set(x, BASE, z);
-    g.rotation.set(tx, rnd() * 0.6, tz);
-    scene.add(g);
-    const d = kind === "box" ? w * 0.85 : w;
-    const rb = kind === "taper" ? w * 0.75 : w / 2, rt = kind === "taper" ? w * 0.3 : w / 2;
-    // Distance from the axis to the facade at angle a, height y; plus its outward normal.
-    const surf = (a: number, y: number): [number, number, number] => {
-      const c = Math.cos(a), s = Math.sin(a);
-      if (kind !== "box") {
-        const r = (rb + (rt - rb) * (y / h)) * (kind === "taper" ? 0.78 : 1);
-        return [r, c, s];
-      }
-      const tX = w / 2 / Math.max(1e-3, Math.abs(c)), tZ = d / 2 / Math.max(1e-3, Math.abs(s));
-      return tX < tZ ? [tX, Math.sign(c), 0] : [tZ, 0, Math.sign(s)];
-    };
-
-    let body: THREE.BufferGeometry;
-    if (kind === "box") body = new THREE.BoxGeometry(w, h, d, 1, Math.ceil(h / 3), 1);
-    else if (kind === "cyl") body = new THREE.CylinderGeometry(rt, rb * 1.05, h, 8, Math.ceil(h / 3));
-    else body = new THREE.CylinderGeometry(rt, rb, h, 4, Math.ceil(h / 3)).rotateY(Math.PI / 4);
-    body.translate(0, h / 2, 0);
-    add(wallUV(facet(body, 0.04), 1 / 8), clad);
-
-    // lit bands, every six units above the waterline
-    for (let y = 9; y < h - 1; y += 6) {
-      if (kind === "box") add(facet(new THREE.BoxGeometry(w + 0.08, 0.14, d + 0.08)), M.glyph, 0, y, 0);
-      else if (kind === "cyl") add(facet(new THREE.CylinderGeometry(rb + 0.05, rb + 0.05, 0.14, 8)), M.glyph, 0, y, 0);
-    }
-
-    // crown
-    if (kind === "box") {
-      add(wallUV(facet(new THREE.BoxGeometry(w * 0.6, 2.2, d * 0.55)), 1 / 8), clad === M.stone ? mat.glass2 : clad, 0, h + 1.1, -d * 0.1);
-      add(facet(new THREE.CylinderGeometry(0.05, 0.09, 4, 4)), M.solid, w * 0.15, h + 4.2, -d * 0.1);
-      add(facet(new THREE.BoxGeometry(0.2, 0.2, 0.2)), M.glyph, w * 0.15, h + 6.2, -d * 0.1);
-    } else if (kind === "cyl") {
-      add(facet(new THREE.CylinderGeometry(rb + 0.25, rb + 0.25, 0.5, 8)), M.stone2, 0, h, 0);
-      add(facet(new THREE.CylinderGeometry(rb + 0.3, rb + 0.3, 0.12, 8)), M.glyph, 0, h + 0.3, 0);
-      const dome = new THREE.IcosahedronGeometry(rb * 0.85, 1);
-      dome.scale(1, 0.5, 1);
-      add(facet(dome, 0.05), mat.glass2, 0, h + 0.2, 0);
-    } else {
-      add(facet(new THREE.ConeGeometry(rt * 1.05, h * 0.25, 4).rotateY(Math.PI / 4), 0.05), clad, 0, h + h * 0.125, 0);
-      add(facet(new THREE.CylinderGeometry(0.04, 0.08, 3, 4)), M.solid, 0, h * 1.25 + 1.4, 0);
-      add(facet(new THREE.BoxGeometry(0.22, 0.22, 0.22)), M.glyph, 0, h * 1.25 + 2.9, 0);
-      if (x === 0 && z === 0) spireTop = BASE + h * 0.85;
-    }
-
-    // overgrowth: roof canopy, facade clumps, hanging vines, waterline thicket
-    const roofY = kind === "taper" ? h + 0.2 : h + 0.25;
-    const roofR = kind === "taper" ? rt * 0.6 : Math.min(w, d) * 0.42;
-    for (let c = 0; c < 6; c++) {
-      const a = rnd() * 6.28, r = rnd() * roofR, s = 0.55 + rnd() * 0.75;
-      add(blob[c % 3], leaf(), Math.cos(a) * r, roofY + s * 0.3, Math.sin(a) * r, rnd() * 3, rnd() * 3, 0, s);
-    }
-    if (kind !== "taper") palm(roofR * 0.4, roofY, -roofR * 0.3, 0.45 + rnd() * 0.15);
-    for (let c = 0; c < h * 0.9; c++) {
-      const a = rnd() * 6.28, y = 3 + Math.pow(rnd(), 0.7) * (h - 3), [r, nx, nz] = surf(a, y), s = 0.45 + rnd() * 0.8;
-      add(blob[c % 3], leaf(), Math.cos(a) * r + nx * s * 0.3, y, Math.sin(a) * r + nz * s * 0.3, rnd() * 3, rnd() * 3, 0, s);
-    }
-    if (kind !== "taper") {
-      for (let v = 0; v < h * 0.45; v++) {
-        const a = rnd() * 6.28, top = h * (0.35 + rnd() * 0.65), L = Math.min(2 + rnd() * 6, top - 2.5);
-        const [r, nx, nz] = surf(a, top);
-        const vg = facet(new THREE.BoxGeometry(0.4 + rnd() * 0.8, L, 0.18, 1, 3, 1), 0.14);
-        add(vg, leaf(), Math.cos(a) * r + nx * 0.12, top - L / 2, Math.sin(a) * r + nz * 0.12, 0, Math.atan2(nx, nz), 0);
-      }
-    }
-    for (let c = 0; c < 7; c++) {
-      const a = (c / 7) * 6.28 + rnd() * 0.5, [r, nx, nz] = surf(a, 3), s = 0.6 + rnd() * 0.6;
-      add(blob[c % 3], leaf(), Math.cos(a) * r + nx * 0.4, 2.7 + rnd() * 0.8, Math.sin(a) * r + nz * 0.4, rnd() * 3, rnd() * 3, 0, s);
-    }
-    flush(g);
-  });
 
   /* ---- islands ---- */
   const foams: { m: THREE.Mesh; x: number; z: number }[] = [];
@@ -423,7 +329,6 @@ export function buildOcean(k: PsxKit): SceneDef {
   return {
     scene, cam, fog: [25, 120], fov: [64, 74], limits: { pitch: [-0.05, 0.7], zoom: [0.55, 1.5] },
     labels: [
-      { name: "Drowned spire", sub: "canopy reclaimed", at: (v) => { v.set(0, spireTop, 0); } },
       { name: "King of Red Lions", sub: "moored · talks back", at: (v) => { v.set(-0.9, 10.6, 0); ship.localToWorld(v); } },
       { name: "Twin suns", sub: "binary, setting", at: (v) => { v.copy(sunA.position).y += 16; } },
     ],
@@ -490,7 +395,7 @@ export function buildOcean(k: PsxKit): SceneDef {
       const a = -1.09 + Math.sin(t * 0.035) * 0.18 + view.px * 0.12 + view.yaw, r = 34 + Math.sin(t * 0.05) * 2;
       const x = Math.cos(a) * r, z = Math.sin(a) * r;
       cam.position.set(x, 3.4 + wave(x, z, t) * 0.45 - view.py * 0.6, z);
-      cam.lookAt(0, 8 - view.py * 1.2, 0);
+      cam.lookAt(0, 6 - view.py * 1.2, 0);
       cam.rotateZ(Math.sin(t * 0.7) * 0.012);
       k.orbit(cam, PIVOT);
       sky.position.copy(cam.position);

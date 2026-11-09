@@ -23,7 +23,7 @@ import { buildSea } from "./sea";
 import { buildField } from "./field";
 import { buildMatrix } from "./matrix";
 import { buildVoid } from "./void";
-import { buildAbyss } from "./abyss";
+import { buildBeach } from "./beach";
 import { buildCliff } from "./cliff";
 import { buildOrb } from "./orb";
 
@@ -88,7 +88,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   /* Only scenes enabled in sheets.ts are built, in tab order. */
   const BUILD: Record<SheetMeta["id"], (k: PsxKit) => SceneDef> = {
     cipher: () => buildVoid(), ocean: buildOcean, sea: buildSea, astral: buildAstral, ruins: buildRuins, drift: buildDrift, dunes: buildDunes, rift: buildRift, frost: buildFrost,
-    field: buildField, matrix: buildMatrix, abyss: buildAbyss, cliff: buildCliff, orb: buildOrb,
+    field: buildField, matrix: buildMatrix, beach: buildBeach, cliff: buildCliff, orb: buildOrb,
   };
   /* Scenes are built on first use, not all up front: building all thirteen in
      one go blocked the main thread for over a second on load. The rest are
