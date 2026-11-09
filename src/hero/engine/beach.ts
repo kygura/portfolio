@@ -503,9 +503,9 @@ export function buildBeach(k: PsxKit): SceneDef {
     const top = P(n).applyMatrix4(xf);
     const crown = 12 + Math.floor(rnd() * 3);
     for (let f = 0; f < crown; f++) {
-      const a = (f / crown) * Math.PI * 2 + rnd() * 0.35;
-      const lift = f % 3 === 0 ? -0.25 - rnd() * 0.2 : 0.05 + (rnd() - 0.5) * 0.3;
-      const g = fronds[Math.min(3, Math.floor(rnd() * 4))].clone().rotateZ(lift).rotateX((rnd() - 0.5) * 0.5).rotateY(a);
+      const a = (f / crown) * Math.PI * 2 + rnd() * 0.12;
+      const lift = f % 2 === 0 ? -0.22 : 0.05 + (rnd() - 0.5) * 0.1;
+      const g = fronds[Math.min(3, Math.floor(rnd() * 4))].clone().rotateZ(lift).rotateX((rnd() - 0.5) * 0.15).rotateY(a);
       add(g, m.frond, top.x, top.y, top.z, 0, 0, 0, s * (0.85 + rnd() * 0.3));
     }
     for (let c = 0; c < 5; c++) {
@@ -514,11 +514,17 @@ export function buildBeach(k: PsxKit): SceneDef {
     }
     return { base, top, s };
   };
+  // Every palm leans the same way: out to sea, square to the shoreline where it stands, like trees grown
+  // under a steady onshore wind. ry turns the palm's local +x (its lean) to face that way, give or take a little.
+  const seaward = (x: number) => {
+    const d = (bend(x + 0.5) - bend(x - 0.5)) / 1, l = Math.hypot(d, 1);
+    return Math.atan2(1 / l, d / l) + (rnd() - 0.5) * 0.16;
+  };
   // close by, leaning out over the beach toward the water; their shadows reach back up the sand.
   // Three frame the left of the view, two the right, leaning in toward the middle.
   const near = [
-    palm(-7, 11.5, 0.84, 3.2, 1.86), palm(-13.5, 13.2, 0.85, 2.2, 2.25), palm(-10.2, 15.6, 0.75, 1.1, 1.3),
-    palm(1.8, 9.2, 0.8, 2.8, 2.5), palm(1.2, 6.8, 0.62, 1.4, 2.0),
+    palm(-7, 11.5, 0.84, 2.6, seaward(-7)), palm(-13.5, 13.2, 0.85, 2.3, seaward(-13.5)), palm(-10.2, 15.6, 0.75, 2.0, seaward(-10.2)),
+    palm(1.8, 9.2, 0.8, 2.5, seaward(1.8)), palm(1.2, 6.8, 0.62, 2.2, seaward(1.2)),
   ];
   near.forEach(({ base, top, s: sc }, i) => {
     const toGround = (p: THREE.Vector3) => {
@@ -531,7 +537,7 @@ export function buildBeach(k: PsxKit): SceneDef {
   });
   for (let i = 0; i < 44; i++) {
     const x = -28 - Math.pow(rnd(), 0.75) * 340;
-    palm(x, 18 + rnd() * 18, 1 + rnd() * 0.5, 0.8 + rnd() * 2.6, Math.PI * 0.25 + (rnd() - 0.5) * 1.6);
+    palm(x, 18 + rnd() * 18, 1 + rnd() * 0.4, 1.8 + rnd() * 0.7, seaward(x));
   }
 
   // dune grass on the berm
@@ -572,7 +578,7 @@ export function buildBeach(k: PsxKit): SceneDef {
   // a stand of palms on the island, drawn large enough to read at this distance
   for (let i = 0; i < 9; i++) {
     const x = 38 + rnd() * 60, z = -420 + (rnd() - 0.5) * 10;
-    palm(0, 0, 1.6 + rnd() * 0.6, 1 + rnd() * 2.5, rnd() * 6.28, new THREE.Vector3(x, 8 * 0.7 * (1 - ((x - 70) / 46) ** 2) - 2.4, z));
+    palm(0, 0, 1.6 + rnd() * 0.5, 1.8 + rnd() * 0.7, 2.6 + (rnd() - 0.5) * 0.3, new THREE.Vector3(x, 8 * 0.7 * (1 - ((x - 70) / 46) ** 2) - 2.4, z));
   }
   flush(scene);
 
