@@ -1,7 +1,7 @@
 /** Hero scene metadata. Kept free of three.js so the tabs can render
  *  before (or without) the lazily loaded engine. */
 export interface SheetMeta {
-  id: "ocean" | "sea" | "astral" | "ruins" | "drift" | "dunes" | "rift" | "frost" | "field" | "matrix" | "abyss" | "cliff" | "orb" | "cipher";
+  id: "ocean" | "sea" | "astral" | "ruins" | "drift" | "dunes" | "rift" | "frost" | "field" | "matrix" | "beach" | "cliff" | "orb" | "cipher";
   name: string;
   aria: string;
   /** Overrides the default drag/zoom hint under the tabs. */
@@ -20,7 +20,7 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "ocean",
     name: "Ocean",
-    aria: "Animated low-poly scene: an endless ocean with overgrown, half-drowned skyscrapers, palm islands and the King of Red Lions, the lion-headed sailboat from The Wind Waker, moored at a pier, under two setting suns, with a ring of sharp mossed spires on the horizon, wreckage in the swell and upside-down islands overhead.",
+    aria: "Animated low-poly scene: an endless ocean with palm islands and the King of Red Lions, the lion-headed sailboat from The Wind Waker, moored at a pier, under two setting suns, with a ring of sharp mossed spires on the horizon, wreckage in the swell and upside-down islands overhead.",
   },
   {
     id: "sea",
@@ -71,9 +71,9 @@ const ALL_SHEETS: SheetMeta[] = [
     aria: "Animated black void: streams of random glyphs rain down in the dark around a slowly turning wireframe tesseract above a ticked ring and survey grid.",
   },
   {
-    id: "abyss",
-    name: "Abyss",
-    aria: "Animated low-poly underground chamber after Hyper Light Drifter: a magenta diamond crystal hangs over a flooded rhombus dais, gripped by black roots that pulse with pink light, ringed by four seal pillars with cyan glyphs and beams, a sunken titan head and arm, ribs, broken columns and stasis tubes, and a small red-cloaked drifter.",
+    id: "beach",
+    name: "Beach",
+    aria: "Animated low-poly scene: a quiet white-sand beach at sunset, small waves rolling in and washing up the shore and sliding back over the wet sand, the sun sinking into the sea on the far horizon with a road of glitter across the water, streaks of pink and gold cloud, leaning palms, driftwood and shells, and gulls overhead.",
   },
   {
     id: "cliff",
