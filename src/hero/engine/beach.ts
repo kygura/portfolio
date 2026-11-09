@@ -1,71 +1,88 @@
-/** Sheet · Beach: a white-sand shore at sunset. Small waves roll in, wash up the slope and slide back,
- *  leaving the sand dark and wet behind them; the sun sinks into the sea far out, with a road of glitter
- *  across the water and streaks of cloud lit pink and gold. Leaning palms, driftwood, shells, gulls.
+/** Sheet · Beach: a crescent of white sand at sunset. You stand near the top of the beach under the palms; the shore curves
+ *  away to the left into a long bay arm ending in a wooded headland, and the open sea runs out to the right
+ *  and the sun is going down far off on the horizon in the middle of the view.
  *
- *  One shoreline model drives everything: the sand height `hs`, the runup that lifts the water up the
- *  slope (`eta`), the breaker rolling in ahead of it and the wet line the backwash leaves. It is written
- *  twice, in GLSL for the shaders and in JS for things riding the water, and the two must match.
+ *  Waves come in as lines: each crest builds over the shallows, curls white and breaks, and the bore runs
+ *  up the sand as a thin sheet, stops, and drains back, leaving the sand dark and glossy where it reached.
+ *  Wave heights vary from set to set. Sandpipers chase the edge of the water up and down.
  *
- *  The palette is fixed (the sunset's, not the site accent). Eggs: the sun, a gull, a bottle in the shallows. */
+ *  Everything lives in a shore frame: `bend(x)` is the curve of the waterline, and `zs = z - bend(x)` is the
+ *  distance inland from it (negative = out to sea). One model of sand, crests and runup is written twice, in
+ *  GLSL for the shaders and in JS for the birds, and the two must match.
+ *
+ *  The palette is fixed. Eggs: the sun (a green flash), the sandpipers (they flush and come back). */
 import * as THREE from "three";
-import { pulse, type PsxKit, type SceneDef, type V3 } from "./psx";
+import { pulse, type PsxKit, type SceneDef } from "./psx";
 
-const T = 7.5; // seconds per wave
-// The sun sits nearly straight out to sea; the light comes from the same bearing.
-const SUN_AZ = 0.09; // radians left of -z
-const SUN = new THREE.Vector3(-420 * Math.sin(SUN_AZ), 5, -420 * Math.cos(SUN_AZ));
-const LIGHT = new THREE.Vector3(-0.92 * Math.sin(SUN_AZ), 0.38, -0.92 * Math.cos(SUN_AZ)).normalize();
-// Where the camera looks, radians left of -z (landscape, portrait): straight at the sun, so it sits mid-frame.
-const VIEW_AZ = [SUN_AZ, SUN_AZ] as const;
+const T = 6.5; // seconds between waves
+const L = 21; // metres between crests out past the break
+const RUN = 0.28; // runup height of an average wave, metres
+// The sun sits in the middle of the view, over open water just right of the headland; the key light
+// comes from the same bearing, so the glow, the road on the water and the palm shadows all agree.
+const SUN = new THREE.Vector3(-250, 3.2, -440);
+const LIGHT = (() => {
+  const h = Math.hypot(SUN.x, SUN.z);
+  return new THREE.Vector3((SUN.x / h) * 0.95, 0.32, (SUN.z / h) * 0.95).normalize();
+})();
 
-/* ---- the shoreline model, JS side ---- */
+/* ---- the shore model, JS side ---- */
 const sstep = (a: number, b: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
   return t * t * (3 - 2 * t);
 };
 const fract = (x: number) => x - Math.floor(x);
-const hs = (x: number, z: number) =>
-  Math.max(-2.6, 0.075 * z + 0.05 * Math.sin(x * 0.21) + 0.04 * Math.sin(x * 0.07 + 1.3) + 0.55 * sstep(5, 24, z)) +
-  0.18 * sstep(10, 18, z) * Math.sin(x * 0.09 + z * 0.15) * Math.sin(z * 0.23 + 1.1);
-const phase = (x: number, t: number) => fract(t / T + 0.05 * Math.sin(x * 0.045) + 0.03 * Math.sin(x * 0.13 + 2));
-const amp = (x: number) => 0.21 + 0.05 * Math.sin(x * 0.09 + 0.7) + 0.03 * Math.sin(x * 0.31);
-const run = (p: number) => (p < 0.18 ? sstep(0, 0.18, p) : 1 - sstep(0.18, 0.8, p));
-const swell = (x: number, z: number, t: number) =>
-  (0.06 * Math.sin(x * 0.15 + z * 0.05 + t * 0.7) + 0.04 * Math.sin(z * 0.21 - x * 0.06 - t * 0.55)) * (1 - 0.8 * sstep(-10, -2, z));
-const waterY = (x: number, z: number, t: number) => {
-  const p = phase(x, t), s = Math.min(1, Math.max(0, (p - 0.3) / 0.7)), zb = -18 + 17.7 * s;
-  const eta = Math.max(amp(x) * run(p), 0.5 * amp(x + 40) * run(fract(t / (T * 1.37) + 0.4)));
-  return swell(x, z, t) + sstep(-9, -1, z) * eta + 0.11 * s * Math.exp(-(((z - zb) / 1.3) ** 2));
+const bend = (x: number) => (x < 0 ? (x > -300 ? -0.002 * x * x : -180 + 1.2 * (x + 300)) : -0.0004 * x * x);
+const hsZ = (x: number, zs: number) =>
+  Math.max(-3, 0.062 * zs + 0.028 * Math.sin(x * 0.19) + 0.018 * Math.sin(x * 0.53 + 1.7) + 0.5 * sstep(7, 22, zs)) +
+  sstep(26, 60, zs) * (1.6 + 0.9 * Math.sin(x * 0.045 + 0.6) * Math.sin(zs * 0.09 + x * 0.013));
+const hs = (x: number, z: number) => hsZ(x, z - bend(x));
+const phi = (x: number) => 0.07 * Math.sin(x * 0.031) + 0.035 * Math.sin(x * 0.12 + 2);
+const size = (n: number) => 0.65 + 0.6 * fract(Math.sin(n * 12.9898 + 4.1) * 43758.5453);
+const run = (p: number) => (p < 0.14 ? sstep(0, 0.14, p) : 1 - sstep(0.14, 0.82, p));
+/** Water level up the slope from the last wave's bore. */
+const eta = (x: number, t: number) => {
+  const q = -1.5 / L - t / T - phi(x), n = Math.floor(-q), p = -q - n;
+  return RUN * size(-n) * run(p);
 };
 
 /* ---- the same model, GLSL side ---- */
 const SHORE = `
 uniform float uTime;
 float sstep(float a, float b, float x){ return smoothstep(a, b, x); }
-float hs(vec2 p){
-  return max(-2.6, 0.075 * p.y + 0.05 * sin(p.x * 0.21) + 0.04 * sin(p.x * 0.07 + 1.3) + 0.55 * sstep(5.0, 24.0, p.y))
-    + 0.18 * sstep(10.0, 18.0, p.y) * sin(p.x * 0.09 + p.y * 0.15) * sin(p.y * 0.23 + 1.1);
+float bend(float x){ return x < 0.0 ? (x > -300.0 ? -0.002 * x * x : -180.0 + 1.2 * (x + 300.0)) : -0.0004 * x * x; }
+float hsZ(float x, float zs){
+  return max(-3.0, 0.062 * zs + 0.028 * sin(x * 0.19) + 0.018 * sin(x * 0.53 + 1.7) + 0.5 * sstep(7.0, 22.0, zs))
+    + sstep(26.0, 60.0, zs) * (1.6 + 0.9 * sin(x * 0.045 + 0.6) * sin(zs * 0.09 + x * 0.013));
 }
-float phase(float x){ return fract(uTime / ${T.toFixed(2)} + 0.05 * sin(x * 0.045) + 0.03 * sin(x * 0.13 + 2.0)); }
-float amp(float x){ return 0.21 + 0.05 * sin(x * 0.09 + 0.7) + 0.03 * sin(x * 0.31); }
-float run(float p){ return p < 0.18 ? sstep(0.0, 0.18, p) : 1.0 - sstep(0.18, 0.8, p); }
-float eta(float x){ return max(amp(x) * run(phase(x)), 0.5 * amp(x + 40.0) * run(fract(uTime / ${(T * 1.37).toFixed(3)} + 0.4))); }
-// Highest the last wave reached, sinking slowly as the sand dries from the top down.
-float wetLevel(float x){ return amp(x) * (1.0 - 0.55 * fract(phase(x) - 0.18)); }
+float phi(float x){ return 0.07 * sin(x * 0.031) + 0.035 * sin(x * 0.12 + 2.0); }
+float size(float n){ return 0.65 + 0.6 * fract(sin(n * 12.9898 + 4.1) * 43758.5453); }
+float run(float p){ return p < 0.14 ? sstep(0.0, 0.14, p) : 1.0 - sstep(0.14, 0.82, p); }
+// The last wave to reach the shore: its number, and how far through its run up and back (0..1).
+vec2 swash(float x){ float q = -1.5 / ${L.toFixed(1)} - uTime / ${T.toFixed(2)} - phi(x); float n = floor(-q); return vec2(n, -q - n); }
+float eta(float x){ vec2 s = swash(x); return ${RUN.toFixed(3)} * size(-s.x) * run(s.y); }
+// How high the sand is still wet: the last wave's reach, or the one before it, drying from the top.
+float wetLevel(float x){
+  vec2 s = swash(x);
+  float now = ${RUN.toFixed(3)} * size(-s.x) * (s.y < 0.14 ? run(s.y) : 1.0);
+  float before = ${RUN.toFixed(3)} * size(1.0 - s.x);
+  return max(now, before * (1.0 - 0.85 * s.y));
+}
 float hash(vec3 p){ return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
 float vnoise(vec3 p){
   vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   return mix(mix(mix(hash(i), hash(i + vec3(1,0,0)), f.x), mix(hash(i + vec3(0,1,0)), hash(i + vec3(1,1,0)), f.x), f.y),
              mix(mix(hash(i + vec3(0,0,1)), hash(i + vec3(1,0,1)), f.x), mix(hash(i + vec3(0,1,1)), hash(i + vec3(1,1,1)), f.x), f.y), f.z);
 }
+float fbm(vec3 p){ float s = 0.0, a = 0.5; for (int i = 0; i < 4; i++){ s += a * vnoise(p); p *= 2.03; a *= 0.5; } return s; }
 uniform vec3 uSunDir;
-// The haze at the horizon: gold toward the sun, coral away from it. Fog fades into this.
+// Haze at the horizon: pale gold toward the sun, rose away from it. Fog fades into this.
 vec3 horizon(vec3 d){
-  vec2 a = d.xz / max(length(d.xz), 1e-4), b = normalize(uSunDir.xz);
-  float sw = max(dot(a, b), 0.0);
-  return mix(vec3(0.95, 0.6, 0.5), vec3(1.0, 0.8, 0.52), pow(sw, 3.0));
+  vec2 a = d.xz / max(length(d.xz), 1e-4);
+  float sw = max(dot(a, normalize(uSunDir.xz)), 0.0);
+  return mix(vec3(0.96, 0.66, 0.6), vec3(1.0, 0.84, 0.6), pow(sw, 4.0));
 }
 `;
+const NSH = 5; // palms whose shadows fall on the sand in view
 const SNAP = `p.xy = floor(p.xy / p.w * uSnap + 0.5) / uSnap * p.w;`;
 
 const SKY_V = `varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
@@ -75,20 +92,32 @@ void main(){
   vec3 d = normalize(vDir); float h = max(d.y, 0.0);
   vec2 a = d.xz / max(length(d.xz), 1e-4);
   float sw = max(dot(a, normalize(uSunDir.xz)), 0.0);
-  vec3 low = mix(vec3(0.9, 0.44, 0.46), vec3(0.98, 0.56, 0.34), pow(sw, 4.0));
-  vec3 c = mix(horizon(d), low, sstep(0.0, 0.07, h));
-  c = mix(c, vec3(0.6, 0.31, 0.5), sstep(0.06, 0.32, h));
-  c = mix(c, vec3(0.15, 0.13, 0.33), sstep(0.28, 0.9, h));
+  vec3 low = mix(vec3(0.98, 0.58, 0.48), vec3(1.0, 0.66, 0.38), pow(sw, 3.0));
+  vec3 c = mix(horizon(d), low, sstep(0.0, 0.05, h));
+  c = mix(c, vec3(0.74, 0.46, 0.58), sstep(0.04, 0.22, h));
+  c = mix(c, vec3(0.3, 0.32, 0.58), sstep(0.18, 0.55, h));
+  c = mix(c, vec3(0.13, 0.17, 0.4), sstep(0.5, 1.0, h));
   float s = max(dot(d, uSunDir), 0.0);
-  c += vec3(1.0, 0.72, 0.42) * (pow(s, 6.0) * 0.32 + pow(s, 48.0) * 0.5) * (1.0 + uFlash);
-  float star = step(0.9975, hash(floor(d * 140.0))) * sstep(0.45, 0.8, h);
-  c += vec3(star) * 0.5;
+  c += vec3(1.0, 0.76, 0.46) * (pow(s, 5.0) * 0.28 + pow(s, 40.0) * 0.45) * (1.0 + 0.6 * uFlash);
+  // long streaks of cloud on a high deck, lit gold underneath near the sun and lilac away from it
+  if (d.y > 0.012) {
+    vec2 uv = d.xz / d.y * 0.06 + vec2(uTime * 0.002, 0.0);
+    float n = fbm(vec3(uv.x * 0.9, uv.y * 4.5, 1.7));
+    float dens = sstep(0.5, 0.72, n) * sstep(0.012, 0.06, d.y) * (1.0 - sstep(0.35, 0.7, d.y));
+    vec3 lit = mix(vec3(0.62, 0.42, 0.62), vec3(1.0, 0.7, 0.46), pow(s, 3.0));
+    lit = mix(lit, vec3(1.0, 0.88, 0.66), pow(s, 24.0));
+    c = mix(c, lit, dens * 0.85);
+  }
+  // the green flash, a thin band just above the sun
+  c += vec3(-0.2, 0.55, 0.15) * uFlash * pow(s, 400.0) * sstep(0.004, 0.012, d.y);
+  float star = step(0.9978, hash(floor(d * 150.0))) * sstep(0.5, 0.85, h);
+  c += vec3(star) * 0.45;
   gl_FragColor = vec4(c, 1.0);
 }`;
 
 const SAND_V = `
-uniform vec2 uSnap; uniform vec3 uLight; uniform vec3 uAmb; uniform vec3 uSunCol;
-varying vec3 vAff; varying vec3 vAmb; varying vec3 vSun; varying float vDepth; varying vec3 vWP;
+uniform vec2 uSnap; uniform vec3 uLight; uniform vec3 uSunCol;
+varying vec3 vAff; varying vec3 vSun; varying float vDepth; varying vec3 vWP;
 void main(){
   vec4 wp = modelMatrix * vec4(position, 1.0);
   vec3 n = normalize(mat3(modelMatrix) * normal);
@@ -97,73 +126,71 @@ void main(){
   vec4 p = projectionMatrix * mv;
   ${SNAP}
   gl_Position = p;
-  vAmb = uAmb;
   vSun = uSunCol * max(dot(n, uLight), 0.0);
   vAff = vec3(uv * p.w, p.w);
   vDepth = -mv.z;
 }`;
 const SAND_F = `${SHORE}
-uniform sampler2D uMap; uniform sampler2D uShadow; uniform vec4 uShadowBox; uniform float uFogNear; uniform float uFogFar;
-varying vec3 vAff; varying vec3 vAmb; varying vec3 vSun; varying float vDepth; varying vec3 vWP;
+uniform sampler2D uMap; uniform float uFogNear; uniform float uFogFar; uniform vec3 uAmb; uniform vec3 uLight;
+uniform vec4 uSh[${NSH}]; uniform vec3 uShTop[${NSH}];
+varying vec3 vAff; varying vec3 vSun; varying float vDepth; varying vec3 vWP;
+float segD(vec2 p, vec2 a, vec2 b){ vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }
+// Shadows of the near palms, thrown long across the sand toward the viewer by the low sun:
+// the trunk as a thin band, the crown as a ragged star stretched along the light.
+float palmShadow(vec2 p){
+  float s = 0.0;
+  for (int i = 0; i < ${NSH}; i++){
+    vec2 a = uSh[i].xy, b = uSh[i].zw;
+    float trunk = 1.0 - sstep(0.12, 0.3, segD(p, a, b));
+    vec2 dir = normalize(b - a), q = p - b;
+    float along = dot(q, dir), lat = q.x * dir.y - q.y * dir.x;
+    float ang = atan(lat, along * 0.33);
+    float r = uShTop[i].z * (0.55 + 0.45 * abs(sin(ang * 4.5 + uShTop[i].x)));
+    float crown = 1.0 - sstep(0.75, 1.0, length(vec2(along / 3.0, lat)) / r);
+    s = max(s, max(trunk, crown));
+  }
+  return s;
+}
 void main(){
-  // baked cast shadows: palms, driftwood and rocks, stretched long toward the camera by the low sun
-  vec2 suv = (vWP.xz - uShadowBox.xy) / uShadowBox.zw;
-  float sh = all(greaterThan(suv, vec2(0.0))) && all(lessThan(suv, vec2(1.0))) ? texture2D(uShadow, suv).r : 0.0;
-  vec3 c = texture2D(uMap, vAff.xy / vAff.z).rgb * (vAmb + vSun * (1.0 - 0.88 * sh));
-  float wl = wetLevel(vWP.x);
-  float wet = sstep(wl + 0.004, wl - 0.025, vWP.y);
+  float zs = vWP.z - bend(vWP.x);
+  vec3 c = texture2D(uMap, vAff.xy / vAff.z).rgb;
+  // behind the beach: low dunes going over to scrub and sea grape
+  float g = sstep(22.0, 34.0, zs + 6.0 * vnoise(vec3(vWP.xz * 0.12, 0.0)));
+  c = mix(c, mix(vec3(0.42, 0.5, 0.3), vec3(0.26, 0.36, 0.24), vnoise(vec3(vWP.xz * 0.6, 3.0))), g);
+  float sh = palmShadow(vWP.xz) * (1.0 - g * 0.5);
+  c *= uAmb + vSun * (1.0 - 0.85 * sh);
   vec3 v = normalize(vWP - cameraPosition);
-  // wet sand goes dark and turns into a soft mirror: the sky, and a hot streak of sun where it lines up
+  // wet sand: darker, cooler, and glossy with the sky
+  float wl = wetLevel(vWP.x);
+  float wet = sstep(wl + 0.006, wl - 0.02, vWP.y);
+  c = mix(c, c * vec3(0.8, 0.76, 0.7) + vec3(0.03, 0.03, 0.04) + horizon(v) * 0.06 * sstep(0.85, 1.0, 1.0 - abs(v.y)), wet);
+  // the wet sand mirrors the sun: a hot streak of glare under it
   vec3 r = reflect(v, vec3(0.0, 1.0, 0.0));
-  float spec = pow(max(dot(r, uSunDir), 0.0), 90.0) * 1.4 + pow(max(dot(r, uSunDir), 0.0), 12.0) * 0.25;
-  c = mix(c, c * vec3(0.6, 0.56, 0.62) + horizon(r) * 0.22 + vec3(1.0, 0.8, 0.52) * spec * (1.0 - 0.8 * sh), wet);
-  // a thin dark rim where the last wave stopped
-  c *= 1.0 - 0.18 * sstep(0.012, 0.0, abs(vWP.y - wl)) * (1.0 - sstep(0.0, 0.02, eta(vWP.x) - vWP.y));
+  float gl = max(dot(r, normalize(uSunDir)), 0.0);
+  c += wet * (vec3(1.0, 0.78, 0.5) * pow(gl, 90.0) * 1.3 + vec3(1.0, 0.7, 0.55) * pow(gl, 12.0) * 0.18) * (1.0 - 0.6 * sh);
+  c *= 1.0 - 0.14 * sstep(0.012, 0.0, abs(vWP.y - wl)) * (1.0 - sstep(0.0, 0.02, eta(vWP.x) - vWP.y));
+  // under the water: a little greener
+  c = mix(c, c * vec3(0.78, 0.95, 0.92), sstep(0.0, -0.4, vWP.y));
   gl_FragColor = vec4(mix(c, horizon(v), sstep(uFogNear, uFogFar, vDepth)), 1.0);
 }`;
 
-// Props: hemisphere ambient (violet sky above, warm sand bounce below), the sun from behind, light through
-// thin leaves when they hang between the eye and the sun, and a bright rim on edges seen against it.
-const PROP_V = `
-uniform vec2 uSnap; uniform vec3 uLight; uniform vec3 uSky; uniform vec3 uGround; uniform vec3 uSunCol;
-uniform float uTrans; uniform float uRim; uniform float uUv;
-varying vec3 vAff; varying vec3 vLit; varying float vDepth; varying vec3 vWP;
-void main(){
-  vec4 wp = modelMatrix * vec4(position, 1.0);
-  vec3 n = normalize(mat3(modelMatrix) * normal);
-  vWP = wp.xyz;
-  vec3 v = normalize(wp.xyz - cameraPosition);
-  float dif = max(dot(n, uLight), 0.0);
-  float tr = max(dot(-n, uLight), 0.0) * uTrans * max(dot(v, uLight), 0.0);
-  float rim = pow(1.0 - abs(dot(n, v)), 3.0) * pow(max(dot(v, uLight), 0.0), 2.0) * uRim;
-  vLit = mix(uGround, uSky, n.y * 0.5 + 0.5) + uSunCol * (dif + tr + rim);
-  vec4 mv = viewMatrix * wp;
-  vec4 p = projectionMatrix * mv;
-  ${SNAP}
-  gl_Position = p;
-  vAff = vec3(uv * uUv * p.w, p.w);
-  vDepth = -mv.z;
-}`;
-const PROP_F = `${SHORE}
-uniform sampler2D uMap; uniform vec3 uTint; uniform float uFogNear; uniform float uFogFar; uniform float uFogAmt;
-varying vec3 vAff; varying vec3 vLit; varying float vDepth; varying vec3 vWP;
-void main(){
-  vec3 c = texture2D(uMap, vAff.xy / vAff.z).rgb * uTint * vLit;
-  vec3 v = normalize(vWP - cameraPosition);
-  gl_FragColor = vec4(mix(c, horizon(v), sstep(uFogNear, uFogFar, vDepth) * uFogAmt), 1.0);
-}`;
+// Shared by the water's vertex and fragment shaders: height of the crests at a point, and where in its cycle.
+const WAVE = `
+// q rises with distance inland and falls with time, so a crest (q whole) moves toward the shore.
+float crestQ(float x, float zs){ return zs / ${L.toFixed(1)} - uTime / ${T.toFixed(2)} - phi(x); }
+float crestShape(float u){ return u < 0.5 ? exp(-u / 0.022) : exp(-(1.0 - u) / 0.15); }
+float crestAmp(float zs){ return (0.05 + 0.24 * sstep(-40.0, -7.0, zs)) * (1.0 - sstep(-4.5, -1.2, zs)); }
+`;
 
-const WATER_V = `${SHORE}
+const WATER_V = `${SHORE}${WAVE}
 uniform vec2 uSnap;
-varying vec3 vWP; varying float vDepth; varying float vZb; varying float vS;
-float swell(vec2 p){
-  return (0.06 * sin(p.x * 0.15 + p.y * 0.05 + uTime * 0.7) + 0.04 * sin(p.y * 0.21 - p.x * 0.06 - uTime * 0.55)) * (1.0 - 0.8 * sstep(-10.0, -2.0, p.y));
-}
+varying vec3 vWP; varying float vDepth;
 void main(){
   vec3 w = position;
-  float s = clamp((phase(w.x) - 0.3) / 0.7, 0.0, 1.0);
-  vZb = -18.0 + 17.7 * s; vS = s;
-  w.y = swell(w.xz) + sstep(-9.0, -1.0, w.z) * eta(w.x) + 0.11 * s * exp(-pow((w.z - vZb) / 1.3, 2.0));
+  float zs = w.z - bend(w.x);
+  float q = crestQ(w.x, zs), n = floor(q);
+  float far = 0.06 * sin(w.x * 0.13 + w.z * 0.05 + uTime * 0.8) + 0.04 * sin(w.z * 0.19 - w.x * 0.07 - uTime * 0.6);
+  w.y = far * (1.0 - sstep(-30.0, -6.0, zs)) + crestAmp(zs) * size(n) * crestShape(q - n) + sstep(-4.0, -0.6, zs) * eta(w.x);
   vec4 wp = modelMatrix * vec4(w, 1.0);
   vWP = wp.xyz;
   vec4 mv = viewMatrix * wp;
@@ -172,95 +199,114 @@ void main(){
   gl_Position = p;
   vDepth = -mv.z;
 }`;
-const WATER_F = `${SHORE}
+const WATER_F = `${SHORE}${WAVE}
 uniform float uFogNear; uniform float uFogFar; uniform vec3 uSunPos; uniform float uFlash;
-varying vec3 vWP; varying float vDepth; varying float vZb; varying float vS;
+varying vec3 vWP; varying float vDepth;
 void main(){
-  float depth = vWP.y - hs(vWP.xz);
+  float zs = vWP.z - bend(vWP.x);
+  float depth = vWP.y - hsZ(vWP.x, zs);
   if (depth < 0.0) discard;
   vec3 v = normalize(vWP - cameraPosition);
   vec3 hz = horizon(v);
-  // shallows: clear aqua over the sand, deepening to violet-blue
-  vec3 c = mix(vec3(0.5, 0.8, 0.76), vec3(0.24, 0.3, 0.5), sstep(0.04, 1.6, depth));
+  // glass-clear over white sand, turquoise, then deep teal
+  vec3 c = mix(vec3(0.62, 0.9, 0.84), vec3(0.24, 0.66, 0.68), sstep(0.03, 0.6, depth));
+  c = mix(c, vec3(0.1, 0.3, 0.42), sstep(0.5, 3.0, depth));
   float graze = 1.0 - abs(v.y);
-  c = mix(c, mix(vec3(0.82, 0.46, 0.55), hz, 0.6), sstep(0.8, 1.0, graze) * 0.8);
-  float n = vnoise(vec3(vWP.x * 0.7, vWP.z * 2.2, uTime * 0.6));
-  c *= 0.92 + 0.16 * n;
-  // the road of light to the sun
+  c = mix(c, mix(vec3(0.88, 0.56, 0.58), hz, 0.55), sstep(0.82, 1.0, graze) * 0.85);
+  float nz = vnoise(vec3(vWP.x * 0.6, vWP.z * 1.8, uTime * 0.5));
+  c *= 0.93 + 0.14 * nz;
+  // the road of light out to the sun
   vec2 toSun = normalize(uSunPos.xz - cameraPosition.xz), rel = vWP.xz - cameraPosition.xz;
   float along = dot(rel, toSun), lat = abs(rel.x * toSun.y - rel.y * toSun.x);
-  float road = along > 0.0 ? exp(-pow(lat / (0.8 + along * 0.075), 2.0)) : 0.0;
-  float glit = step(0.78 - 0.12 * road, vnoise(vec3(floor(vWP.x * 1.4), floor(vWP.z * 3.0), floor(uTime * 5.0))));
-  c = mix(c, vec3(1.0, 0.78, 0.45), road * (0.35 + 0.65 * glit) * (0.7 + 0.5 * uFlash));
-  // foam: the lip of the swash, and the crest of the wave rolling in
-  float lip = 1.0 - sstep(0.0, 0.03 + 0.03 * n, depth);
-  float crest = sstep(0.45, 0.8, vS) * (1.0 - sstep(0.0, 0.5 + 0.4 * n, abs(vWP.z - vZb - 0.25)));
-  float foam = max(lip, crest * step(0.35, n));
-  c = mix(c, vec3(1.0, 0.95, 0.9), foam);
-  float a = mix(0.45, 1.0, sstep(0.0, 0.5, depth));
+  float road = along > 0.0 ? exp(-pow(lat / (1.0 + along * 0.06), 2.0)) : 0.0;
+  float glit = step(0.74 - 0.14 * road, vnoise(vec3(floor(vWP.x * 1.3), floor(vWP.z * 2.6), floor(uTime * 5.0))));
+  c = mix(c, vec3(1.0, 0.8, 0.5), road * (0.3 + 0.7 * glit) * (0.65 + 0.5 * uFlash) * sstep(4.0, 30.0, along));
+  // foam: whitecaps curling over as a crest breaks, the white water it leaves behind,
+  // lace on the thin sheet of the bore, and the bright lip at its edge
+  float q = crestQ(vWP.x, zs), u = q - floor(q), big = size(floor(q));
+  float lace = vnoise(vec3(vWP.x * 1.6, zs * 3.2, uTime * 0.4));
+  float cap = step(0.45, crestShape(u)) * sstep(-13.0, -6.0, zs) * (1.0 - sstep(-1.5, 0.5, zs)) * step(0.55 - 0.25 * big, lace + 0.3 * sstep(-9.0, -4.0, zs));
+  float white = step(0.3, exp(-(1.0 - u) / 0.09)) * sstep(-7.0, -3.5, zs) * step(0.38, lace);
+  float sheet = sstep(-3.0, -0.5, zs) * step(0.62, lace) * (1.0 - sstep(0.05, 0.25, depth));
+  float lip = 1.0 - sstep(0.0, 0.025 + 0.025 * lace, depth);
+  float foam = max(max(cap, white), max(sheet, lip));
+  c = mix(c, vec3(1.0, 0.96, 0.92), foam);
+  float a = mix(0.35, 1.0, sstep(0.0, 0.45, depth));
   a = max(a, foam);
   float fg = sstep(uFogNear, uFogFar, vDepth);
   gl_FragColor = vec4(mix(c, hz, fg), mix(a, 1.0, fg));
 }`;
 
-/* Cast shadows, baked once (nothing that casts one moves): every caster triangle is pushed along the
-   sunlight onto the sand, filled into a top-down mask, then softened. The sand samples it by world x/z.
-   Filling a mask, not drawing dark geometry, keeps overlapping shadows from stacking darker. */
-const SHADOW_BOX: [number, number, number, number] = [-48, -14, 96, 52]; // x0, z0, width, depth
-function bakeShadows(casters: THREE.BufferGeometry[]) {
-  const W = 1024, H = 512, [x0, z0, bw, bd] = SHADOW_BOX;
-  const make = () => {
-    const c = document.createElement("canvas");
-    c.width = W;
-    c.height = H;
-    const g = c.getContext("2d");
-    if (!g) throw new Error("2d canvas unavailable");
-    return [c, g] as const;
-  };
-  const [sharp, g] = make();
-  g.fillStyle = "#000";
-  g.fillRect(0, 0, W, H);
-  g.fillStyle = "#fff";
-  const dx = -LIGHT.x, dy = -LIGHT.y, dz = -LIGHT.z;
-  const proj = (x: number, y: number, z: number): [number, number] => {
-    let t = 0;
-    for (let i = 0; i < 6; i++) t = Math.max(0, (y - hs(x + dx * t, z + dz * t)) / -dy);
-    return [((x + dx * t - x0) / bw) * W, ((z + dz * t - z0) / bd) * H];
-  };
-  for (const geo of casters) {
-    const p = (geo.index ? geo.toNonIndexed() : geo).attributes.position;
-    for (let i = 0; i + 2 < p.count; i += 3) {
-      g.beginPath();
-      for (let j = 0; j < 3; j++) {
-        const [u, v] = proj(p.getX(i + j), p.getY(i + j), p.getZ(i + j));
-        if (j) g.lineTo(u, v);
-        else g.moveTo(u, v);
-      }
-      g.closePath();
-      g.fill();
-    }
+// Palms: lit for a low sun behind them. Leaves are two-sided and let the light through, so the fronds glow
+// gold-green where they hang between you and the sun; the sky fills everything from above and the trunk
+// edges catch a warm rim. Same vertex snap, affine UVs and haze as the rest of the scene.
+const PALM_V = `
+uniform vec2 uSnap; uniform vec3 uLight; uniform vec3 uSunCol; uniform vec3 uSky; uniform vec3 uGround; uniform float uLeaf;
+varying vec3 vAff; varying vec3 vLit; varying float vDepth; varying vec3 vWP;
+void main(){
+  vec4 wp = modelMatrix * vec4(position, 1.0);
+  vec3 n = normalize(mat3(modelMatrix) * normal);
+  vWP = wp.xyz;
+  vec3 v = normalize(cameraPosition - wp.xyz);
+  if (uLeaf > 0.5 && dot(n, v) < 0.0) n = -n;
+  float ndl = dot(n, uLight);
+  float key = uLeaf > 0.5 ? max(ndl * 0.6 + 0.4, 0.0) : max(ndl * 0.5 + 0.5, 0.0) * 0.8;
+  float hemi = n.y * 0.5 + 0.5;
+  vec3 amb = mix(uGround, uSky, hemi);
+  // light through the leaf when the sun is behind it
+  float back = pow(max(dot(-v, uLight), 0.0), 3.0);
+  float trans = uLeaf * back * (0.55 + 0.45 * max(-ndl, 0.0));
+  // warm rim on edges turned side-on to the camera
+  float rim = (1.0 - uLeaf) * pow(1.0 - abs(dot(n, v)), 2.0) * (0.4 + 0.6 * back);
+  vLit = amb + uSunCol * (key + rim * 0.9) + uSunCol * vec3(1.0, 0.92, 0.6) * trans * 0.75;
+  vec4 mv = viewMatrix * wp;
+  vec4 p = projectionMatrix * mv;
+  ${SNAP}
+  gl_Position = p;
+  vAff = vec3(uv * p.w, p.w);
+  vDepth = -mv.z;
+}`;
+const PALM_F = `${SHORE}
+uniform sampler2D uMap; uniform vec3 uTint; uniform float uFogNear; uniform float uFogFar;
+varying vec3 vAff; varying vec3 vLit; varying float vDepth; varying vec3 vWP;
+void main(){
+  vec3 c = texture2D(uMap, vAff.xy / vAff.z).rgb * uTint * vLit;
+  vec3 v = normalize(vWP - cameraPosition);
+  gl_FragColor = vec4(mix(c, horizon(v), sstep(uFogNear, uFogFar, vDepth)), 1.0);
+}`;
+
+// Palm textures, brighter than the kit's: frond green with paler leaflet midribs, grey-tan ringed bark.
+function palmTex(kind: "leaf" | "bark") {
+  const S = 32, c = document.createElement("canvas");
+  c.width = c.height = S;
+  const g = c.getContext("2d");
+  if (!g) throw new Error("2d canvas unavailable");
+  let seed = kind === "leaf" ? 23 : 31;
+  const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const k = 0.85 + r() * 0.2;
+    if (kind === "leaf") g.fillStyle = x % 8 === 0 ? `rgb(${214 * k},${224 * k},${150 * k})` : `rgb(${136 * k},${174 * k},${92 * k})`;
+    else g.fillStyle = y % 5 === 0 ? `rgb(${120 * k},${104 * k},${90 * k})` : `rgb(${176 * k},${156 * k},${132 * k})`;
+    g.fillRect(x, y, 1, 1);
   }
-  const [soft, g2] = make();
-  g2.filter = "blur(2px)";
-  g2.drawImage(sharp, 0, 0);
-  const t = new THREE.CanvasTexture(soft);
-  t.flipY = false;
+  const t = new THREE.CanvasTexture(c);
+  t.magFilter = t.minFilter = THREE.NearestFilter;
   t.generateMipmaps = false;
-  t.minFilter = t.magFilter = THREE.LinearFilter;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
   return t;
 }
 
-// White sand: near-white grains, a few darker and a few bright ones. 32px, nearest-filtered.
+// White sand with a warm cast: near-white grains, a few bright ones, a few shell-pink and grey. 32px, nearest.
 function sandTex() {
   const S = 32, c = document.createElement("canvas");
   c.width = c.height = S;
   const g = c.getContext("2d");
   if (!g) throw new Error("2d canvas unavailable");
-  let seed = 7;
-  const r = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  let seed = 11;
+  const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
-    const f = r(), k = 0.9 + r() * 0.1;
-    g.fillStyle = f > 0.95 ? "rgb(196,186,172)" : f > 0.9 ? "rgb(255,253,248)" : `rgb(${242 * k},${236 * k},${224 * k})`;
+    const f = r(), k = 0.92 + r() * 0.08;
+    g.fillStyle = f > 0.96 ? "rgb(206,196,186)" : f > 0.93 ? "rgb(250,222,214)" : f > 0.86 ? "rgb(255,255,252)" : `rgb(${246 * k},${242 * k},${232 * k})`;
     g.fillRect(x, y, 1, 1);
   }
   const t = new THREE.CanvasTexture(c);
@@ -271,9 +317,9 @@ function sandTex() {
 }
 
 export function buildBeach(k: PsxKit): SceneDef {
-  const { rnd, facet, tex, view, U } = k;
+  const { rnd, facet, psx, tex, view, U } = k;
   const scene = new THREE.Scene();
-  const cam = new THREE.PerspectiveCamera(56, 16 / 9, 0.1, 760);
+  const cam = new THREE.PerspectiveCamera(54, 16 / 9, 0.1, 900);
 
   const sunDirU = { value: SUN.clone().normalize() };
   const flashU = { value: 0 };
@@ -287,74 +333,86 @@ export function buildBeach(k: PsxKit): SceneDef {
   sky.renderOrder = -1;
   scene.add(sky);
 
-  /* ---- light: one low sun behind the scene, a violet sky above, warm bounce off the sand ---- */
-  const lightU = { value: LIGHT };
-  const SKY = new THREE.Color("#a890c0"), GROUND = new THREE.Color("#e0bc9c"), SUNC = new THREE.Color("#ffc888").multiplyScalar(1.35);
-  const mat = (o: { map: THREE.Texture; tint: string; uv?: number; amb?: number; trans?: number; rim?: number; fogAmt?: number }) =>
+  /* ---- prop materials: the kit's PS1 shader, lit by the low sun, fogged into the haze ---- */
+  const fogU = { value: new THREE.Color("#f2a888") }, lightU = { value: LIGHT };
+  const mat = (o: Parameters<typeof psx>[0]) => {
+    const m = psx({ amb: "#8a6e92", sun: "#ffbe86", ...o });
+    m.uniforms.uFogColor = fogU;
+    m.uniforms.uLightDir = lightU;
+    return m;
+  };
+  const palmMat = (map: THREE.Texture, tint: string, leaf: number) =>
     new THREE.ShaderMaterial({
+      side: leaf ? THREE.DoubleSide : THREE.FrontSide,
       uniforms: {
-        ...shared, uSnap: U.uSnap, uLight: lightU, uMap: { value: o.map }, uTint: { value: new THREE.Color(o.tint) }, uUv: { value: o.uv ?? 1 },
-        uSky: { value: SKY.clone().multiplyScalar(o.amb ?? 1) }, uGround: { value: GROUND.clone().multiplyScalar(o.amb ?? 1) },
-        uSunCol: { value: SUNC }, uTrans: { value: o.trans ?? 0 }, uRim: { value: o.rim ?? 0.5 },
-        uFogNear: U.uFogNear, uFogFar: U.uFogFar, uFogAmt: { value: o.fogAmt ?? 1 },
+        ...shared, uSnap: U.uSnap, uMap: { value: map }, uTint: { value: new THREE.Color(tint) }, uLight: lightU, uLeaf: { value: leaf },
+        uSunCol: { value: new THREE.Color("#ffc890") }, uSky: { value: new THREE.Color("#a8a4c8") }, uGround: { value: new THREE.Color("#d8c4b8") },
+        uFogNear: U.uFogNear, uFogFar: U.uFogFar,
       },
-      vertexShader: PROP_V,
-      fragmentShader: PROP_F,
+      vertexShader: PALM_V,
+      fragmentShader: PALM_F,
     });
   const m = {
-    trunk: mat({ map: tex.tBark, tint: "#ffe4c8", amb: 1.25, rim: 1.2 }),
-    frond: mat({ map: tex.tPlain, tint: "#c4e894", trans: 0.75, rim: 0.8 }),
-    frond2: mat({ map: tex.tPlain, tint: "#a6d484", trans: 0.75, rim: 0.8 }),
-    drift: mat({ map: tex.tPlain, tint: "#ecdccc", rim: 1 }),
-    rock: mat({ map: tex.tStone, tint: "#c4b0bc", uv: 1.5, amb: 0.85, rim: 0.8 }),
-    shell: mat({ map: tex.tPlain, tint: "#ffd6c8", rim: 1.5 }),
-    shell2: mat({ map: tex.tPlain, tint: "#f4e8dc", rim: 1.5 }),
-    star: mat({ map: tex.tPlain, tint: "#ff8a5c", amb: 0.9 }),
-    print: mat({ map: tex.tPlain, tint: "#b8a8a4", amb: 0.8, rim: 0 }),
-    bottle: mat({ map: tex.tPlain, tint: "#7cc6a0", trans: 0.8, rim: 1.5 }),
-    cork: mat({ map: tex.tBark, tint: "#e0aa78" }),
-    head: mat({ map: tex.tStone, tint: "#7a5a84", amb: 0.55, rim: 0.3, fogAmt: 0.8 }),
+    trunk: palmMat(palmTex("bark"), "#f4e2d0", 0),
+    frond: palmMat(palmTex("leaf"), "#eef6d8", 1),
+    nut: palmMat(tex.tPlain, "#b0a060", 0),
+    grass: palmMat(palmTex("leaf"), "#f4ecc8", 1),
+    shell: mat({ map: tex.tPlain, tint: "#ffe2d6", amb: "#e8d4d8" }),
+    shell2: mat({ map: tex.tPlain, tint: "#f6ece0", amb: "#d8c8cc" }),
+    print: mat({ map: tex.tPlain, tint: "#d8ccd0", amb: "#a8a0b8" }),
+    head: mat({ map: tex.tLeaf, tint: "#7a8a70", amb: "#5a4a6c", fogAmt: 0.85, uv: 3 }),
+    isle: mat({ map: tex.tStone, tint: "#6c5878", amb: "#5a4468", fogAmt: 0.9 }),
+    bird: mat({ map: tex.tPlain, tint: "#d8c0a8", amb: "#b09aa8" }),
+    belly: mat({ map: tex.tPlain, tint: "#fff6ee", amb: "#b8a4b4" }),
+    beak: mat({ map: tex.tPlain, tint: "#3a2c34", amb: "#3a2c34" }),
   };
   m.print.polygonOffset = true;
   m.print.polygonOffsetFactor = -2;
   m.print.polygonOffsetUnits = -2;
 
-  /* ---- sand: one sheet from under the water up to the dune line ---- */
-  const NX = 120, NZ = 110;
+  const shA: THREE.Vector4[] = [], shB: THREE.Vector3[] = []; // filled once the palms are placed
+
+  /* ---- sand: one sheet following the curve of the bay, fine at the waterline, coarse far off ---- */
+  const NX = 150, NZ = 120;
   const sg = new THREE.PlaneGeometry(1, 1, NX, NZ);
   sg.rotateX(-Math.PI / 2);
   const sp = sg.attributes.position;
   for (let i = 0; i < sp.count; i++) {
     const u = sp.getX(i) * 2, v = sp.getZ(i) + 0.5;
-    const x = Math.sign(u) * Math.abs(u) ** 1.4 * 150, z = -30 + v * 80;
-    sp.setXYZ(i, x, hs(x, z), z);
+    const x = u < 0 ? -(Math.abs(u) ** 1.6) * 620 : u ** 1.6 * 170;
+    const zs = v < 0.55 ? -12 + (v / 0.55) * 24 : 12 + ((v - 0.55) / 0.45) ** 1.5 * 88;
+    const z = zs + bend(x);
+    sp.setXYZ(i, x, hsZ(x, zs), z);
   }
-  const sand = facet(sg, 0.02);
+  const sand = facet(sg, 0.015);
   const spos = sand.attributes.position, suv = sand.attributes.uv;
   for (let i = 0; i < spos.count; i++) suv.setXY(i, spos.getX(i) / 3, spos.getZ(i) / 3);
-  const sandMat = new THREE.ShaderMaterial({
-    uniforms: {
-      ...shared, uSnap: U.uSnap, uMap: { value: sandTex() }, uLight: lightU,
-      uAmb: { value: new THREE.Color("#a898b8") }, uSunCol: { value: new THREE.Color("#ffc890").multiplyScalar(1.25) },
-      uShadow: { value: null as THREE.Texture | null }, uShadowBox: { value: new THREE.Vector4(...SHADOW_BOX) },
-      uFogNear: U.uFogNear, uFogFar: U.uFogFar,
-    },
-    vertexShader: SAND_V,
-    fragmentShader: SAND_F,
-  });
-  const sandMesh = new THREE.Mesh(sand, sandMat);
+  const sandMesh = new THREE.Mesh(
+    sand,
+    new THREE.ShaderMaterial({
+      uniforms: {
+        ...shared, uSnap: U.uSnap, uMap: { value: sandTex() }, uLight: lightU,
+        uAmb: { value: new THREE.Color("#a6a2bc") }, uSunCol: { value: new THREE.Color("#ffc890").multiplyScalar(1.4) },
+        uSh: { value: shA }, uShTop: { value: shB },
+        uFogNear: U.uFogNear, uFogFar: U.uFogFar,
+      },
+      vertexShader: SAND_V,
+      fragmentShader: SAND_F,
+    }),
+  );
   sandMesh.frustumCulled = false;
   scene.add(sandMesh);
 
-  /* ---- sea: a grid fine across the surf zone, coarse out to the horizon; displaced on the GPU ---- */
-  const WX = 110, WZ = 150;
+  /* ---- sea: rows packed tight through the surf, stretching out to the horizon; displaced on the GPU ---- */
+  const WX = 140, WZ = 170;
   const wg = new THREE.PlaneGeometry(1, 1, WX, WZ);
   wg.rotateX(-Math.PI / 2);
   const wp = wg.attributes.position;
   for (let i = 0; i < wp.count; i++) {
     const u = wp.getX(i) * 2, v = wp.getZ(i) + 0.5;
-    const z = v > 0.5 ? 9 - (1 - v) * 2 * 32 : -23 - ((0.5 - v) * 2) ** 2.2 * 640;
-    wp.setXYZ(i, Math.sign(u) * Math.abs(u) ** 1.6 * 680, 0, z);
+    const x = Math.sign(u) * Math.abs(u) ** 1.6 * 820;
+    const zs = v > 0.45 ? -28 + ((v - 0.45) / 0.55) * 38 : -28 - ((0.45 - v) / 0.45) ** 2.2 * 760;
+    wp.setXYZ(i, x, 0, zs + bend(Math.max(x, -420)));
   }
   const water = new THREE.Mesh(
     wg,
@@ -368,242 +426,282 @@ export function buildBeach(k: PsxKit): SceneDef {
   water.frustumCulled = false;
   scene.add(water);
 
-  /* ---- the sun, half sunk, and clouds streaked across the glow ---- */
-  const sun = k.sunDisc(scene, SUN.x, SUN.y, SUN.z, 17, "#fff0c8", "#ffa868");
-  const clouds: { g: THREE.Mesh; x: number; sp: number; ph: number }[] = [];
-  const cloudGeo = new THREE.CircleGeometry(1, 9);
-  for (let i = 0; i < 16; i++) {
-    const y = 14 + Math.pow(rnd(), 1.4) * 80, near = Math.max(0, 1 - y / 70);
-    const col = new THREE.Color("#7e4f86").lerp(new THREE.Color("#ffb07a"), near * near).lerp(new THREE.Color("#ffd8a0"), rnd() * 0.15);
-    const c = new THREE.Mesh(cloudGeo, new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.55 + rnd() * 0.35, depthWrite: false }));
-    const a = SUN_AZ + (rnd() - 0.5) * 1.6, r = 340 + rnd() * 90;
-    const x = -r * Math.sin(a);
-    c.position.set(x, y, -r * Math.cos(a));
-    c.scale.set(30 + rnd() * 70, 1.2 + rnd() * 2.8, 1);
-    c.renderOrder = 0;
-    scene.add(c);
-    clouds.push({ g: c, x, sp: 0.4 + rnd() * 0.6, ph: rnd() * 6.28 });
-  }
+  /* ---- the sun, far off and half down ---- */
+  const sun = k.sunDisc(scene, SUN.x, SUN.y, SUN.z, 11, "#fff2cc", "#ffaa6a");
+  const sunCore = (sun.children[0] as THREE.Mesh).material as THREE.MeshBasicMaterial;
+  const coreCol = sunCore.color.clone(), green = new THREE.Color("#b8ffb0");
 
   /* ---- props ---- */
   const { add, flush } = k.batcher();
-  // Everything that casts a shadow on the sand goes through here as well, already placed in the world.
-  const casters: THREE.BufferGeometry[] = [];
-  const cm = new THREE.Matrix4(), cq = new THREE.Quaternion(), ce = new THREE.Euler(), cp = new THREE.Vector3(), cs = new THREE.Vector3();
-  const addC = (geo: THREE.BufferGeometry, mt: THREE.Material, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, sc = 1) => {
-    cm.compose(cp.set(x, y, z), cq.setFromEuler(ce.set(rx, ry, rz)), cs.set(sc, sc, sc));
-    casters.push(geo.clone().applyMatrix4(cm));
-    add(geo, mt, x, y, z, rx, ry, rz, sc);
-  };
   const up = new THREE.Vector3(0, 1, 0);
-  const seg = (a: V3, b: V3, r0: number, r1: number, n = 5) => {
+  const seg = (a: THREE.Vector3, b: THREE.Vector3, r0: number, r1: number, n = 5) => {
     const g = new THREE.CylinderGeometry(r1, r0, a.distanceTo(b) * 1.08, n, 1);
     g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(up, b.clone().sub(a).normalize()));
     g.translate((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
     return facet(g, 0.03);
   };
+  const at = (x: number, zs: number) => new THREE.Vector3(x, hsZ(x, zs), zs + bend(x));
 
-  // palms leaning out toward the water
-  /* A frond: a spine arching up and out then drooping, folded into a shallow V, with a saw-tooth edge
-     for the leaflets. Both faces are built (flat-shaded apart) so light through the leaf reads from
-     either side. Built along +x from the crown. */
-  const frondGeo = (L: number, arch: number) => {
-    const N = 22, pos: number[] = [], idx: number[] = [];
-    for (let i = 0; i <= N; i++) {
-      const u = i / N, x = L * u, y = L * (0.34 * u - arch * u * u);
-      const w = 0.62 * Math.sin(Math.PI * Math.min(1, u * 1.08)) ** 0.7 * (1 - 0.35 * u) * (i % 2 ? 0.45 : 1);
-      const dip = 0.22 * w + 0.12 * u;
-      pos.push(x, y - dip, -w, x, y, 0, x, y - dip, w);
-    }
-    for (let i = 0; i < N; i++) {
-      const b = i * 3;
-      idx.push(b, b + 1, b + 3, b + 1, b + 4, b + 3, b + 1, b + 2, b + 4, b + 2, b + 5, b + 4);
-      idx.push(b, b + 3, b + 1, b + 1, b + 3, b + 4, b + 1, b + 4, b + 2, b + 2, b + 4, b + 5);
+  // coconut palms along the back of the beach, thinning out down the bay.
+  // Trunk: one smooth tube up a curved spine, ringed with leaf scars, flaring at the foot.
+  const trunkGeo = (spine: THREE.Vector3[], r0: number, r1: number, sides = 9) => {
+    const pos: number[] = [], idx: number[] = [], uvs: number[] = [];
+    const tg = new THREE.Vector3(), nA = new THREE.Vector3(), nB = new THREE.Vector3(), ref = new THREE.Vector3(1, 0, 0);
+    const N = spine.length;
+    spine.forEach((c, i) => {
+      tg.subVectors(spine[Math.min(N - 1, i + 1)], spine[Math.max(0, i - 1)]).normalize();
+      nA.crossVectors(tg, ref).normalize();
+      nB.crossVectors(tg, nA).normalize();
+      const t = i / (N - 1);
+      const r = (r0 + (r1 - r0) * t) * (1 + 0.55 * Math.exp(-t * 18)) * (i % 2 ? 0.94 : 1.04);
+      for (let j = 0; j <= sides; j++) {
+        const a = (j / sides) * Math.PI * 2;
+        pos.push(c.x + (nA.x * Math.cos(a) + nB.x * Math.sin(a)) * r, c.y + (nA.y * Math.cos(a) + nB.y * Math.sin(a)) * r, c.z + (nA.z * Math.cos(a) + nB.z * Math.sin(a)) * r);
+        uvs.push(j / sides, t * 6);
+      }
+    });
+    for (let i = 0; i < N - 1; i++) for (let j = 0; j < sides; j++) {
+      const a = i * (sides + 1) + j, b = a + sides + 1;
+      idx.push(a, b, a + 1, a + 1, b, b + 1);
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-    g.setAttribute("uv", new THREE.Float32BufferAttribute(new Array((pos.length / 3) * 2).fill(0), 2));
+    g.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
     g.setIndex(idx);
-    return facet(g, 0.015);
+    return facet(g);
   };
-  const fronds = [0, 1, 2, 3].map((i) => frondGeo(3.3 + i * 0.25, 0.75 + i * 0.18));
-  const crownG = facet(new THREE.IcosahedronGeometry(0.3, 1), 0.04);
+  // Frond: a midrib that arches up and out then droops, with paired leaflets folded down in a V
+  // along its length, longest in the middle. Built pointing along +x from the crown.
+  const frondGeo = (droop: number, len: number) => {
+    const K = 14, pos: number[] = [], uvs: number[] = [];
+    const rib = Array.from({ length: K + 1 }, (_, k) => {
+      const t = k / K;
+      return new THREE.Vector3(len * t * (1 - 0.12 * droop * t), len * (0.42 * Math.sin(t * Math.PI * 0.7) - droop * t * t), 0);
+    });
+    for (let k = 1; k < K; k++) {
+      const t = k / K, w = 0.95 * Math.sin(Math.PI * Math.min(1, t * 1.08)) * (1 - 0.25 * t) + 0.08;
+      const a = rib[k], b = rib[k + 1], dir = b.clone().sub(a).normalize();
+      for (const side of [-1, 1]) {
+        const tip = a.clone().addScaledVector(dir, w * 0.55).add(new THREE.Vector3(0, -0.24 * w - 0.05, side * w));
+        pos.push(a.x, a.y, a.z, b.x, b.y, b.z, tip.x, tip.y, tip.z);
+        uvs.push(0, 0, 1, 0, 0.5, 1);
+      }
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+    g.computeVertexNormals();
+    return g;
+  };
+  const fronds = [0.15, 0.35, 0.6, 0.85].map((d) => frondGeo(d, 3.8));
   const nut = facet(new THREE.IcosahedronGeometry(0.17, 1), 0.02);
-  const palm = (x: number, z: number, s: number, ry: number, lean: number) => {
-    const H = 5.5 + rnd() * 2, n = 12;
-    const xf = new THREE.Matrix4().compose(new THREE.Vector3(x, hs(x, z) - 0.2, z), new THREE.Quaternion().setFromAxisAngle(up, ry), new THREE.Vector3(s, s, s));
-    const P = (i: number) => new THREE.Vector3(lean * (i / n) ** 2, (H * i) / n, 0);
-    // ringed trunk: each segment flares a little at its foot, like the scars of old fronds
-    for (let i = 0; i < n; i++) {
-      const r = 0.26 - 0.07 * (i / n);
-      addC(seg(P(i), P(i + 1), r * 1.08, r * 0.94, 8).applyMatrix4(xf), m.trunk);
-    }
+  const palm = (x: number, zs: number, s: number, lean: number, ry: number, on?: THREE.Vector3) => {
+    const H = 6 + rnd() * 3, n = 18, base = on ?? at(x, zs), wob = rnd() * 6;
+    const xf = new THREE.Matrix4().compose(base.clone().setY(base.y - 0.25), new THREE.Quaternion().setFromAxisAngle(up, ry), new THREE.Vector3(s, s, s));
+    // a gentle S: leaning out low down, curving back up toward the crown
+    const P = (i: number) => {
+      const t = i / n;
+      return new THREE.Vector3(lean * (t * t * 0.85 + 0.15 * Math.sin(t * Math.PI)), H * t, 0.25 * Math.sin(t * 3 + wob) * t);
+    };
+    const spine = Array.from({ length: n + 1 }, (_, i) => P(i));
+    add(trunkGeo(spine, 0.26, 0.15).applyMatrix4(xf), m.trunk);
     const top = P(n).applyMatrix4(xf);
-    add(crownG, m.frond2, top.x, top.y, top.z, rnd() * 3, rnd() * 3, 0, s);
-    // an upright inner ring and a drooping outer ring
-    for (let f = 0; f < 12; f++) {
-      const inner = f < 4, a = ry + (inner ? f / 4 + 0.12 : (f - 4) / 8) * Math.PI * 2 + (rnd() - 0.5) * 0.35;
-      const lift = inner ? 0.55 + rnd() * 0.25 : 0.05 + rnd() * 0.25;
-      const g = fronds[inner ? Math.floor(rnd() * 2) : 1 + Math.floor(rnd() * 3)].clone().rotateX((rnd() - 0.5) * 0.5).rotateZ(lift).rotateY(a);
-      addC(g, f % 2 ? m.frond2 : m.frond, top.x, top.y, top.z, 0, 0, 0, s * (inner ? 0.8 : 1));
+    const crown = 12 + Math.floor(rnd() * 3);
+    for (let f = 0; f < crown; f++) {
+      const a = (f / crown) * Math.PI * 2 + rnd() * 0.35;
+      const lift = f % 3 === 0 ? -0.25 - rnd() * 0.2 : 0.05 + (rnd() - 0.5) * 0.3;
+      const g = fronds[Math.min(3, Math.floor(rnd() * 4))].clone().rotateZ(lift).rotateX((rnd() - 0.5) * 0.5).rotateY(a);
+      add(g, m.frond, top.x, top.y, top.z, 0, 0, 0, s * (0.85 + rnd() * 0.3));
     }
-    for (let c = 0; c < 4; c++) {
-      const a = c * 1.6 + rnd() * 0.4;
-      add(nut, m.cork, top.x + Math.cos(a) * 0.24 * s, top.y - 0.22 * s, top.z + Math.sin(a) * 0.24 * s, 0, 0, 0, s);
+    for (let c = 0; c < 5; c++) {
+      const a = c * 1.31 + wob;
+      add(nut, m.nut, top.x + Math.cos(a) * 0.24 * s, top.y - (0.22 + (c % 2) * 0.12) * s, top.z + Math.sin(a) * 0.24 * s, 0, 0, 0, s);
     }
+    return { base, top, s };
   };
-  // the camera sees a narrow strip of shore, so the palms stand near its edges and lean in over the water
-  palm(-5.8, 3.3, 0.9, 1.1, 4.2);
-  palm(-9, 5, 0.85, 0.7, 2.4);
-  palm(8.8, 3.8, 0.95, 2.05, 3.8);
-  palm(12.5, 5.6, 0.8, 2.4, 2.2);
-  palm(-7.6, 1.8, 0.75, 0.95, 3.2);
-  palm(6.4, 2.6, 0.7, 2.3, 2.6);
-  palm(-12, 6.2, 0.9, 0.5, 1.4);
-
-  // driftwood: a bleached trunk with a broken limb, lying across the slope
-  const dA = new THREE.Vector3(3.8, 0, 3.6), dB = new THREE.Vector3(7.6, 0, 4.4);
-  dA.y = hs(dA.x, dA.z) + 0.12;
-  dB.y = hs(dB.x, dB.z) + 0.1;
-  addC(seg(dA, dB, 0.17, 0.11, 6), m.drift);
-  const dC = dA.clone().lerp(dB, 0.35), dD = dC.clone().add(new THREE.Vector3(0.4, 0.75, -1.1));
-  addC(seg(dC, dD, 0.1, 0.05, 5), m.drift);
-  const stump = facet(new THREE.DodecahedronGeometry(0.34, 0), 0.08);
-  add(stump, m.drift, dB.x + 0.15, dB.y, dB.z + 0.05, 0, 0, 0, 0.7);
-
-  // rocks at the water's edge, half buried
-  const rock = facet(new THREE.DodecahedronGeometry(1, 0), 0.32);
-  ([[-15, -0.6, 1.3], [-13.4, 0.4, 0.8], [-16.6, 0.9, 0.6], [16, -2.4, 0.9], [17.2, -1.5, 0.55]] as const).forEach(([x, z, s]) =>
-    addC(rock, m.rock, x, hs(x, z) + s * 0.25, z, rnd() * 3, rnd() * 3, rnd() * 3, s),
-  );
-
-  // shells and starfish on the dry sand
-  const shellG = facet(new THREE.ConeGeometry(0.11, 0.07, 6).scale(1, 1, 0.8), 0.01);
-  const starArm = facet(new THREE.ConeGeometry(0.05, 0.2, 3).rotateX(Math.PI / 2).translate(0, 0, 0.1).scale(1, 0.4, 1));
-  for (let i = 0; i < 26; i++) {
-    const x = (rnd() - 0.5) * 26, z = 2.8 + rnd() * 5.5;
-    addC(shellG, rnd() > 0.5 ? m.shell : m.shell2, x, hs(x, z) + 0.02, z, 0, rnd() * 6, 0, 0.8 + rnd() * 0.8);
-  }
-  for (let i = 0; i < 3; i++) {
-    const x = -4 + i * 5.5 + rnd(), z = 3.2 + rnd() * 3, ry = rnd() * 6, y = hs(x, z) + 0.02;
-    for (let a = 0; a < 5; a++) addC(starArm, m.star, x, y, z, 0, ry + (a / 5) * Math.PI * 2, 0, 1.4);
-  }
-
-  // footprints walking down to the water, gone below the wet line
-  const printG = new THREE.CircleGeometry(0.11, 7).rotateX(-Math.PI / 2).scale(1, 1, 1.8);
-  for (let i = 0; i < 16; i++) {
-    const f = i / 15, side = i % 2 ? 1 : -1;
-    const x = -7 + f * 5 + side * 0.17, z = 8.6 - f * 6;
-    if (z < 3) break;
-    add(printG, m.print, x, hs(x, z) + 0.02, z, -Math.atan(0.075), -0.53, 0);
-  }
-
-  // a headland far off to the right, dark against the haze, and a stack off its point
-  const head = facet(new THREE.IcosahedronGeometry(1, 1), 0.18);
-  ([[190, -300, 70, 26, 40], [130, -280, 36, 14, 22], [95, -265, 9, 13, 9], [-260, -340, 60, 9, 30]] as const).forEach(([x, z, sx, sy, sz]) => {
-    const g = head.clone();
-    g.scale(sx, sy, sz);
-    add(g, m.head, x, -sy * 0.25, z, 0, rnd() * 3, 0);
+  // close by, leaning out over the beach toward the water; their shadows reach back up the sand.
+  // Three frame the left of the view, two the right, leaning in toward the middle.
+  const near = [
+    palm(-7, 11.5, 0.84, 3.2, 1.86), palm(-13.5, 13.2, 0.85, 2.2, 2.25), palm(-10.2, 15.6, 0.75, 1.1, 1.3),
+    palm(1.8, 9.2, 0.8, 2.8, 2.5), palm(1.2, 6.8, 0.62, 1.4, 2.0),
+  ];
+  near.forEach(({ base, top, s: sc }, i) => {
+    const toGround = (p: THREE.Vector3) => {
+      const h = p.y - hs(p.x, p.z);
+      return [p.x - (h / LIGHT.y) * LIGHT.x, p.z - (h / LIGHT.y) * LIGHT.z];
+    };
+    const [tx, tz] = toGround(top);
+    shA.push(new THREE.Vector4(base.x, base.z, tx, tz));
+    shB.push(new THREE.Vector3(i * 1.7, 0, 3.4 * sc));
   });
-  flush(scene);
-  sandMat.uniforms.uShadow.value = bakeShadows(casters);
-
-  /* ---- the bottle, adrift in the shallows ---- */
-  const bottle = new THREE.Group();
-  scene.add(bottle);
-  add(facet(new THREE.CylinderGeometry(0.16, 0.16, 0.6, 6)), m.bottle);
-  add(facet(new THREE.CylinderGeometry(0.06, 0.15, 0.24, 6)), m.bottle, 0, 0.42, 0);
-  add(facet(new THREE.CylinderGeometry(0.055, 0.055, 0.12, 5)), m.cork, 0, 0.58, 0);
-  flush(bottle);
-  const BX = 3.5, BZ = -4.2;
-
-  /* ---- glitter on the swell along the line to the sun ---- */
-  const CX = 1.5, CZ = 9.5;
-  const NG = 200, gp = new Float32Array(NG * 3), gBase: number[] = [];
-  {
-    const dx = SUN.x - CX, dz = SUN.z - CZ, l = Math.hypot(dx, dz), ux = dx / l, uz = dz / l;
-    for (let i = 0; i < NG; i++) {
-      const d = 22 + Math.pow(rnd(), 0.7) * 380, w = (rnd() - 0.5) * (1 + d * 0.11);
-      gBase.push(CX + ux * d - uz * w, CZ + uz * d + ux * w);
-    }
+  for (let i = 0; i < 44; i++) {
+    const x = -28 - Math.pow(rnd(), 0.75) * 340;
+    palm(x, 18 + rnd() * 18, 1 + rnd() * 0.5, 0.8 + rnd() * 2.6, Math.PI * 0.25 + (rnd() - 0.5) * 1.6);
   }
-  const glintGeo = new THREE.BufferGeometry();
-  glintGeo.setAttribute("position", new THREE.BufferAttribute(gp, 3));
-  const glints = new THREE.Points(glintGeo, new THREE.PointsMaterial({ color: "#fff0c0", size: 1, sizeAttenuation: false }));
-  glints.frustumCulled = false;
-  scene.add(glints);
 
-  /* ---- gulls, dark against the glow ---- */
+  // dune grass on the berm
+  const blade = facet(new THREE.ConeGeometry(0.05, 0.7, 3).translate(0, 0.35, 0));
+  for (let i = 0; i < 60; i++) {
+    const x = -45 + rnd() * 36, zs = 13 + rnd() * 9, p = at(x, zs);
+    for (let b = 0; b < 5; b++) add(blade, m.grass, p.x + (rnd() - 0.5) * 0.4, p.y - 0.05, p.z + (rnd() - 0.5) * 0.4, (rnd() - 0.5) * 0.7, 0, (rnd() - 0.5) * 0.7, 0.7 + rnd() * 0.8);
+  }
+
+  // shells on the dry sand above the wet line
+  const shellG = facet(new THREE.ConeGeometry(0.1, 0.07, 6).scale(1, 1, 0.8), 0.01);
+  for (let i = 0; i < 18; i++) {
+    const x = -16 + rnd() * 22, zs = 5.5 + rnd() * 6, p = at(x, zs);
+    add(shellG, rnd() > 0.5 ? m.shell : m.shell2, p.x, p.y + 0.02, p.z, 0, rnd() * 6, 0, 0.8 + rnd() * 0.8);
+  }
+
+  // one set of footprints walking off down the bay, just above the reach of the waves
+  const printG = new THREE.CircleGeometry(0.1, 7).rotateX(-Math.PI / 2).scale(1, 1, 1.8);
+  for (let i = 0; i < 70; i++) {
+    const x = 4 - i * 0.62, zs = 7.2 + Math.sin(i * 0.11) * 0.7 + (i % 2 ? 0.15 : -0.15), p = at(x, zs);
+    const yaw = Math.atan2(-(bend(x - 0.5) - bend(x + 0.5)), -1) + Math.PI / 2;
+    add(printG, m.print, p.x, p.y + 0.02, p.z, 0, yaw, 0);
+  }
+
+  // the headland closing the bay, and a low island off to the right on the horizon
+  const lump = facet(new THREE.IcosahedronGeometry(1, 1), 0.2);
+  const end = at(-390, 0);
+  ([[-30, 40, 70, 30, 46], [10, 0, 46, 22, 36], [-60, 90, 90, 38, 60], [38, -30, 24, 12, 18]] as const).forEach(([dx, dz, sx, sy, sz]) => {
+    const g = lump.clone();
+    g.scale(sx, sy, sz);
+    add(g, m.head, end.x + dx, -sy * 0.35, end.z + dz, 0, rnd() * 3, 0);
+  });
+  ([[70, -420, 46, 8, 18], [112, -436, 16, 4.5, 9]] as const).forEach(([x, z, sx, sy, sz]) => {
+    const g = lump.clone();
+    g.scale(sx, sy, sz);
+    add(g, m.isle, x, -sy * 0.3, z, 0, rnd() * 3, 0);
+  });
+  // a stand of palms on the island, drawn large enough to read at this distance
+  for (let i = 0; i < 9; i++) {
+    const x = 38 + rnd() * 60, z = -420 + (rnd() - 0.5) * 10;
+    palm(0, 0, 1.6 + rnd() * 0.6, 1 + rnd() * 2.5, rnd() * 6.28, new THREE.Vector3(x, 8 * 0.7 * (1 - ((x - 70) / 46) ** 2) - 2.4, z));
+  }
+  flush(scene);
+
+  /* ---- sandpipers working the edge of the water ---- */
+  const body = facet(new THREE.IcosahedronGeometry(0.1, 0).scale(1.6, 0.9, 1), 0.01);
+  const bellyG = facet(new THREE.IcosahedronGeometry(0.085, 0).scale(1.4, 0.7, 0.9), 0.0);
+  const headG = facet(new THREE.IcosahedronGeometry(0.055, 0));
+  const beakG = facet(new THREE.ConeGeometry(0.012, 0.12, 3).rotateZ(Math.PI / 2));
+  const legG = facet(new THREE.CylinderGeometry(0.008, 0.008, 0.14, 3));
+  const waterline = (x: number, t: number) => {
+    // highest point the water reaches here: bisect hs(zs) = level on the slope
+    const lvl = Math.max(eta(x, t), 0);
+    let a = -3, b = 9;
+    for (let i = 0; i < 14; i++) {
+      const c = (a + b) / 2;
+      if (hsZ(x, c) > lvl) b = c; else a = c;
+    }
+    return a;
+  };
+  const birds = Array.from({ length: 6 }, (_, i) => {
+    const g = new THREE.Group();
+    const parts = new THREE.Group();
+    parts.add(new THREE.Mesh(body, m.bird));
+    const bl = new THREE.Mesh(bellyG, m.belly);
+    bl.position.y = -0.03;
+    parts.add(bl);
+    const hd = new THREE.Mesh(headG, m.bird);
+    hd.position.set(0.15, 0.07, 0);
+    parts.add(hd);
+    const bk = new THREE.Mesh(beakG, m.beak);
+    bk.position.set(0.25, 0.06, 0);
+    parts.add(bk);
+    parts.position.y = 0.16;
+    g.add(parts);
+    const legs = [-0.03, 0.03].map((dz) => {
+      const l = new THREE.Mesh(legG, m.beak);
+      l.position.set(0, 0.08, dz);
+      g.add(l);
+      return l;
+    });
+    g.scale.setScalar(0.95);
+    scene.add(g);
+    const x0 = -9 + i * 2.1 + rnd() * 1.2;
+    return { g, parts, legs, x0, x: x0, zs: 3, ph: rnd() * 6.28, gap: 0.3 + rnd() * 0.5, dir: 1 };
+  });
+
+  /* ---- gulls far out over the water ---- */
   const gullGeo = new THREE.BufferGeometry().setFromPoints([
-    new THREE.Vector3(-0.7, 0.25, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(0.7, 0.25, 0),
+    new THREE.Vector3(-0.8, 0.25, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, 0), new THREE.Vector3(0.8, 0.25, 0),
   ]);
-  const gullMat = new THREE.LineBasicMaterial({ color: "#3a2440" });
-  const gulls = Array.from({ length: 6 }, (_, i) => {
+  const gullMat = new THREE.LineBasicMaterial({ color: "#4a3050" });
+  const gulls = Array.from({ length: 4 }, () => {
     const l = new THREE.LineSegments(gullGeo, gullMat);
     scene.add(l);
-    return { l, r: 10 + rnd() * 14, y: 12 + rnd() * 10, sp: (0.08 + rnd() * 0.08) * (i % 3 ? 1 : -1), ph: rnd() * 6.28, cz: -22 - rnd() * 12 };
+    return { l, r: 14 + rnd() * 18, y: 10 + rnd() * 8, sp: 0.05 + rnd() * 0.05, ph: rnd() * 6.28, cx: -30 + rnd() * 30, cz: -50 - rnd() * 20 };
   });
 
-  let tSun = -99, tGull = -99, tBottle = -99;
-  const camY = hs(CX, CZ) + 1.7;
+  let tSun = -99, tBird = -99, prevT = 0;
+  const CX = 0, CZS = 17;
+  const camBase = at(CX, CZS);
+  const camY = camBase.y + 1.6;
 
   return {
-    scene, cam, fog: [70, 560], fov: [56, 70], limits: { pitch: [-0.4, 0.3], zoom: [0.8, 2.4], yaw: 0.75 },
+    scene, cam, fog: [60, 600], fov: [54, 68], limits: { pitch: [-0.4, 0.3], zoom: [0.8, 2.6], yaw: 0.8 },
     labels: [
-      { name: "Sunset", sub: "going down, west", at: (v) => { v.copy(SUN).y += 30; } },
-      { name: "Shoreline", sub: "the tide, turning", at: (v) => { v.set(0, 1.2, 0); } },
+      { name: "Sunset", sub: "far out, west", at: (v) => { v.copy(SUN).y += 28; } },
+      { name: "Shoreline", sub: "small surf, rising", at: (v) => { v.set(-4, 1.2, bend(-4)); } },
+      { name: "Headland", sub: "the end of the bay", at: (v) => { v.copy(end).y += 40; } },
     ],
     eggs: [
-      { id: "beach-sun", r: 46, at: (v) => { v.copy(SUN).y += 6; }, fire: (t) => { tSun = t; } },
-      { id: "beach-gull", r: 32, at: (v) => { v.copy(gulls[0].l.position); }, fire: (t) => { tGull = t; } },
-      { id: "beach-bottle", r: 30, at: (v) => { bottle.getWorldPosition(v); }, fire: (t) => { tBottle = t; } },
+      { id: "beach-sun", r: 40, at: (v) => { v.copy(SUN).y += 4; }, fire: (t) => { tSun = t; } },
+      { id: "beach-birds", r: 34, at: (v) => { birds[2].g.getWorldPosition(v); }, fire: (t) => { tBird = t; } },
     ],
     update(t) {
-      // sun: a tap swells it and floods the sky and the road on the water
-      const es = t - tSun;
-      sun.scale.setScalar(1 + 0.3 * pulse(es, 1.8));
-      flashU.value = 1.2 * pulse(es, 1.8);
+      const dt = Math.min(0.1, Math.max(0, t - prevT));
+      prevT = t;
+
+      // sun: a tap brings on the green flash
+      const es = t - tSun, fl = pulse(es, 2.2);
+      flashU.value = fl;
+      sunCore.color.copy(coreCol).lerp(green, fl * 0.8);
+      sun.scale.setScalar(1 + 0.12 * fl);
       sun.lookAt(cam.position);
-      for (const c of clouds) {
-        c.g.position.x = c.x + Math.sin(t * 0.004 * c.sp + c.ph) * 40;
-        c.g.lookAt(cam.position);
-      }
 
-      // bottle: bobs on the swell; tapped, it rides a wave in toward the shore and drifts back out
-      const eb = t - tBottle, ride = pulse(eb, 6) ** 0.7;
-      const bz = BZ + ride * 3.6, bx = BX + ride * 0.8;
-      bottle.position.set(bx, waterY(bx, bz, t) + 0.02, bz);
-      bottle.rotation.set(Math.PI / 2 - 0.2 + Math.sin(t * 1.1) * 0.15, 0.8 + Math.sin(t * 0.3) * 0.3 + ride * 2, Math.sin(t * 0.9) * 0.2);
-
-      for (let i = 0; i < NG; i++) {
-        const x = gBase[i * 2], z = gBase[i * 2 + 1], on = Math.sin(t * 2.6 + i * 1.73) > 0.45;
-        gp[i * 3] = x;
-        gp[i * 3 + 1] = on ? swell(x, z, t) + 0.05 : -9;
-        gp[i * 3 + 2] = z;
+      // sandpipers: keep just ahead of the water, darting up as it comes in and following it back down
+      const eb = t - tBird, flush = pulse(eb, 5);
+      for (const b of birds) {
+        const goal = waterline(b.x, t) + b.gap;
+        const d = goal - b.zs, step = Math.sign(d) * Math.min(Math.abs(d), 4.5 * dt);
+        b.zs += step;
+        const moving = Math.abs(step) > 0.002;
+        b.x += Math.sin(t * 0.2 + b.ph) * 0.15 * dt;
+        const y = hsZ(b.x, b.zs);
+        const lift = flush * (2.5 + Math.sin(b.ph) * 0.8);
+        b.g.position.set(b.x + flush * 3 * Math.sin(b.ph * 2), Math.max(y, eta(b.x, t)) + lift, b.zs + bend(b.x) + flush * 1.5);
+        if (moving) b.dir = step > 0 ? 1 : -1;
+        b.g.rotation.y = b.dir > 0 ? -Math.PI / 2 : Math.PI / 2;
+        const stride = moving && !flush ? Math.sin(t * 30 + b.ph) * 0.5 : 0;
+        b.legs[0].rotation.z = stride;
+        b.legs[1].rotation.z = -stride;
+        b.legs.forEach((l) => { l.visible = flush < 0.2; });
+        // standing still, they probe the wet sand
+        b.parts.rotation.z = moving || flush ? 0 : -0.35 * Math.max(0, Math.sin(t * 2.4 + b.ph * 3));
+        b.parts.rotation.x = flush ? Math.sin(t * 25 + b.ph) * 0.3 : 0;
       }
-      glintGeo.attributes.position.needsUpdate = true;
 
       for (const g of gulls) {
         const a = g.ph + t * g.sp;
-        g.l.position.set(Math.cos(a) * g.r, g.y + Math.sin(t * 0.5 + g.ph) * 0.8, g.cz + Math.sin(a) * g.r * 0.6);
-        g.l.rotation.y = -a + (g.sp > 0 ? 0 : Math.PI);
-        g.l.scale.y = Math.sin(t * 5 + g.ph * 3);
+        g.l.position.set(g.cx + Math.cos(a) * g.r, g.y + Math.sin(t * 0.4 + g.ph) * 0.8, g.cz + Math.sin(a) * g.r * 0.5);
+        g.l.rotation.y = -a;
+        g.l.scale.y = Math.sin(t * 4 + g.ph * 3);
       }
-      const eg = Math.min(1, (t - tGull) / 1.3);
-      gulls[0].l.rotation.z = eg > 0 && eg < 1 ? eg * eg * (3 - 2 * eg) * Math.PI * 2 : 0;
 
-      // standing on the sand, a slow sway; looking out past the surf to the sun
-      cam.position.set(CX + Math.sin(t * 0.05) * 0.3 + view.px * 0.6, camY + Math.sin(t * 0.5) * 0.02 - view.py * 0.3, CZ + Math.sin(t * 0.031) * 0.3);
-      const va = VIEW_AZ[cam.aspect < 1 ? 1 : 0] + Math.sin(t * 0.04) * 0.01 - view.px * 0.03;
-      cam.lookAt(cam.position.x - Math.sin(va) * 200, 2 - view.py * 4, cam.position.z - Math.cos(va) * 200);
+      // standing at the top of the beach, looking out across the surf to the sun
+      cam.position.set(CX + Math.sin(t * 0.05) * 0.3 + view.px * 0.6, camY + Math.sin(t * 0.45) * 0.02 - view.py * 0.3, camBase.z + Math.sin(t * 0.03) * 0.3);
+      cam.lookAt(SUN.x + view.px * 8 + Math.sin(t * 0.04) * 2, -6 - view.py * 5, SUN.z);
       k.look(cam);
       sky.position.copy(cam.position);
     },
     readout() {
       const p = cam.position;
       return [
-        ["Lat", k.dms(-16.5004 - p.z * 0.00009, "N", "S", 2)],
-        ["Lon", k.dms(-151.7415 + p.x * 0.00013, "E", "W", 3)],
+        ["Lat", k.dms(-8.6871 - p.z * 0.00009, "N", "S", 2)],
+        ["Lon", k.dms(115.4458 + p.x * 0.00012, "E", "W", 3)],
         ["Elev", `${p.y.toFixed(1)} m`],
         ["Brg", `${k.pad(Math.round(k.bearing(cam)), 3)}°`],
         ["Grid", k.gridRef(p.x, p.z, 40)],
