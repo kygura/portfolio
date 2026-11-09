@@ -10,6 +10,7 @@ import TerminalHost from "./components/TerminalHost";
 import CommandHost from "./components/CommandHost";
 import Keys from "./theme/Keys";
 import LofiPlayer from "./components/player/LofiPlayer";
+import FamiliarHost from "./components/familiar/FamiliarHost";
 
 // Toast viewports render nothing until something fires a toast, and only
 // two lazily-routed pages ever do — no reason to ship them up front.
@@ -28,6 +29,8 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const Artifacts = lazy(() => import("./pages/Artifacts"));
 const CV = lazy(() => import("./pages/CV"));
 const Scenes = lazy(() => import("./pages/Scenes"));
+// Unlisted on purpose: nothing on the site links to it.
+const Hollow = lazy(() => import("./pages/Hollow"));
 
 const queryClient = new QueryClient();
 
@@ -45,6 +48,7 @@ const App = () => (
         <CommandHost />
         <Keys />
         <LofiPlayer />
+        <FamiliarHost />
         <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<Index />} />
@@ -101,6 +105,14 @@ const App = () => (
               element={
                 <Layout>
                   <CV />
+                </Layout>
+              }
+            />
+            <Route
+              path="/hollow"
+              element={
+                <Layout>
+                  <Hollow />
                 </Layout>
               }
             />
