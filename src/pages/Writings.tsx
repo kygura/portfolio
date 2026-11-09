@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
+import PageHead from "../components/PageHead";
 import { useMarkdownPosts } from "../hooks/useMarkdownPosts";
 import { resolvePostTags } from "../lib/postTagFallbacks";
 import type { PostSummary } from "../../content/posts";
@@ -50,45 +51,37 @@ const Writings = () => {
 
   return (
     <div className="page-shell page-shell--wide animate-fade-in">
-      <div className="mb-10 sm:mb-14 pb-6 sm:pb-8 border-b border-[var(--border-muted)] relative">
-        <h1 className="text-5xl md:text-7xl font-display text-foreground tracking-[-0.01em] leading-[0.85] uppercase mb-4 relative z-10">Writings</h1>
-        <p className="text-lg md:text-xl text-foreground max-w-2xl leading-relaxed relative z-10">
-          Thoughts on the arts, engineering, the esoteric and the existential.
-        </p>
+      <PageHead no="01" label="Writings" title="Writings" lede="Thoughts on the arts, engineering, the esoteric and the existential.">
         {posts.length > 0 && (
-          <p className="ledger__stats">
+          <p className="page-head__facts">
             <span>{pad(posts.length)} entries</span>
             <span>{totalMinutes} min of reading</span>
           </p>
         )}
-      </div>
+      </PageHead>
 
-      <div className="mb-10 sm:mb-14 flex flex-wrap gap-2 sm:gap-3">
+      <div className="tag-filters" role="group" aria-label="Filter by tag">
         {[null, ...allTags].map((tag) => (
           <button
             key={tag ?? "all"}
             onClick={() => setSelectedTag(tag)}
             aria-pressed={selectedTag === tag}
-            className={`font-mono text-[11px] tracking-[0.16em] px-3 py-1 border transition-colors uppercase ${
-              selectedTag === tag
-                ? "bg-accent border-accent text-accent-foreground"
-                : "border-foreground/40 text-foreground/60 hover:border-accent hover:text-accent bg-transparent"
-            }`}
+            className="tag-filter"
           >
             {tag ?? "All"}
-            <sup className="ml-1.5 opacity-60">{tag ? tagCount(tag) : posts.length}</sup>
+            <i>{tag ? tagCount(tag) : posts.length}</i>
           </button>
         ))}
       </div>
 
       {loading && (
-        <div className="border border-dashed border-foreground/30 px-6 py-8 text-sm uppercase tracking-[0.2em] text-muted-foreground">
+        <div className="notice">
           Loading writings...
         </div>
       )}
 
       {error && !loading && (
-        <div className="border border-destructive px-6 py-8 text-sm uppercase tracking-[0.2em] text-destructive">
+        <div className="notice notice--error">
           {error}
         </div>
       )}
@@ -139,7 +132,7 @@ const Writings = () => {
         ))}
 
         {!loading && !error && filteredPosts.length === 0 && (
-          <div className="border border-dashed border-foreground/30 px-6 py-8 text-sm uppercase tracking-[0.2em] text-muted-foreground">
+          <div className="notice">
             No writings found.
           </div>
         )}

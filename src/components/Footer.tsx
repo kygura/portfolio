@@ -2,7 +2,9 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { QUOTES_ARRAY } from "../lib/consts";
 import { useState, useEffect, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { isTyping } from "@/theme/keymap";
+import { cv } from "../../content/cv";
 
 function initQuote(list: string[]) {
   const r = Math.floor(Math.random() * list.length);
@@ -181,8 +183,24 @@ const Footer = () => {
         </div>
       </div>
 
-      <div className="px-4 pb-4 sm:pb-3 text-center font-mono text-[0.6rem] tracking-widest text-muted-foreground opacity-40 uppercase">
-        Today is {new Date().toLocaleDateString("en-US",{ year: "numeric", month: "long", day: "numeric" })} | {currentQuote.index + 1} / {QUOTES_ARRAY.length}
+      {/* Colophon: who and where on the left, the quote's place in the
+          deck in the middle, ways out on the right. */}
+      <div className="colophon">
+        <p className="colophon__who">
+          <span>NCA.ink</span>
+          <span>M&aacute;laga</span>
+          <span>{new Date().getFullYear()}</span>
+        </p>
+        <p className="colophon__count" aria-label={`Quote ${currentQuote.index + 1} of ${QUOTES_ARRAY.length}`}>
+          <b>{String(currentQuote.index + 1).padStart(2, "0")}</b>/{QUOTES_ARRAY.length}
+        </p>
+        <p className="colophon__links">
+          <a href={`https://${cv.contact.github}`} target="_blank" rel="noopener noreferrer">
+            GitHub
+          </a>
+          <a href={`mailto:${cv.contact.email}`}>Email</a>
+          <Link to="/cv">CV</Link>
+        </p>
       </div>
     </footer>
   );

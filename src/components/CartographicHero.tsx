@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { isTyping } from "@/theme/keymap";
 import { pickHomeScene, SHEETS } from "@/hero/sheets";
 import { readStored, writeStored } from "@/theme/accent";
@@ -109,8 +110,20 @@ const CartographicHero = () => {
           <div className="hero__mark-text">C.A</div>
         </div>
 
-        {/* Hairline footer strip. */}
-        <footer ref={footerRef} className="hero__strip" />
+        {/* Hairline footer strip: which scene this is (and the way to the
+            rest) on the left, the scroll cue on the right. */}
+        <footer ref={footerRef} className="hero__strip">
+          <Link to={`/scenes/${SHEETS[sheet].id}`} className="hero__scene" data-no-orbit>
+            <span className="hero__scene-no">
+              {String(sheet + 1).padStart(2, "0")}/{String(SHEETS.length).padStart(2, "0")}
+            </span>
+            <span className="hero__scene-name">{SHEETS[sheet].name}</span>
+            <span className="hero__scene-go">All scenes &rarr;</span>
+          </Link>
+          <span className="hero__cue" aria-hidden="true">
+            Scroll <i>&darr;</i>
+          </span>
+        </footer>
       </div>
 
     </div>

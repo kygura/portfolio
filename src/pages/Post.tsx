@@ -1,9 +1,10 @@
 import React, { useRef } from "react";
 import { useParams, Link, Navigate } from "react-router-dom";
-import { ArrowLeft, Clock } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useMarkdownPost } from "../hooks/useMarkdownPosts";
+import { useMarkdownPost, useMarkdownPosts } from "../hooks/useMarkdownPosts";
+import { resolvePostTags } from "../lib/postTagFallbacks";
 import CodeBlock from "../components/CodeBlock";
 import PostImage from "../components/PostImage";
 import Alert from "../components/Alert";
@@ -59,12 +60,13 @@ const alertTypes: Record<AlertType, AlertType> = {
 const Post = () => {
   const { slug } = useParams();
   const { post, loading, error } = useMarkdownPost(slug);
+  const { posts } = useMarkdownPosts();
   const articleRef = useRef<HTMLElement>(null);
 
   if (loading) {
     return (
       <div className="page-shell page-shell--narrow animate-fade-in">
-        <div className="border border-dashed border-foreground/30 px-6 py-8 text-sm uppercase tracking-[0.2em] text-muted-foreground">
+        <div className="notice">
           Loading post...
         </div>
       </div>
@@ -74,7 +76,7 @@ const Post = () => {
   if (error) {
     return (
       <div className="page-shell page-shell--narrow animate-fade-in">
-        <div className="border border-destructive px-6 py-8 text-sm uppercase tracking-[0.2em] text-destructive">
+        <div className="notice notice--error">
           {error}
         </div>
       </div>
@@ -88,30 +90,41 @@ const Post = () => {
       replace />;
   }
 
+  // The index lists newest first and numbers entries up from the oldest.
+  const at = posts.findIndex((p) => p.slug === post.slug);
+  const number = at >= 0 ? posts.length - at : 0;
+  const newer = at > 0 ? posts[at - 1] : null;
+  const older = at >= 0 && at < posts.length - 1 ? posts[at + 1] : null;
+  const tags = resolvePostTags(post).slice(0, 4);
+  const parsed = new Date(post.date);
+  const date = Number.isFinite(parsed.getTime())
+    ? parsed.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })
+    : "";
+
   return (
     <div className="page-shell page-shell--narrow animate-fade-in">
-      <div className="mb-12 pb-6 border-b border-[var(--border-muted)] relative">
-        <Link
-          to="/writings"
-          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-300 mb-8 mt-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          BACK TO WRITINGS
+      <header className="post-head">
+        <Link to="/writings" className="post-head__back">
+          <ArrowLeft size={14} aria-hidden="true" />
+          Writings
         </Link>
 
-        <h1 className="text-2xl md:text-4xl font-display tracking-[-0.01em] text-foreground uppercase leading-[0.95] mb-6">
-          {post.title}
-        </h1>
+        <p className="post-head__eyebrow">
+          {number > 0 && <span>№{String(number).padStart(2, "0")}</span>}
+          {date && <time dateTime={post.date}>{date}</time>}
+          <span>{post.readTime} min read</span>
+        </p>
 
-        {post.readTime && (
-          <div className="flex items-center gap-6 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            <span className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              {post.readTime} read
-            </span>
-          </div>
+        <h1 className="post-head__title">{post.title}</h1>
+
+        {tags.length > 0 && (
+          <p className="post-head__tags">
+            {tags.map((tag) => (
+              <span key={tag}>{tag}</span>
+            ))}
+          </p>
         )}
-      </div>
+      </header>
 
       <PostToc articleRef={articleRef} contentKey={post.content} />
 
@@ -242,6 +255,29 @@ const Post = () => {
           {post.content}
         </ReactMarkdown>
       </article>
+
+      {(older || newer) && (
+        <nav className="post-next" aria-label="More writings">
+          {older ? (
+            <Link to={`/writings/${older.slug}`} className="post-next__link">
+              <span className="post-next__dir">
+                <ArrowLeft size={13} aria-hidden="true" /> Older
+              </span>
+              <span className="post-next__title">{older.title}</span>
+            </Link>
+          ) : (
+            <span />
+          )}
+          {newer && (
+            <Link to={`/writings/${newer.slug}`} className="post-next__link post-next__link--newer">
+              <span className="post-next__dir">
+                Newer <ArrowRight size={13} aria-hidden="true" />
+              </span>
+              <span className="post-next__title">{newer.title}</span>
+            </Link>
+          )}
+        </nav>
+      )}
     </div>
   );
 };
