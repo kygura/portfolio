@@ -73,7 +73,7 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "beach",
     name: "Beach",
-    aria: "Animated low-poly scene: a crescent bay of white sand at sunset, coconut palms leaning out over the beach and throwing long shadows back up the sand, small waves building in lines, breaking white and running up the shore in thin sheets before draining back over the glossy wet sand, sandpipers chasing the edge of the water, the shore curving away to a wooded headland, and the sun going down far out on the horizon with a road of light across the sea under streaks of gold and lilac cloud.",
+    aria: "Animated low-poly scene: a quiet white-sand beach at sunset, small waves rolling in and washing up the shore and sliding back over the wet sand, the sun sinking into the sea on the far horizon with a road of glitter across the water, streaks of pink and gold cloud, leaning palms, driftwood and shells, and gulls overhead.",
   },
   {
     id: "cliff",
@@ -83,7 +83,7 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "orb",
     name: "Orb",
-    aria: "Animated low-poly scene in the style of an early raytraced render: a swirled chrome planet hangs over a lone pyramid standing on a glittering mirror sea, a long shadow on the water and both of them doubled in the reflection, small pyramids far out in the white haze of the horizon, under a deep sky in the active palette's colour.",
+    aria: "Animated low-poly scene in the style of an early raytraced render: a swirled chrome planet hangs over a lone pyramid standing on a glittering copper mirror sea, a long shadow on the water and both of them doubled in the reflection, small pyramids far out in the gold haze of the horizon, under a sky that runs from magenta overhead to orange and pale gold at the horizon.",
   },
 ];
 
