@@ -355,6 +355,8 @@ export function buildBeach(k: PsxKit): SceneDef {
   const m = {
     trunk: palmMat(palmTex("bark"), "#f4e2d0", 0),
     frond: palmMat(palmTex("leaf"), "#eef6d8", 1),
+    trunk2: palmMat(tex.tBark, "#ffe0c0", 0),
+    frond2: palmMat(tex.tPlain, "#cce89c", 1),
     nut: palmMat(tex.tPlain, "#b0a060", 0),
     grass: palmMat(palmTex("leaf"), "#f4ecc8", 1),
     shell: mat({ map: tex.tPlain, tint: "#ffe2d6", amb: "#e8d4d8" }),
@@ -519,11 +521,56 @@ export function buildBeach(k: PsxKit): SceneDef {
     }
     return { base, top, s };
   };
+  /* A second kind of palm, so the stand isn't all one tree: a trunk of stacked rings that flare at the
+     foot (darker bark), and smooth, lighter fronds cut as a saw-tooth ribbon folded in a shallow V, in an
+     upright inner ring and a drooping outer one. Same placement arguments and return as palm(). */
+  const ribbonGeo = (len: number, arch: number) => {
+    const N = 22, pos: number[] = [], idx: number[] = [];
+    for (let i = 0; i <= N; i++) {
+      const u = i / N, x = len * u, y = len * (0.34 * u - arch * u * u);
+      const w = 0.62 * Math.sin(Math.PI * Math.min(1, u * 1.08)) ** 0.7 * (1 - 0.35 * u) * (i % 2 ? 0.45 : 1);
+      const dip = 0.22 * w + 0.12 * u;
+      pos.push(x, y - dip, -w, x, y, 0, x, y - dip, w);
+    }
+    for (let i = 0; i < N; i++) {
+      const b = i * 3;
+      idx.push(b, b + 1, b + 3, b + 1, b + 4, b + 3, b + 1, b + 2, b + 4, b + 2, b + 5, b + 4);
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+    g.setAttribute("uv", new THREE.Float32BufferAttribute(new Array((pos.length / 3) * 2).fill(0.5), 2));
+    g.setIndex(idx);
+    return facet(g, 0.015);
+  };
+  const ribbons = [0, 1, 2, 3].map((i) => ribbonGeo(3.3 + i * 0.25, 0.75 + i * 0.18));
+  const ribbonCrown = facet(new THREE.IcosahedronGeometry(0.3, 1), 0.04);
+  const palm2 = (x: number, zs: number, s: number, lean: number, ry: number, on?: THREE.Vector3) => {
+    const H = 5.5 + rnd() * 2, n = 12, base = on ?? at(x, zs);
+    const xf = new THREE.Matrix4().compose(base.clone().setY(base.y - 0.2), new THREE.Quaternion().setFromAxisAngle(up, ry), new THREE.Vector3(s, s, s));
+    const P = (i: number) => new THREE.Vector3(lean * (i / n) ** 2, (H * i) / n, 0);
+    for (let i = 0; i < n; i++) {
+      const r = 0.26 - 0.07 * (i / n);
+      add(seg(P(i), P(i + 1), r * 1.08, r * 0.94, 8).applyMatrix4(xf), m.trunk2);
+    }
+    const top = P(n).applyMatrix4(xf);
+    add(ribbonCrown, m.frond2, top.x, top.y, top.z, rnd() * 3, rnd() * 3, 0, s);
+    for (let f = 0; f < 12; f++) {
+      const inner = f < 4, a = ry + (inner ? f / 4 + 0.12 : (f - 4) / 8) * Math.PI * 2 + (rnd() - 0.5) * 0.35;
+      const lift = inner ? 0.55 + rnd() * 0.25 : 0.05 + rnd() * 0.25;
+      const g = ribbons[inner ? Math.floor(rnd() * 2) : 1 + Math.floor(rnd() * 3)].clone().rotateX((rnd() - 0.5) * 0.5).rotateZ(lift).rotateY(a);
+      add(g, m.frond2, top.x, top.y, top.z, 0, 0, 0, s * (inner ? 0.8 : 1));
+    }
+    for (let c = 0; c < 4; c++) {
+      const a = c * 1.6 + rnd() * 0.4;
+      add(nut, m.nut, top.x + Math.cos(a) * 0.24 * s, top.y - 0.22 * s, top.z + Math.sin(a) * 0.24 * s, 0, 0, 0, s);
+    }
+    return { base, top, s };
+  };
   // close by, leaning out over the beach toward the water; their shadows reach back up the sand.
   // Three frame the left of the view, two the right, leaning in toward the middle.
   const near = [
-    palm(-7, 11.5, 0.84, 3.2, 1.86), palm(-13.5, 13.2, 0.85, 2.2, 2.25), palm(-10.2, 15.6, 0.75, 1.1, 1.3),
-    palm(1.8, 9.2, 0.8, 2.8, 2.5), palm(1.2, 6.8, 0.62, 1.4, 2.0),
+    palm(-7, 11.5, 0.84, 3.2, 1.86), palm2(-13.5, 13.2, 0.9, 2.6, 2.25), palm(-10.2, 15.6, 0.75, 1.1, 1.3),
+    palm(1.8, 9.2, 0.8, 2.8, 2.5), palm2(1.2, 6.8, 0.7, 1.8, 2.0),
   ];
   near.forEach(({ base, top, s: sc }, i) => {
     const toGround = (p: THREE.Vector3) => {
@@ -536,7 +583,7 @@ export function buildBeach(k: PsxKit): SceneDef {
   });
   for (let i = 0; i < 44; i++) {
     const x = -28 - Math.pow(rnd(), 0.75) * 340;
-    palm(x, 18 + rnd() * 18, 1 + rnd() * 0.5, 0.8 + rnd() * 2.6, Math.PI * 0.25 + (rnd() - 0.5) * 1.6);
+    (i % 3 === 1 ? palm2 : palm)(x, 18 + rnd() * 18, 1 + rnd() * 0.5, 0.8 + rnd() * 2.6, Math.PI * 0.25 + (rnd() - 0.5) * 1.6);
   }
 
   // dune grass on the berm
