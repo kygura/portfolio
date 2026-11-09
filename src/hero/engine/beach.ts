@@ -569,8 +569,8 @@ export function buildBeach(k: PsxKit): SceneDef {
   // close by, leaning out over the beach toward the water; their shadows reach back up the sand.
   // Three frame the left of the view, two the right, leaning in toward the middle.
   const near = [
-    palm(-7, 11.5, 0.84, 3.2, 1.86), palm2(-13.5, 13.2, 0.9, 2.6, 2.25), palm(-10.2, 15.6, 0.75, 1.1, 1.3),
-    palm(1.8, 9.2, 0.8, 2.8, 2.5), palm2(1.2, 6.8, 0.7, 1.8, 2.0),
+    palm2(-7, 11.5, 0.9, 3.6, 1.86), palm2(-13.5, 13.2, 0.9, 2.6, 2.25), palm2(-10.2, 15.6, 0.82, 1.6, 1.3),
+    palm2(1.8, 9.2, 0.88, 3.2, 2.5), palm2(1.2, 6.8, 0.72, 1.8, 2.0),
   ];
   near.forEach(({ base, top, s: sc }, i) => {
     const toGround = (p: THREE.Vector3) => {
@@ -583,7 +583,8 @@ export function buildBeach(k: PsxKit): SceneDef {
   });
   for (let i = 0; i < 44; i++) {
     const x = -28 - Math.pow(rnd(), 0.75) * 340;
-    (i % 3 === 1 ? palm2 : palm)(x, 18 + rnd() * 18, 1 + rnd() * 0.5, 0.8 + rnd() * 2.6, Math.PI * 0.25 + (rnd() - 0.5) * 1.6);
+    // the feathered palms stand back from the beach as a fringe of background foliage
+    palm(x - 6, 26 + rnd() * 20, 1 + rnd() * 0.5, 0.8 + rnd() * 2.6, Math.PI * 0.25 + (rnd() - 0.5) * 1.6);
   }
 
   // dune grass on the berm
