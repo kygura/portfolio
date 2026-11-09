@@ -83,7 +83,7 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "orb",
     name: "Orb",
-    aria: "Animated low-poly scene in the style of an early raytraced render: a swirled chrome planet hangs over a lone pyramid standing on a glittering copper mirror sea, a long shadow on the water and both of them doubled in the reflection, small pyramids far out in the gold haze of the horizon, under a sky that runs from magenta overhead to orange and pale gold at the horizon.",
+    aria: "Animated low-poly scene in the style of an early raytraced render: a swirled chrome planet hangs over a lone pyramid standing on a glittering mirror sea, a long shadow on the water and both of them doubled in the reflection, small pyramids far out in the white haze of the horizon, under a deep sky in the active palette's colour.",
   },
 ];
 

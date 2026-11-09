@@ -25,7 +25,7 @@ const VOICES: Record<Accent["id"], Voice> = {
   moss: { notes: [330, 392, 494], wave: "triangle", step: 0.06, decay: 0.42 },
   jade: { notes: [392, 494, 587], wave: "sine", step: 0.05, decay: 0.38 },
   astral: { notes: [523, 659, 784, 1047], wave: "sine", step: 0.05, decay: 0.36 },
-  glacier: { notes: [880, 1175], wave: "sine", step: 0.08, decay: 0.5 },
+  cobalt: { notes: [784, 988, 1175], wave: "sine", step: 0.07, decay: 0.48 },
   iris: { notes: [466, 587, 698, 932], wave: "sine", step: 0.055, decay: 0.4 },
   mono: { notes: [180], wave: "square", step: 0, decay: 0.06 },
   phosphor: { notes: [1320, 1760], wave: "square", step: 0.04, decay: 0.05 },

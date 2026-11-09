@@ -371,47 +371,47 @@
   --sidebar-accent-foreground: 160 34% 88%;
 }
 
-/* Glacier: polar dusk. Slate-blue ground, frost ink, a pale steel accent. */
-:root[data-accent="glacier"] {
-  --bg: #10151c;
-  --bg-2: #141b24;
-  --sheet: #1c2530;
-  --code: #0b0f14;
-  --ink: #e4ecf4;
-  --ink-2: #a9b7c6;
-  --ink-3: #748395;
-  --rule: #24303d;
-  --rule-2: #364556;
-  --grid: rgba(195, 217, 239, 0.04);
-  --scrim: rgba(11, 15, 20, 0.86);
+/* Cobalt: the Orb's raytraced noon. Deep cobalt ground, cold white ink, an ice-cyan accent. */
+:root[data-accent="cobalt"] {
+  --bg: #0a0e2e;
+  --bg-2: #0e1338;
+  --sheet: #161d4c;
+  --code: #070a22;
+  --ink: #e6f0ff;
+  --ink-2: #a9bbe6;
+  --ink-3: #7182b8;
+  --rule: #1c2558;
+  --rule-2: #2b3878;
+  --grid: rgba(168, 230, 240, 0.045);
+  --scrim: rgba(7, 10, 34, 0.86);
   --danger: #f29a9a;
-  --accent: #c3d9ef;
-  --accent-deep: #4f7398;
-  --on-accent: #0c1520;
-  --accent-h: 210 58% 85%;
-  --on-accent-h: 213 45% 9%;
-  --tex: linear-gradient(180deg, rgba(195, 217, 239, 0.06), transparent 40%);
+  --accent: #a8e6f0;
+  --accent-deep: #2a43d6;
+  --on-accent: #060a2e;
+  --accent-h: 188 69% 80%;
+  --on-accent-h: 233 77% 10%;
+  --tex: linear-gradient(180deg, rgba(42, 67, 214, 0.14), transparent 45%);
   --tex-size: auto;
 
-  --background: 215 27% 9%;
-  --foreground: 210 42% 93%;
-  --card: 214 29% 11%;
-  --card-foreground: 210 42% 93%;
-  --popover: 214 29% 11%;
-  --popover-foreground: 210 42% 93%;
-  --secondary: 213 26% 15%;
-  --secondary-foreground: 210 42% 93%;
+  --background: 234 64% 11%;
+  --foreground: 215 100% 95%;
+  --card: 233 54% 14%;
+  --card-foreground: 215 100% 95%;
+  --popover: 233 54% 14%;
+  --popover-foreground: 215 100% 95%;
+  --secondary: 232 52% 20%;
+  --secondary-foreground: 215 100% 95%;
   --destructive: 0 77% 78%;
-  --destructive-foreground: 215 27% 9%;
-  --muted: 213 26% 15%;
-  --muted-foreground: 211 20% 72%;
-  --border: 211 26% 19%;
-  --input: 212 23% 27%;
-  --sidebar-background: 214 29% 11%;
-  --sidebar-foreground: 210 42% 93%;
-  --sidebar-border: 211 26% 19%;
-  --sidebar-accent: 213 26% 15%;
-  --sidebar-accent-foreground: 210 42% 93%;
+  --destructive-foreground: 234 64% 11%;
+  --muted: 232 52% 20%;
+  --muted-foreground: 222 52% 78%;
+  --border: 231 52% 23%;
+  --input: 229 47% 32%;
+  --sidebar-background: 233 54% 14%;
+  --sidebar-foreground: 215 100% 95%;
+  --sidebar-border: 231 52% 23%;
+  --sidebar-accent: 232 52% 20%;
+  --sidebar-accent-foreground: 215 100% 95%;
 }
 
 /* Iris: an indigo night. Ink-blue ground, lavender ink, a periwinkle accent. */

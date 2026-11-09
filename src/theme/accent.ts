@@ -18,7 +18,7 @@ export interface Accent {
   id:
     | "manuscript" | "torch" | "madder"
     | "lichen" | "moss" | "jade"
-    | "astral" | "glacier" | "iris"
+    | "astral" | "cobalt" | "iris"
     | "mono" | "phosphor" | "vermilion";
   name: string;
   family: FamilyId;
@@ -59,7 +59,7 @@ export const ACCENTS: Accent[] = [
   { id: "jade", name: "Jade", family: "grove", hex: "#5ad6ad", deep: "#1d7a63", fog: "#2b4844", zen: "#061110", bg: "#0b1615", ink: "#d6ebe4" },
   // Tide
   { id: "astral", name: "Sky", family: "tide", hex: "#86d3dc", deep: "#2f6f9a", fog: "#2f4562", zen: "#08101e", bg: "#0b1424", ink: "#d6e6f2" },
-  { id: "glacier", name: "Glacier", family: "tide", hex: "#c3d9ef", deep: "#4f7398", fog: "#3a4757", zen: "#0a0f16", bg: "#10151c", ink: "#e4ecf4" },
+  { id: "cobalt", name: "Cobalt", family: "tide", hex: "#a8e6f0", deep: "#2a43d6", fog: "#2a3a78", zen: "#060a3a", bg: "#0a0e2e", ink: "#e6f0ff" },
   { id: "iris", name: "Iris", family: "tide", hex: "#a99cf5", deep: "#5543b0", fog: "#38335c", zen: "#0b0a1c", bg: "#111024", ink: "#e6e2f6" },
   // Signal
   { id: "mono", name: "Graphite", family: "signal", hex: "#d4d4d4", deep: "#6b6b6b", fog: "#3f3f3f", zen: "#0e0e0e", bg: "#121212", ink: "#e2e2e2" },
@@ -124,7 +124,8 @@ function storedAccent(): number {
   const id =
     readStored(ACCENT_KEY) ??
     LEGACY_ACCENT_ORDER[Number.parseInt(readStored(LEGACY_ACCENT_KEY) ?? "", 10)];
-  const i = ACCENTS.findIndex((a) => a.id === id);
+  // Glacier was replaced by Cobalt.
+  const i = ACCENTS.findIndex((a) => a.id === (id === "glacier" ? "cobalt" : id));
   return i >= 0 ? i : DEFAULT_ACCENT;
 }
 
