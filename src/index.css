@@ -1825,10 +1825,10 @@
    each one has left once all four links fit unscrolled (checked 360–1600px). */
 .nav-bar .nav-items { gap: clamp(10px, 6vw - 10px, 28px); }
 @media (min-width: 640px) {
-  .nav-bar .nav-items { gap: clamp(14px, 4vw - 12px, 24px); }
+  .nav-bar .nav-items { gap: clamp(12px, 4vw - 13px, 24px); }
 }
 @media (min-width: 800px) {
-  .nav-bar .nav-items { gap: clamp(16px, 4vw - 14px, 28px); }
+  .nav-bar .nav-items { gap: clamp(12px, 6vw - 36px, 28px); }
 }
 @media (min-width: 1024px) {
   .nav-bar .nav-items { gap: clamp(28px, 6vw - 30px, 48px); }
