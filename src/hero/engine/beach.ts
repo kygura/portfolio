@@ -77,7 +77,7 @@ vec3 horizon(vec3 d){
   return mix(vec3(0.96, 0.66, 0.6), vec3(1.0, 0.84, 0.6), pow(sw, 4.0));
 }
 `;
-const NSH = 3; // palms whose shadows fall on the sand in view
+const NSH = 5; // palms whose shadows fall on the sand in view
 const SNAP = `p.xy = floor(p.xy / p.w * uSnap + 0.5) / uSnap * p.w;`;
 
 const SKY_V = `varying vec3 vDir; void main(){ vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
@@ -490,8 +490,8 @@ export function buildBeach(k: PsxKit): SceneDef {
   };
   const fronds = [0.15, 0.35, 0.6, 0.85].map((d) => frondGeo(d, 3.8));
   const nut = facet(new THREE.IcosahedronGeometry(0.17, 1), 0.02);
-  const palm = (x: number, zs: number, s: number, lean: number, ry: number) => {
-    const H = 6 + rnd() * 3, n = 18, base = at(x, zs), wob = rnd() * 6;
+  const palm = (x: number, zs: number, s: number, lean: number, ry: number, on?: THREE.Vector3) => {
+    const H = 6 + rnd() * 3, n = 18, base = on ?? at(x, zs), wob = rnd() * 6;
     const xf = new THREE.Matrix4().compose(base.clone().setY(base.y - 0.25), new THREE.Quaternion().setFromAxisAngle(up, ry), new THREE.Vector3(s, s, s));
     // a gentle S: leaning out low down, curving back up toward the crown
     const P = (i: number) => {
@@ -514,8 +514,12 @@ export function buildBeach(k: PsxKit): SceneDef {
     }
     return { base, top, s };
   };
-  // three close by, leaning out over the beach toward the water; their shadows reach back up the sand
-  const near = [palm(-7, 11.5, 0.84, 3.2, 1.86), palm(-13.5, 13.2, 0.85, 2.2, 2.25), palm(-10.2, 15.6, 0.75, 1.1, 1.3)];
+  // close by, leaning out over the beach toward the water; their shadows reach back up the sand.
+  // Three frame the left of the view, two the right, leaning in toward the middle.
+  const near = [
+    palm(-7, 11.5, 0.84, 3.2, 1.86), palm(-13.5, 13.2, 0.85, 2.2, 2.25), palm(-10.2, 15.6, 0.75, 1.1, 1.3),
+    palm(1.8, 9.2, 0.8, 2.8, 2.5), palm(1.2, 6.8, 0.62, 1.4, 2.0),
+  ];
   near.forEach(({ base, top, s: sc }, i) => {
     const toGround = (p: THREE.Vector3) => {
       const h = p.y - hs(p.x, p.z);
@@ -560,11 +564,16 @@ export function buildBeach(k: PsxKit): SceneDef {
     g.scale(sx, sy, sz);
     add(g, m.head, end.x + dx, -sy * 0.35, end.z + dz, 0, rnd() * 3, 0);
   });
-  ([[150, -600, 60, 9, 22], [205, -620, 22, 5, 12]] as const).forEach(([x, z, sx, sy, sz]) => {
+  ([[70, -420, 46, 8, 18], [112, -436, 16, 4.5, 9]] as const).forEach(([x, z, sx, sy, sz]) => {
     const g = lump.clone();
     g.scale(sx, sy, sz);
     add(g, m.isle, x, -sy * 0.3, z, 0, rnd() * 3, 0);
   });
+  // a stand of palms on the island, drawn large enough to read at this distance
+  for (let i = 0; i < 9; i++) {
+    const x = 38 + rnd() * 60, z = -420 + (rnd() - 0.5) * 10;
+    palm(0, 0, 1.6 + rnd() * 0.6, 1 + rnd() * 2.5, rnd() * 6.28, new THREE.Vector3(x, 8 * 0.7 * (1 - ((x - 70) / 46) ** 2) - 2.4, z));
+  }
   flush(scene);
 
   /* ---- sandpipers working the edge of the water ---- */
