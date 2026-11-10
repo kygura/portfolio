@@ -1,9 +1,7 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import PageHead from "../components/PageHead";
 import { useMarkdownPosts } from "../hooks/useMarkdownPosts";
-import { resolvePostTags } from "../lib/postTagFallbacks";
 import type { PostSummary } from "../../content/posts";
 
 const MAX_TICKS = 12;
@@ -32,18 +30,9 @@ const groupByMonth = (posts: PostSummary[]) =>
   }, []);
 
 const Writings = () => {
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
-
   const { posts, loading, error } = useMarkdownPosts();
 
-  const allTags = Array.from(new Set(posts.flatMap((post) => resolvePostTags(post))));
-  const tagCount = (tag: string) => posts.filter((post) => resolvePostTags(post).includes(tag)).length;
-
-  const filteredPosts = selectedTag
-    ? posts.filter((post) => resolvePostTags(post).includes(selectedTag))
-    : posts;
-
-  // Entry numbers count up from the oldest post and stay fixed under a filter.
+  // Entry numbers count up from the oldest post.
   const entryNumber = new Map(posts.map((post, i) => [post.slug, posts.length - i]));
   const totalMinutes = posts.reduce((sum, post) => sum + post.readTime, 0);
 
@@ -60,20 +49,6 @@ const Writings = () => {
         )}
       </PageHead>
 
-      <div className="tag-filters" role="group" aria-label="Filter by tag">
-        {[null, ...allTags].map((tag) => (
-          <button
-            key={tag ?? "all"}
-            onClick={() => setSelectedTag(tag)}
-            aria-pressed={selectedTag === tag}
-            className="tag-filter"
-          >
-            {tag ?? "All"}
-            <i>{tag ? tagCount(tag) : posts.length}</i>
-          </button>
-        ))}
-      </div>
-
       {loading && (
         <div className="notice">
           Loading writings...
@@ -86,15 +61,14 @@ const Writings = () => {
         </div>
       )}
 
-      <div className="ledger" key={selectedTag ?? "all"}>
-        {groupByMonth(filteredPosts).map((group) => (
+      <div className="ledger">
+        {groupByMonth(posts).map((group) => (
           <section key={group.label} className="ledger__group">
             <h2 className="ledger__month">
               <span>{group.label}</span>
             </h2>
 
             {group.posts.map((post) => {
-              const tags = resolvePostTags(post).slice(0, 3);
               const ticks = Math.min(post.readTime, MAX_TICKS);
               return (
                 <article key={post.slug} className="ledger__row" style={{ animationDelay: `${row++ * 60}ms` }}>
@@ -104,13 +78,6 @@ const Writings = () => {
                     <div className="ledger__body">
                       <h3 className="ledger__title">{post.title}</h3>
                       {post.excerpt && <p className="ledger__excerpt">{post.excerpt}</p>}
-                      {tags.length > 0 && (
-                        <p className="ledger__tags">
-                          {tags.map((tag) => (
-                            <span key={tag}>{tag}</span>
-                          ))}
-                        </p>
-                      )}
                     </div>
 
                     <div className="ledger__meta">
@@ -131,7 +98,7 @@ const Writings = () => {
           </section>
         ))}
 
-        {!loading && !error && filteredPosts.length === 0 && (
+        {!loading && !error && posts.length === 0 && (
           <div className="notice">
             No writings found.
           </div>

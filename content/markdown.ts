@@ -18,7 +18,6 @@ export interface PostFrontmatterFields {
   title: string;
   excerpt: string;
   date: string;
-  tags: string[];
   readTime: number;
   published: boolean;
   notionPageId: string;
@@ -103,22 +102,11 @@ export function serializeFrontmatter(fields: PostFrontmatterFields): string {
     `title: ${JSON.stringify(fields.title)}`,
     `excerpt: ${JSON.stringify(fields.excerpt)}`,
     `date: ${JSON.stringify(fields.date)}`,
-    `tags: ${JSON.stringify(fields.tags)}`,
     `readTime: ${fields.readTime}`,
     `published: ${fields.published}`,
     `notionPageId: ${JSON.stringify(fields.notionPageId)}`,
     "---",
   ].join("\n");
-}
-
-function toStringArray(value: unknown): string[] {
-  if (Array.isArray(value)) {
-    return value.map((item) => String(item)).filter(Boolean);
-  }
-  if (typeof value === "string" && value.trim()) {
-    return [value.trim()];
-  }
-  return [];
 }
 
 /**
@@ -143,7 +131,6 @@ export function buildPostFromMarkdown(
     }
 
     const date = String(data.date ?? "").trim();
-    const tags = toStringArray(data.tags);
     const body = content.trim();
     const excerpt = String(data.excerpt ?? "").trim() || createExcerpt(body);
     const readTimeRaw = Number(data.readTime);
@@ -153,7 +140,7 @@ export function buildPostFromMarkdown(
         : estimateReadTime(body);
 
     return {
-      summary: { slug, title, excerpt, date, tags, readTime },
+      summary: { slug, title, excerpt, date, readTime },
       content: body,
     };
   } catch {

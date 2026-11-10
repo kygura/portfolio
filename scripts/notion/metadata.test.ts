@@ -33,10 +33,6 @@ function makeFullPage() {
         type: "date",
         date: { start: "2026-05-24" },
       },
-      Keywords: {
-        type: "multi_select",
-        multi_select: [{ name: "philosophy" }, { name: "self" }],
-      },
       Published: {
         type: "checkbox",
         checkbox: true,
@@ -58,7 +54,6 @@ describe("extractPostMetadata", () => {
     assert.equal(meta.title, "On the Ego");
     assert.equal(meta.slug, "on-the-ego");
     assert.equal(meta.date, "2026-05-24");
-    assert.deepEqual(meta.tags, ["philosophy", "self"]);
     assert.equal(meta.published, true);
     assert.equal(meta.excerpt, "");
     assert.equal(meta.createdTime, "2026-05-01T00:00:00.000Z");
@@ -120,31 +115,12 @@ describe("extractPostMetadata", () => {
       properties: {
         Title: { type: "title", title: [{ plain_text: "No Create Time" }] },
         "Publication Date": { type: "date", date: { start: "2026-05-20" } },
-        Keywords: { type: "multi_select", multi_select: [] },
         Published: { type: "checkbox", checkbox: false },
       },
     };
     const meta = extractPostMetadata(page);
     assert.equal(meta.createdTime, "2026-05-20T00:00:00.000Z");
     assert.equal(meta.lastEditedTime, "2026-05-20T00:00:00.000Z");
-  });
-
-  it("falls back to alternate property key 'Tags' for tags", () => {
-    const page = makeFullPage();
-    delete page.properties["Keywords"];
-    page.properties["Tags"] = {
-      type: "multi_select",
-      multi_select: [{ name: "alt-tag" }],
-    };
-    const meta = extractPostMetadata(page);
-    assert.deepEqual(meta.tags, ["alt-tag"]);
-  });
-
-  it("returns empty tags array when multi_select is absent", () => {
-    const page = makeFullPage();
-    delete page.properties["Keywords"];
-    const meta = extractPostMetadata(page);
-    assert.deepEqual(meta.tags, []);
   });
 });
 
@@ -183,7 +159,6 @@ describe("dedupeBySlug", () => {
       title: slug,
       excerpt: "",
       date: "2026-01-01",
-      tags: [],
       published: true,
       createdTime: lastEditedTime,
       lastEditedTime,

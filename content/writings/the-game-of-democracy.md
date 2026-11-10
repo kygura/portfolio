@@ -3,7 +3,6 @@ slug: "the-game-of-democracy"
 title: "The Game of Democracy"
 excerpt: "An application of [[Semper Contra]] and [[Perpetua Illusio]] to the current era ] Starting Point Semper Contra established the pattern: every system built to liberate becomes the next cage. History has no destination — o..."
 date: "2026-02-27T10:08:00.000Z"
-tags: []
 readTime: 5
 published: true
 notionPageId: "314143f2-8260-81e7-b6d0-f76413bcad63"

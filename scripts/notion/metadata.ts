@@ -18,7 +18,7 @@ type NotionProp = {
 
 type NotionProps = Record<string, NotionProp | undefined>;
 
-type NotionTextItem = { plain_text?: unknown; name?: unknown } | null | undefined;
+type NotionTextItem = { plain_text?: unknown; } | null | undefined;
 
 type NotionPage = {
   id: string;
@@ -77,18 +77,6 @@ function readDateProperty(props: NotionProps, ...keys: string[]): string {
   return "";
 }
 
-function readMultiSelectProperty(props: NotionProps, ...keys: string[]): string[] {
-  for (const key of keys) {
-    const prop = props[key];
-    if (!prop || prop.type !== "multi_select") continue;
-    const items: NotionTextItem[] = Array.isArray(prop.multi_select) ? prop.multi_select : [];
-    return items
-      .map((item) => (typeof item?.name === "string" ? item.name.trim() : ""))
-      .filter((name) => name.length > 0);
-  }
-  return [];
-}
-
 // ---------------------------------------------------------------------------
 // Exported functions
 // ---------------------------------------------------------------------------
@@ -103,9 +91,6 @@ export function extractPostMetadata(page: NotionPage): NotionPostMetadata {
   const rawDate =
     readDateProperty(props, "Publication Date", "Date", "date") ||
     (page.created_time ?? "");
-
-  // tags
-  const tags = readMultiSelectProperty(props, "Keywords", "Tags", "tags");
 
   // published
   const published = readCheckboxProperty(props, "Published", "published");
@@ -135,7 +120,6 @@ export function extractPostMetadata(page: NotionPage): NotionPostMetadata {
     slug,
     excerpt,
     date: rawDate,
-    tags,
     published,
     createdTime,
     lastEditedTime,

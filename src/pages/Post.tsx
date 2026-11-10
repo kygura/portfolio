@@ -4,7 +4,6 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useMarkdownPost, useMarkdownPosts } from "../hooks/useMarkdownPosts";
-import { resolvePostTags } from "../lib/postTagFallbacks";
 import CodeBlock from "../components/CodeBlock";
 import PostImage from "../components/PostImage";
 import Alert from "../components/Alert";
@@ -95,7 +94,6 @@ const Post = () => {
   const number = at >= 0 ? posts.length - at : 0;
   const newer = at > 0 ? posts[at - 1] : null;
   const older = at >= 0 && at < posts.length - 1 ? posts[at + 1] : null;
-  const tags = resolvePostTags(post).slice(0, 4);
   const parsed = new Date(post.date);
   const date = Number.isFinite(parsed.getTime())
     ? parsed.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })
@@ -116,14 +114,6 @@ const Post = () => {
         </p>
 
         <h1 className="post-head__title">{post.title}</h1>
-
-        {tags.length > 0 && (
-          <p className="post-head__tags">
-            {tags.map((tag) => (
-              <span key={tag}>{tag}</span>
-            ))}
-          </p>
-        )}
       </header>
 
       <PostToc articleRef={articleRef} contentKey={post.content} />

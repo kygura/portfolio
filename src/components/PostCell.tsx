@@ -22,8 +22,6 @@ export default function PostCell({ post, loading }: PostCellProps) {
     );
   }
 
-  const tag = post.tags[0] ?? null;
-
   return (
     <div className="canvas-cell canvas-cell--post">
       <Link
@@ -32,7 +30,6 @@ export default function PostCell({ post, loading }: PostCellProps) {
         aria-label={`Read: ${post.title}`}
       >
         <div className="canvas-cell__post-meta">
-          {tag && <span>{tag}</span>}
           <span>{post.readTime} min</span>
         </div>
         <h3 className="canvas-cell__post-title">{post.title}</h3>

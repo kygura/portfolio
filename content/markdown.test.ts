@@ -13,7 +13,6 @@ test("serializeFrontmatter + parseFrontmatter round-trips fields", () => {
     title: "On the Ego",
     excerpt: "A short note",
     date: "2026-05-24",
-    tags: ["philosophy", "self"],
     readTime: 3,
     published: true,
     notionPageId: "page-123",
@@ -23,7 +22,6 @@ test("serializeFrontmatter + parseFrontmatter round-trips fields", () => {
   assert.equal(data.slug, "on-the-ego");
   assert.equal(data.title, "On the Ego");
   assert.equal(data.date, "2026-05-24");
-  assert.deepEqual(data.tags, ["philosophy", "self"]);
   assert.equal(data.readTime, 3);
   assert.equal(data.published, true);
   assert.equal(data.notionPageId, "page-123");
@@ -36,7 +34,6 @@ test("buildPostFromMarkdown derives a valid summary", () => {
     title: "Thaumazein",
     excerpt: "",
     date: "2026-05-22",
-    tags: ["wonder"],
     readTime: 0,
     published: true,
     notionPageId: "page-456",
@@ -49,7 +46,6 @@ test("buildPostFromMarkdown derives a valid summary", () => {
   assert.ok(result);
   assert.equal(result.summary.slug, "thaumazein");
   assert.equal(result.summary.title, "Thaumazein");
-  assert.deepEqual(result.summary.tags, ["wonder"]);
   assert.ok(result.summary.readTime >= 1, "readTime is estimated when missing");
   assert.ok(result.summary.excerpt.length > 0, "excerpt is derived from body");
   assert.equal(result.content, "Wonder is the beginning of philosophy.");
