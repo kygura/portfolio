@@ -3,7 +3,9 @@ import { useParams, Link, Navigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useMarkdownPost, useMarkdownPosts } from "../hooks/useMarkdownPosts";
+import { localizedSummary, postLangs, useMarkdownPost, useMarkdownPosts } from "../hooks/useMarkdownPosts";
+import { postPath, READING_COPY, useReadingLang } from "../lib/readingLang";
+import LangSwitch from "../components/LangSwitch";
 import { resolvePostTags } from "../lib/postTagFallbacks";
 import CodeBlock from "../components/CodeBlock";
 import PostImage from "../components/PostImage";
@@ -59,8 +61,10 @@ const alertTypes: Record<AlertType, AlertType> = {
 
 const Post = () => {
   const { slug } = useParams();
-  const { post, loading, error } = useMarkdownPost(slug);
+  const [requestedLang, setLang] = useReadingLang();
+  const { post, loading, error, lang, stale } = useMarkdownPost(slug, requestedLang);
   const { posts } = useMarkdownPosts();
+  const copy = READING_COPY[lang];
   const articleRef = useRef<HTMLElement>(null);
 
   if (loading) {
@@ -93,26 +97,33 @@ const Post = () => {
   // The index lists newest first and numbers entries up from the oldest.
   const at = posts.findIndex((p) => p.slug === post.slug);
   const number = at >= 0 ? posts.length - at : 0;
-  const newer = at > 0 ? posts[at - 1] : null;
-  const older = at >= 0 && at < posts.length - 1 ? posts[at + 1] : null;
+  const summary = at >= 0 ? posts[at] : null;
+  const langs = summary ? postLangs(summary) : (["en"] as const);
+  const newerPost = at > 0 ? posts[at - 1] : null;
+  const olderPost = at >= 0 && at < posts.length - 1 ? posts[at + 1] : null;
+  const newer = newerPost && localizedSummary(newerPost, lang);
+  const older = olderPost && localizedSummary(olderPost, lang);
   const tags = resolvePostTags(post).slice(0, 4);
   const parsed = new Date(post.date);
   const date = Number.isFinite(parsed.getTime())
-    ? parsed.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })
+    ? parsed.toLocaleDateString(copy.locale, { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })
     : "";
 
   return (
     <div className="page-shell page-shell--narrow animate-fade-in">
-      <header className="post-head">
-        <Link to="/writings" className="post-head__back">
-          <ArrowLeft size={14} aria-hidden="true" />
-          Writings
-        </Link>
+      <header className="post-head" lang={lang}>
+        <div className="post-head__bar">
+          <Link to="/writings" className="post-head__back">
+            <ArrowLeft size={14} aria-hidden="true" />
+            Writings
+          </Link>
+          {langs.length > 1 && <LangSwitch lang={lang} onChange={setLang} available={langs} />}
+        </div>
 
         <p className="post-head__eyebrow">
           {number > 0 && <span>№{String(number).padStart(2, "0")}</span>}
           {date && <time dateTime={post.date}>{date}</time>}
-          <span>{post.readTime} min read</span>
+          <span>{copy.minRead(post.readTime)}</span>
         </p>
 
         <h1 className="post-head__title">{post.title}</h1>
@@ -126,9 +137,15 @@ const Post = () => {
         )}
       </header>
 
+      {stale && (
+        <p className="notice post-stale" lang={lang}>
+          {copy.stale}
+        </p>
+      )}
+
       <PostToc articleRef={articleRef} contentKey={post.content} />
 
-      <article ref={articleRef} className="prose-minimal text-lg leading-relaxed text-foreground">
+      <article ref={articleRef} lang={lang} className="prose-minimal text-lg leading-relaxed text-foreground">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
@@ -257,11 +274,11 @@ const Post = () => {
       </article>
 
       {(older || newer) && (
-        <nav className="post-next" aria-label="More writings">
+        <nav className="post-next" aria-label={copy.more} lang={lang}>
           {older ? (
-            <Link to={`/writings/${older.slug}`} className="post-next__link">
+            <Link to={postPath(older.slug, lang)} className="post-next__link">
               <span className="post-next__dir">
-                <ArrowLeft size={13} aria-hidden="true" /> Older
+                <ArrowLeft size={13} aria-hidden="true" /> {copy.older}
               </span>
               <span className="post-next__title">{older.title}</span>
             </Link>
@@ -269,9 +286,9 @@ const Post = () => {
             <span />
           )}
           {newer && (
-            <Link to={`/writings/${newer.slug}`} className="post-next__link post-next__link--newer">
+            <Link to={postPath(newer.slug, lang)} className="post-next__link post-next__link--newer">
               <span className="post-next__dir">
-                Newer <ArrowRight size={13} aria-hidden="true" />
+                {copy.newer} <ArrowRight size={13} aria-hidden="true" />
               </span>
               <span className="post-next__title">{newer.title}</span>
             </Link>

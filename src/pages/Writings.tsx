@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import PageHead from "../components/PageHead";
-import { useMarkdownPosts } from "../hooks/useMarkdownPosts";
+import { localizedSummary, readableLang, useMarkdownPosts } from "../hooks/useMarkdownPosts";
+import { postPath, useReadingLang } from "../lib/readingLang";
+import LangSwitch from "../components/LangSwitch";
 import { resolvePostTags } from "../lib/postTagFallbacks";
 import type { PostSummary } from "../../content/posts";
 
@@ -22,8 +24,8 @@ const monthLabel = (date: Date | null) =>
   date ? date.toLocaleString("en", { month: "long", year: "numeric", timeZone: "UTC" }) : "Undated";
 
 // Posts arrive newest first; consecutive posts from the same month share a group.
-const groupByMonth = (posts: PostSummary[]) =>
-  posts.reduce<{ label: string; posts: PostSummary[] }[]>((groups, post) => {
+const groupByMonth = <T extends PostSummary>(posts: T[]) =>
+  posts.reduce<{ label: string; posts: T[] }[]>((groups, post) => {
     const label = monthLabel(parseDate(post.date));
     const last = groups[groups.length - 1];
     if (last?.label === label) last.posts.push(post);
@@ -34,7 +36,10 @@ const groupByMonth = (posts: PostSummary[]) =>
 const Writings = () => {
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
-  const { posts, loading, error } = useMarkdownPosts();
+  const { posts: originals, loading, error } = useMarkdownPosts();
+  const [lang, setLang] = useReadingLang();
+  const posts = originals.map((post) => ({ ...localizedSummary(post, lang), lang: readableLang(post, lang) }));
+  const translated = originals.some((post) => post.translations?.es);
 
   const allTags = Array.from(new Set(posts.flatMap((post) => resolvePostTags(post))));
   const tagCount = (tag: string) => posts.filter((post) => resolvePostTags(post).includes(tag)).length;
@@ -60,18 +65,21 @@ const Writings = () => {
         )}
       </PageHead>
 
-      <div className="tag-filters" role="group" aria-label="Filter by tag">
-        {[null, ...allTags].map((tag) => (
-          <button
-            key={tag ?? "all"}
-            onClick={() => setSelectedTag(tag)}
-            aria-pressed={selectedTag === tag}
-            className="tag-filter"
-          >
-            {tag ?? "All"}
-            <i>{tag ? tagCount(tag) : posts.length}</i>
-          </button>
-        ))}
+      <div className="writings-controls">
+        <div className="tag-filters" role="group" aria-label="Filter by tag">
+          {[null, ...allTags].map((tag) => (
+            <button
+              key={tag ?? "all"}
+              onClick={() => setSelectedTag(tag)}
+              aria-pressed={selectedTag === tag}
+              className="tag-filter"
+            >
+              {tag ?? "All"}
+              <i>{tag ? tagCount(tag) : posts.length}</i>
+            </button>
+          ))}
+        </div>
+        {translated && <LangSwitch lang={lang} onChange={setLang} />}
       </div>
 
       {loading && (
@@ -97,8 +105,8 @@ const Writings = () => {
               const tags = resolvePostTags(post).slice(0, 3);
               const ticks = Math.min(post.readTime, MAX_TICKS);
               return (
-                <article key={post.slug} className="ledger__row" style={{ animationDelay: `${row++ * 60}ms` }}>
-                  <Link to={`/writings/${post.slug}`} className="ledger__link">
+                <article key={post.slug} lang={post.lang} className="ledger__row" style={{ animationDelay: `${row++ * 60}ms` }}>
+                  <Link to={postPath(post.slug, post.lang)} className="ledger__link">
                     <span className="ledger__num">№{pad(entryNumber.get(post.slug) ?? 0)}</span>
 
                     <div className="ledger__body">

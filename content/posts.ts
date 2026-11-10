@@ -20,6 +20,27 @@ export const notionPostMetadataSchema = z.object({
   lastEditedTime: z.string().trim().min(1),
 });
 
+/** Reading languages. English is the original; the rest are translations. */
+export const LANGS = ["en", "es"] as const;
+export type Lang = (typeof LANGS)[number];
+export type TranslationLang = Exclude<Lang, "en">;
+export const TRANSLATION_LANGS: TranslationLang[] = ["es"];
+
+export function isLang(value: unknown): value is Lang {
+  return typeof value === "string" && (LANGS as readonly string[]).includes(value);
+}
+
+/**
+ * A translation's own title, excerpt and length. `stale` is set when the
+ * English original changed after the translation was last checked against it.
+ */
+export const postTranslationSchema = z.object({
+  title: z.string().trim().min(1),
+  excerpt: z.string().trim().default(""),
+  readTime: z.number().int().positive(),
+  stale: z.boolean().default(false),
+});
+
 export const postSummarySchema = z.object({
   slug: z.string().regex(slugPattern),
   title: z.string().trim().min(1),
@@ -27,6 +48,7 @@ export const postSummarySchema = z.object({
   date: optionalDateSchema,
   tags: z.array(postTagSchema).default([]),
   readTime: z.number().int().positive(),
+  translations: z.object({ es: postTranslationSchema.optional() }).optional(),
 });
 
 export const postSchema = postSummarySchema.extend({
@@ -41,6 +63,7 @@ export const postFrontmatterSchema = postSummarySchema.extend({
 export const postsManifestSchema = z.array(postSummarySchema);
 
 export type NotionPostMetadata = z.infer<typeof notionPostMetadataSchema>;
+export type PostTranslation = z.infer<typeof postTranslationSchema>;
 export type PostSummary = z.infer<typeof postSummarySchema>;
 export type Post = z.infer<typeof postSchema>;
 export type PostFrontmatter = z.infer<typeof postFrontmatterSchema>;
