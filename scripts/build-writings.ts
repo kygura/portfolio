@@ -11,13 +11,23 @@
  *    - `public/writings.json`            the same list, for agents and feeds
  *    - `public/writings/<slug>.md`       raw markdown per post
  *    - `public/llms.txt`                 an index agents can start from
+ *    Translations in `content/writings/<lang>/<slug>.md` (hand-maintained, never
+ *    touched by the sync) are attached to their post's summary and copied to
+ *    `public/writings/<lang>/<slug>.md`. Each one records a `source` hash of the
+ *    English body it was translated from; when the original changes, the build
+ *    warns and the translation is flagged `stale` until it is reviewed.
  *
  * Without NOTION_SECRET (local dev, forks) the committed snapshot in
  * `content/writings/` is used as-is.
  *
- * Usage: bun scripts/build-writings.ts [--offline]
+ * Usage: bun scripts/build-writings.ts [--offline] [--stamp-translations[=slug,...]]
+ *
+ * --stamp-translations records the current English hash in every translation
+ * that has none yet; with a slug list it re-stamps those translations, which
+ * is how a reviewed translation is marked current again.
  * Bun loads .env / .env.local on its own, so local runs pick up NOTION_SECRET.
  */
+import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,7 +37,9 @@ import {
   createExcerpt,
   estimateReadTime,
   sortPostsByDateDesc,
+  TRANSLATION_LANGS,
   type PostSummary,
+  type TranslationLang,
 } from "../content/posts.ts";
 import { getNotionClient, resolveDataSourceId } from "./notion/client.ts";
 import { getOptionalNotionToken } from "./notion/env.ts";
@@ -155,7 +167,8 @@ function renderLlmsTxt(posts: PostSummary[], origin: string): string {
     `> ${SITE_DESCRIPTION}`,
     "",
     "Every post is available as raw markdown with YAML frontmatter at",
-    "`/writings/<slug>.md`. The full list, with metadata, is at `/writings.json`.",
+    "`/writings/<slug>.md`. Spanish translations live at `/writings/es/<slug>.md`.",
+    "The full list, with metadata, is at `/writings.json`.",
     "",
     "## About",
     "",
@@ -165,11 +178,102 @@ function renderLlmsTxt(posts: PostSummary[], origin: string): string {
     "",
     ...posts.map((post) => {
       const summary = post.excerpt ? `: ${post.excerpt}` : "";
-      return `- [${post.title}](${origin}/writings/${post.slug}.md)${summary}`;
+      const es = post.translations?.es
+        ? ` ([español](${origin}/writings/es/${post.slug}.md))`
+        : "";
+      return `- [${post.title}](${origin}/writings/${post.slug}.md)${es}${summary}`;
     }),
     "",
   ];
   return lines.join("\n");
+}
+
+/** Fingerprint of an English body, recorded in translations as `source`. */
+function sourceHash(body: string): string {
+  return createHash("sha256").update(body.trim()).digest("hex").slice(0, 16);
+}
+
+/** Write `source: "<hash>"` into a translation's frontmatter. */
+function withSource(raw: string, hash: string): string {
+  const end = raw.indexOf("\n---", 3);
+  if (!raw.startsWith("---") || end < 0) {
+    throw new Error("translation has no frontmatter to stamp");
+  }
+  const head = raw
+    .slice(0, end)
+    .split("\n")
+    .filter((line) => !line.startsWith("source:"));
+  return [...head, `source: ${JSON.stringify(hash)}`].join("\n") + raw.slice(end);
+}
+
+function stampRequest(): { all: boolean; slugs: Set<string> } | null {
+  const flag = process.argv.find((arg) => arg.startsWith("--stamp-translations"));
+  if (!flag) return null;
+  const list = flag.split("=")[1];
+  return list
+    ? { all: false, slugs: new Set(list.split(",").map((slug) => slug.trim()).filter(Boolean)) }
+    : { all: true, slugs: new Set() };
+}
+
+async function attachTranslations(
+  summaries: PostSummary[],
+  englishBodies: Map<string, string>,
+): Promise<void> {
+  const bySlug = new Map(summaries.map((summary) => [summary.slug, summary]));
+  const stamp = stampRequest();
+
+  for (const lang of TRANSLATION_LANGS) {
+    const dir = path.join(CONTENT_DIR, lang);
+    const files = await fs.readdir(dir).catch(() => [] as string[]);
+    const publicDir = path.join(PUBLIC_POSTS_DIR, lang);
+    await fs.mkdir(publicDir, { recursive: true });
+
+    for (const file of files.filter((name) => name.endsWith(".md"))) {
+      const slug = file.slice(0, -3);
+      const summary = bySlug.get(slug);
+      const english = englishBodies.get(slug);
+      if (!summary || english === undefined) {
+        console.warn(`[writings]   ${lang}/${file}: no English post "${slug}", skipped`);
+        continue;
+      }
+
+      let raw = await fs.readFile(path.join(dir, file), "utf-8");
+      const parsed = buildPostFromMarkdown(raw, slug);
+      if (!parsed) {
+        throw new Error(`content/writings/${lang}/${file} has no title in its frontmatter`);
+      }
+      if (parsed.summary.slug !== slug) {
+        throw new Error(`content/writings/${lang}/${file} declares slug "${parsed.summary.slug}"; rename the file to match`);
+      }
+
+      const current = sourceHash(english);
+      const recorded = String(parseFrontmatter(raw).data.source ?? "");
+      if (stamp && ((stamp.all && !recorded) || stamp.slugs.has(slug))) {
+        raw = withSource(raw, current);
+        await fs.writeFile(path.join(dir, file), raw, "utf-8");
+        console.log(`[writings]   stamped ${lang}/${file}`);
+      }
+
+      const stale = String(parseFrontmatter(raw).data.source ?? "") !== current;
+      if (stale) {
+        console.warn(
+          `[writings]   ${lang}/${file} is stale: the English original changed since it was translated. ` +
+            `Update it, then run with --stamp-translations=${slug}.`,
+        );
+      }
+
+      summary.translations = {
+        ...summary.translations,
+        [lang as TranslationLang]: {
+          title: parsed.summary.title,
+          excerpt: parsed.summary.excerpt,
+          readTime: estimateReadTime(parsed.content),
+          stale,
+        },
+      };
+      await fs.writeFile(path.join(publicDir, file), raw, "utf-8");
+    }
+  }
 }
 
 async function emit(): Promise<PostSummary[]> {
@@ -180,6 +284,7 @@ async function emit(): Promise<PostSummary[]> {
   await fs.mkdir(PUBLIC_POSTS_DIR, { recursive: true });
 
   const summaries: PostSummary[] = [];
+  const englishBodies = new Map<string, string>();
   for (const file of files) {
     const raw = await fs.readFile(path.join(CONTENT_DIR, file), "utf-8");
     const parsed = buildPostFromMarkdown(raw, file.slice(0, -3));
@@ -190,8 +295,11 @@ async function emit(): Promise<PostSummary[]> {
       throw new Error(`content/writings/${file} declares slug "${parsed.summary.slug}"; rename the file to match`);
     }
     summaries.push(parsed.summary);
+    englishBodies.set(parsed.summary.slug, parsed.content);
     await fs.writeFile(path.join(PUBLIC_POSTS_DIR, file), raw, "utf-8");
   }
+
+  await attachTranslations(summaries, englishBodies);
 
   const sorted = sortPostsByDateDesc(summaries);
   const origin = siteOrigin();
@@ -204,6 +312,15 @@ async function emit(): Promise<PostSummary[]> {
         ...post,
         url: `${origin}/writings/${post.slug}`,
         markdownUrl: `${origin}/writings/${post.slug}.md`,
+        ...(post.translations?.es && {
+          translations: {
+            es: {
+              ...post.translations.es,
+              url: `${origin}/writings/${post.slug}?lang=es`,
+              markdownUrl: `${origin}/writings/es/${post.slug}.md`,
+            },
+          },
+        }),
       })),
       null,
       2,
