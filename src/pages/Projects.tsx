@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight, GitBranch, MessageSquare, Star } from "lucide-react";
 import RepoPreview from "@/components/RepoPreview";
 import { timeAgo, useShowcase, type ShowcaseRepo } from "@/lib/showcase";
+import PageHead from "../components/PageHead";
 
 const RepoMeta = ({ repo }: { repo: ShowcaseRepo }) => (
   <p className="repo-card__meta">
@@ -81,23 +82,21 @@ const Projects = () => {
 
   return (
     <div className="page-shell page-shell--wide animate-fade-in">
-      <div className="mb-10 sm:mb-14 pb-6 sm:pb-8 border-b border-[var(--border-muted)]">
-        <h1 className="text-5xl md:text-7xl font-display text-foreground tracking-[-0.01em] leading-[0.85] uppercase mb-4">
-          Software
-        </h1>
-        <p className="text-lg md:text-xl text-foreground max-w-2xl leading-relaxed">
-          My projects, pulled from GitHub. Deployed projects link to the live site. The rest open onto their source, which you can browse and ask questions.
-        </p>
+      <PageHead
+        no="02"
+        label="Software"
+        title="Software"
+        lede="My projects, pulled from GitHub. Deployed ones link to the live site; the rest open onto their source, which you can browse and ask questions about."
+      >
         {data && (
-          <p className="repo-index__stamp">
+          <p className="page-head__facts">
             <a href={`https://github.com/${data.user}`} target="_blank" rel="noopener noreferrer">
               github.com/{data.user}
             </a>
-            <span aria-hidden="true">/</span>
             <span>synced {timeAgo(data.generatedAt)}</span>
           </p>
         )}
-      </div>
+      </PageHead>
 
       {isPending && (
         <div className="repo-grid" aria-busy="true" aria-label="Loading repositories">
@@ -108,9 +107,9 @@ const Projects = () => {
       )}
 
       {error && (
-        <div className="border border-dashed border-foreground/30 px-6 py-8 text-sm uppercase tracking-[0.2em] text-muted-foreground">
+        <div className="notice">
           Couldn't reach GitHub ({error.message}).{" "}
-          <a href="https://github.com/kygura" className="underline text-foreground">
+          <a href="https://github.com/kygura">
             Browse the repositories there
           </a>
           .

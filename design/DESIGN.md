@@ -74,7 +74,7 @@ Master's `CartographicHero` keeps its sticky stage, scroll runway, name, tagline
 - **Beach** (`beach.ts`): a white-sand shore at sunset, looking straight out to sea with the sun half sunk dead ahead and a road of glitter to it, cloud streaks lit pink and gold. Small waves roll in, wash up the slope and slide back, leaving a dark wet band that dries from the top down and mirrors the sky. Near palms with stacked, flared trunk rings and saw-tooth ribbon fronds arch in from both sides to frame the sun; feathered palms with smooth ringed trunks (midrib plus V-folded leaflets) are the background, in stands on the low island to the left and the headland to the right, and lining the beach on both sides past the near palms. Driftwood, rocks, shells, starfish, footprints, gulls. Lighting: one low sun ahead, sky-over-sand hemisphere ambient, light through backlit fronds, a rim on edges against the sun; cast shadows baked once into a top-down mask the sand samples. One shoreline model (sand height, runup, breaker, wet line) is written in GLSL and mirrored in JS. Standing camera facing the sun. Fixed palette. Eggs: the sun (flares), a gull (rolls), a bottle in the shallows (rides a wave in).
 - **05 Field**: the interactive sheet, a living relief on one shared height field (ambient drift + wave simulation + cursor swell). Click or tap sends a pulse out from that point (the wave equation carries it through the contours, with a dashed accent ring marking the front). Dragging pulls the contours and draped grid along and they relax back; moving the cursor lifts a soft swell with a reticle and leaves a wake. Scenes opt into input through `SceneDef.pointer`; such a scene takes taps (pulse) and Shift+drag (warp) while plain drag orbits like every other scene; its pitch floor and zoom-out limit are set so the frame never shows past the edge of the map.
 
-Scene tabs (`01 02 03 04 05` + `[` `]` hint) sit at the left end of the existing bottom strip, opposite the scroll cue. Tabs show only a sequential number taken from the scene's position in `SHEETS` (the name stays in the button's aria-label), so adding a scene renumbers the rest. No pinned labels float in the stage; the mock's readouts, map key and compass are not shown (master's hero has no slot for them).
+The home hero shows one random scene per page load. Its bottom strip names it (`09/12 MATRIX · ALL SCENES →`, a link to that scene on `/scenes`) opposite a scroll cue; under 640px the cue and the words "all scenes" drop and an arrow stands in. This link is how phones reach Scenes, since the nav only lists it from 1024px. No pinned labels float in the stage; the mock's readouts, map key and compass are not shown (master's hero has no slot for them).
 
 Easter eggs: every scene hides one to four tap targets (`SceneDef.eggs` in `psx.ts`: a world position, a screen-pixel radius and a `fire` that starts a one-shot reaction and returns a caption). A tap (under 8px of travel) on or near one fires the nearest; drags, orbit and the Field's pulse are untouched, and a hit on the Field's benchmark suppresses that tap's pulse. The caption shows as a hairline readout above the strip (`FOUND 03/15` the first time, `AGAIN` after). Found ids persist in `localStorage["nca-eggs"]`. Nothing marks the targets.
 
@@ -83,6 +83,20 @@ Below the hero sits a new Manifesto (`src/components/Manifesto.tsx`): a `( 00 �
 PS1 pipeline: render to ~¼ width target, vertex snap, affine UVs, Gouraud light, fog, 15-bit quantize with 4×4 Bayer dither, vignette, nearest upscale. Switching scenes dissolves through the dither matrix (hard cut under reduced motion). Last scene stored in `localStorage["nca-sheet"]`. The mock's scrims (top and lower half) keep the type legible over every scene.
 
 Colour: three's colour management is off and output is linear, matching the r128 mock. The render loop runs only while needed (stops offscreen and in hidden tabs). Reduced motion starts paused on a still frame. Everything is disposed on unmount. Without WebGL the stage shows a CSS contour sheet.
+
+## Scenes viewer
+
+`/scenes/:id` (`src/pages/Scenes.tsx`) is a stage over a console, together exactly one viewport tall under the nav. The console is a solid bar on the `--code` ground, not an overlay, so its type reads the same over a pink beach or a black void. Top row: previous / next steppers around a Silkscreen counter (`10/12`), the scene name in Literata italic, the input hint (from 1200px), and two tools: `0` Reset (camera) and `F` Hide. Bottom row: a rail of every scene, numbered, the current one marked by an accent bar on the rail's top hairline; under 720px the rail scrolls and its right end fades out. `F` folds the console away so the stage fills the window, leaving one dimmed "Show panel" handle; `F` or `Esc` brings it back. On touch screens the key caps are hidden.
+
+## Page heads
+
+Every index page opens with the same head (`src/components/PageHead.tsx`): a Silkscreen eyebrow numbered in nav order (`( 01 — WRITINGS )`, `( 02 — SOFTWARE )`, `( 04 — CV )`), the uppercase Literata title, a lede in `--ink-2`, an optional mono row of facts, and a hairline. All of them sit on the wide shell so their left edges line up from page to page. Loading, empty and error states share one `.notice` box (dashed hairline, mono).
+
+A post's head is quieter: a back link, a mono line of entry number, date and read time, the title in sentence case as written, and its tags. At the foot of a post an Older / Newer pair links the neighbouring entries.
+
+The CV is a ledger on the same shell: each section has its label in an 11rem margin column and its content beside it (stacked under 900px). Skills are plain lines of text per category, not chips. The PDF button is a real download link.
+
+The footer ends in a colophon line under the quote: site, place and year on the left, the quote's number in the middle, GitHub / Email / CV on the right.
 
 ## Keyboard
 
@@ -97,7 +111,8 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 | `n` / `p` | Next / previous page (nav order, wraps) |
 | `j` / `k` / `G` | Scroll down / up / bottom |
 | `←` `→` `Home` `End` | Move along the nav links when one is focused |
-| `[` `]` | Previous / next hero scene (home) |
+| `[` `]` | Previous / next scene (`/scenes`) |
+| `0` / `F` | Reset the camera / fold the console (`/scenes`) |
 | `m` | Play / pause the tape deck |
 | `?` | Help sheet (focus held on its close button) |
 | `Esc` | Close help, leave a field |
