@@ -8,7 +8,7 @@ import { useHeroStage } from "@/hero/useHeroStage";
 
 /**
  * Scenes: a stage and, under it, a console: counter and steppers, the scene's
- * name and one-line caption, the input hint, camera reset, and a rail of every
+ * name, the input hint, camera reset, and a rail of every
  * scene. Each scene has its own URL (/scenes/:id); /scenes alone opens the last
  * one viewed. [ ] and the arrow keys change scene, 0 resets the camera, and F
  * folds the console away so the stage fills the window.
@@ -109,7 +109,6 @@ const Scenes = () => {
 
             <div className="scenes__caption" key={cur.id}>
               <h1 className="scenes__title">{cur.name}</h1>
-              <p className="scenes__note">{cur.note}</p>
             </div>
 
             <p className="scenes__hint">{cur.hint ?? DEFAULT_HINT}</p>

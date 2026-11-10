@@ -86,7 +86,7 @@ Colour: three's colour management is off and output is linear, matching the r128
 
 ## Scenes viewer
 
-`/scenes/:id` (`src/pages/Scenes.tsx`) is a stage over a console, together exactly one viewport tall under the nav. The console is a solid bar on the `--code` ground, not an overlay, so its type reads the same over a pink beach or a black void. Top row: previous / next steppers around a Silkscreen counter (`10/12`), the scene name in Literata italic with its one-line caption (`note` in `sheets.ts`), the input hint (from 1200px), and two tools: `0` Reset (camera) and `F` Hide. Bottom row: a rail of every scene, numbered, the current one marked by an accent bar on the rail's top hairline; under 720px the rail scrolls and its right end fades out. `F` folds the console away so the stage fills the window, leaving one dimmed "Show panel" handle; `F` or `Esc` brings it back. On touch screens the key caps are hidden.
+`/scenes/:id` (`src/pages/Scenes.tsx`) is a stage over a console, together exactly one viewport tall under the nav. The console is a solid bar on the `--code` ground, not an overlay, so its type reads the same over a pink beach or a black void. Top row: previous / next steppers around a Silkscreen counter (`10/12`), the scene name in Literata italic, the input hint (from 1200px), and two tools: `0` Reset (camera) and `F` Hide. Bottom row: a rail of every scene, numbered, the current one marked by an accent bar on the rail's top hairline; under 720px the rail scrolls and its right end fades out. `F` folds the console away so the stage fills the window, leaving one dimmed "Show panel" handle; `F` or `Esc` brings it back. On touch screens the key caps are hidden.
 
 ## Page heads
 
