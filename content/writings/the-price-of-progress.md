@@ -3,7 +3,6 @@ slug: "the-price-of-progress"
 title: "The Price of Progress"
 excerpt: "The Core Premise Freedom is not a right passively possessed. It is a currency — something citizens actively generate, circulate, and invest into the collective project of civilization. Society, in exchange, offers comfor..."
 date: "2026-02-26T17:57:00.000Z"
-tags: []
 readTime: 4
 published: true
 notionPageId: "313143f2-8260-816d-abdc-f1acbfe36d81"

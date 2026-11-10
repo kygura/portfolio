@@ -3,7 +3,6 @@ slug: "outsourced-spirituality"
 title: "Outsourced Spirituality"
 excerpt: "Thesis Humanity has surrendered its most personal responsibility — the confrontation with existence — to institutions built on the corpse of original insight. Religion is not spirituality. It is spirituality's institutio..."
 date: "2026-03-07T19:34:00.000Z"
-tags: []
 readTime: 4
 published: true
 notionPageId: "31c143f2-8260-8158-b90e-d7e52a69fa8b"

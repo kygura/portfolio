@@ -3,7 +3,6 @@ slug: "a-philosophy-of-pragmatic-sovereignity"
 title: "A Philosophy of Pragmatic Sovereignity"
 excerpt: "Core Axioms I. The State Acts as if Inevitable The state is not a moral good , but it is operates as gravitational inevitability. Complex societies generate hierarchies of power, and those hierarchies coalesce into state..."
 date: "2026-04-19T21:02:00.000Z"
-tags: []
 readTime: 9
 published: true
 notionPageId: "347143f2-8260-8189-aacc-dd98f811d198"

@@ -2,7 +2,6 @@ import { z } from "zod";
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-export const postTagSchema = z.string().trim().min(1);
 const optionalDateSchema = z.preprocess(
   (value) => (value == null ? "" : value),
   z.string().trim(),
@@ -14,7 +13,6 @@ export const notionPostMetadataSchema = z.object({
   slug: z.string().trim().min(1),
   excerpt: z.string().trim().default(""),
   date: optionalDateSchema,
-  tags: z.array(postTagSchema).default([]),
   published: z.boolean(),
   createdTime: z.string().trim().min(1),
   lastEditedTime: z.string().trim().min(1),
@@ -25,7 +23,6 @@ export const postSummarySchema = z.object({
   title: z.string().trim().min(1),
   excerpt: z.string().trim().default(""),
   date: optionalDateSchema,
-  tags: z.array(postTagSchema).default([]),
   readTime: z.number().int().positive(),
 });
 

@@ -139,7 +139,7 @@ export default function CommandPalette({
       .map((p) => ({
         value: `writings/${p.slug}`,
         label: p.title,
-        keywords: [p.slug, ...(p.tags ?? [])],
+        keywords: [p.slug],
         meta: `${p.readTime} min`,
         run: () => navigate(`/writings/${p.slug}`),
       }));

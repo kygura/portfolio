@@ -119,7 +119,6 @@ async function syncFromNotion(): Promise<void> {
       title: meta.title,
       excerpt: meta.excerpt || createExcerpt(body),
       date: meta.date,
-      tags: meta.tags,
       readTime: estimateReadTime(body),
       published: true,
       notionPageId: meta.pageId,
