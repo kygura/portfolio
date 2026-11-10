@@ -1,7 +1,7 @@
 /**
  * Bit's voice: no speech, just a bitcrushed babble. Each syllable is a short
- * square-wave blip, sample-and-held down to ~8 kHz and quantised to 4 bits,
- * so it sounds like grit in an old machine. The pitch of each blip comes from
+ * low square-wave blip roughed up with LFSR noise, sample-and-held down to
+ * ~4 kHz and quantised to 3 bits, so it sounds like grit in an old machine. The pitch of each blip comes from
  * the letters it stands for, so a line always "sounds" the same way, and the
  * blips land in step with the bubble's typewriter.
  *
@@ -18,10 +18,11 @@ import { context } from "@/theme/sfx";
 export const CHAR_MS = 32;
 /** One blip per this many characters. */
 const CHARS_PER_BLIP = 2;
-const BASE_HZ = 150;
+const BASE_HZ = 95;
 const LEVEL = 0.05;
-const HOLD = 6; // sample-and-hold factor: 48 kHz → 8 kHz
-const LEVELS = 16; // 4-bit amplitude
+const HOLD = 12; // sample-and-hold factor: 48 kHz → 4 kHz
+const LEVELS = 8; // 3-bit amplitude
+const NOISE = 0.45; // share of the blip that is noise
 const MODE_KEY = "nca-familiar-voice";
 /** Before the voice modes there was only a mute switch. */
 const LEGACY_MUTE_KEY = "nca-familiar-mute";
@@ -50,7 +51,7 @@ const isMuted = () => voiceMode() === "off";
 
 const crush = (v: number) => Math.round(v * (LEVELS / 2)) / (LEVELS / 2);
 
-/** A single crushed blip: a square wave with a pitch dip and a stepped decay. */
+/** A single crushed blip: a noisy square wave with a pitch dip and a stepped decay. */
 function blip(ac: AudioContext, hz: number, seconds: number): AudioBuffer {
   const rate = ac.sampleRate;
   const length = Math.floor(rate * seconds);
@@ -58,14 +59,20 @@ function blip(ac: AudioContext, hz: number, seconds: number): AudioBuffer {
   const data = buffer.getChannelData(0);
   let phase = 0;
   let held = 0;
+  // 15-bit LFSR, the old console noise channel. Seeded from the pitch so a
+  // given blip always crackles the same way.
+  let lfsr = (hz * 2654435761) & 0x7fff || 1;
   for (let i = 0; i < length; i++) {
     const t = i / length;
     // A little downward bend, like stone settling.
     phase += (hz * (1 - 0.18 * t)) / rate;
     if (i % HOLD === 0) {
       const square = phase % 1 < 0.5 ? 1 : -1;
-      const env = t < 0.08 ? t / 0.08 : 1 - (t - 0.08) / 0.92;
-      held = crush(square * env * 0.9);
+      const bit = (lfsr ^ (lfsr >> 1)) & 1;
+      lfsr = (lfsr >> 1) | (bit << 14);
+      const noise = lfsr & 1 ? 1 : -1;
+      const env = t < 0.06 ? t / 0.06 : 1 - (t - 0.06) / 0.94;
+      held = crush((square * (1 - NOISE) + noise * NOISE) * env);
     }
     data[i] = held;
   }
