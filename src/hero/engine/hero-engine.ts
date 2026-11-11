@@ -550,6 +550,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     const plain = Boolean(scene(cur).freeCam) && getComputedStyle(host).touchAction === "none";
     if (!(e.ctrlKey || e.metaKey || plain) || interactive(e.target)) return;
     e.preventDefault();
+    // Lenis smooth-scrolls from a window wheel listener that ignores defaultPrevented.
+    e.stopPropagation();
     zoomT *= Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.04 : 0.0022));
     clampView();
     dirty = true;
