@@ -10,7 +10,7 @@ function fakeRedis() {
     const [, , numkeys, ...rest] = command;
     const keys = rest.slice(0, Number(numkeys)).map(String);
     const args = rest.slice(Number(numkeys));
-    if (keys.length === 4) {
+    if (keys.length === 5) {
       const until = state.cooling.get(keys[3]) ?? 0;
       if (until > state.now) return [0, until - state.now];
       state.cooling.set(keys[3], state.now + Number(args[2]) * 1000);

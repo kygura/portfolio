@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Minus, Plus, Scan } from "lucide-react";
-import { PALETTE, RGBA, SIZE, place, pull, readLocal, unpack, writeLocal } from "@/plot/model";
+import { AGENT_WINDOW, PALETTE, RGBA, SIZE, place, pull, readLocal, unpack, writeLocal, type Resident } from "@/plot/model";
 
 /**
  * Plot: one shared 256 × 256 sheet anyone can mark, a cell at a time, with a
@@ -9,6 +9,10 @@ import { PALETTE, RGBA, SIZE, place, pull, readLocal, unpack, writeLocal } from 
  * [ ] change colour, + − zoom, 0 fits the sheet. The board polls for other
  * people's marks every few seconds while the tab is visible. When the server
  * has no storage the sheet is kept in this browser only.
+ *
+ * Resident agents (api/plot/agents.ts) work the sheet too. Each poll says
+ * where they stand; the board draws each one's window with a name tag, and
+ * the console shows what they last said.
  */
 
 const POLL_MS = 2500;
@@ -16,6 +20,12 @@ const TAP_SLOP = 6;
 const MIN_SCALE = 0.75;
 const MAX_SCALE = 64;
 const GRID_FROM = 10;
+const FRESH_MS = 10 * 60_000;
+
+const ago = (at: number, now: number) => {
+  const s = Math.max(0, Math.round((now - at) / 1000));
+  return s < 60 ? `${s}s` : s < 3600 ? `${Math.round(s / 60)}m` : `${Math.round(s / 3600)}h`;
+};
 
 type View = { scale: number; ox: number; oy: number };
 type Mode = "loading" | "live" | "local";
@@ -32,6 +42,7 @@ const Plot = () => {
   const view = useRef<View>({ scale: 1, ox: 0, oy: 0 });
   const hover = useRef<{ x: number; y: number } | null>(null);
   const seq = useRef(0);
+  const residentsRef = useRef<Resident[]>([]);
   const frame = useRef(0);
 
   const [mode, setMode] = useState<Mode>("loading");
@@ -41,6 +52,7 @@ const Plot = () => {
   const [now, setNow] = useState(() => Date.now());
   const [flash, setFlash] = useState(0);
   const [marks, setMarks] = useState(0);
+  const [agents, setAgents] = useState<Resident[]>([]);
 
   const live = useRef({ colour, coolUntil, mode });
   live.current = { colour, coolUntil, mode };
@@ -109,6 +121,34 @@ const Plot = () => {
     ctx.strokeStyle = token("--rule-2") || "#3d4b4d";
     ctx.lineWidth = 1;
     ctx.strokeRect(Math.round(ox) - 0.5, Math.round(oy) - 0.5, Math.round(span) + 1, Math.round(span) + 1);
+
+    // Residents: each one's window as a dashed frame with a name tag. Faint
+    // when it hasn't taken a turn lately.
+    const mono = token("--f-mono") || "monospace";
+    for (const r of residentsRef.current) {
+      const wx = clamp(r.x - AGENT_WINDOW / 2, 0, SIZE - AGENT_WINDOW);
+      const wy = clamp(r.y - AGENT_WINDOW / 2, 0, SIZE - AGENT_WINDOW);
+      const sx = Math.round(ox + wx * scale) + 0.5;
+      const sy = Math.round(oy + wy * scale) + 0.5;
+      const side = Math.round(AGENT_WINDOW * scale);
+      const fresh = r.at && Date.now() - r.at < FRESH_MS;
+      ctx.globalAlpha = fresh ? 0.9 : 0.35;
+      ctx.strokeStyle = r.hex;
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 3]);
+      ctx.strokeRect(sx, sy, side, side);
+      ctx.setLineDash([]);
+      ctx.font = `10px ${mono}`;
+      const label = r.name.toUpperCase();
+      const tw = ctx.measureText(label).width + 8;
+      const ty = sy - 15 < 0 ? sy : sy - 15;
+      ctx.fillStyle = r.hex;
+      ctx.fillRect(sx - 0.5, ty, tw, 15);
+      ctx.fillStyle = "#111617";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label, sx + 3.5, ty + 8);
+      ctx.globalAlpha = 1;
+    }
 
     const at = hover.current;
     if (at) {
@@ -239,6 +279,10 @@ const Plot = () => {
             }
           }
           seq.current = got.seq;
+          if (got.agents) {
+            residentsRef.current = got.agents;
+            setAgents(got.agents);
+          }
           setMode("live");
           countMarks();
           redraw();
@@ -473,6 +517,17 @@ const Plot = () => {
 
   useEffect(redraw, [colour, redraw]);
 
+  // Keep "12s ago" and the faded frames current while residents are about.
+  const hasAgents = agents.length > 0;
+  useEffect(() => {
+    if (!hasAgents) return;
+    const id = window.setInterval(() => {
+      setNow(Date.now());
+      redraw();
+    }, 5000);
+    return () => clearInterval(id);
+  }, [hasAgents, redraw]);
+
   const wait = Math.max(0, coolUntil - now);
   const ready = wait === 0;
   const status =
@@ -547,6 +602,20 @@ const Plot = () => {
             </button>
           </div>
         </div>
+        {agents.some((a) => a.thought) && (
+          <ul className="plot__feed" aria-label="Residents">
+            {[...agents]
+              .filter((a) => a.thought)
+              .sort((a, b) => b.at - a.at)
+              .map((a) => (
+                <li key={a.id}>
+                  <b style={{ color: a.hex }}>{a.name}</b>
+                  <span>{a.thought}</span>
+                  <i>{ago(a.at, now)}</i>
+                </li>
+              ))}
+          </ul>
+        )}
         <p id="plot-help" className="plot__help">
           Tap to place · drag to pan · scroll or pinch to zoom · one mark every 5s · keys: arrows, enter, [ ], + −, 0
         </p>

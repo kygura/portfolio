@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { waitUntil } from "@vercel/functions";
+import { agentsEnabled, maybeTurn, residents, type Ask } from "./agents.ts";
 
 /**
  * /api/plot/board — the shared pixel sheet on /plot.
@@ -10,15 +12,21 @@ import { createHash } from "node:crypto";
  * poll; one that has fallen further behind than the log reaches gets the whole
  * board again (32 KB).
  *
- *   GET  /api/plot/board            → { seq, board }        board = base64 of the packed cells
- *   GET  /api/plot/board?since=N    → { seq, changes }      changes = [[cell, colour], …]
- *                                     (or { seq, board } when N is too old)
+ *   GET  /api/plot/board            → { seq, board, agents }      board = base64 of the packed cells
+ *   GET  /api/plot/board?since=N    → { seq, changes, agents }    changes = [[cell, colour], …]
+ *                                     (or a full board when N is too old)
  *   POST /api/plot/board {x, y, c}  → { seq, cooldown }     or 429 { wait }
  *
  * One placement per address every COOLDOWN_S seconds. Addresses are hashed
  * before they become key names. Storage is Upstash Redis over REST (the Vercel
  * marketplace integration sets KV_REST_API_* or UPSTASH_REDIS_REST_*); without
  * it every call is a 503 and the page keeps a local sheet instead.
+ *
+ * A second 4-bit layer (plot:owner) records who made each cell: 0 for a
+ * person, 1-4 for a resident agent (see agents.ts). A person's mark resets its
+ * cell to 0, and agents can't paint over those. While agents are on, `agents`
+ * lists where each one is and what it last said, and a poll may start an
+ * agent turn after the response is sent.
  */
 
 export const SIZE = 256;
@@ -27,7 +35,7 @@ export const COOLDOWN_S = 5;
 export const LOG_MAX = 2000;
 export const BOARD_BYTES = (SIZE * SIZE) / 2;
 
-const KEYS = { board: "plot:board", seq: "plot:seq", log: "plot:log" };
+const KEYS = { board: "plot:board", seq: "plot:seq", log: "plot:log", owner: "plot:owner" };
 
 // Place a cell, unless this address placed one within the cooldown. Atomic:
 // the cooldown check, the write, the sequence bump and the log entry happen
@@ -37,6 +45,7 @@ if not redis.call('SET', KEYS[4], '1', 'NX', 'EX', tonumber(ARGV[3])) then
   return {0, redis.call('PTTL', KEYS[4])}
 end
 redis.call('BITFIELD', KEYS[1], 'SET', 'u4', '#' .. ARGV[1], ARGV[2])
+redis.call('BITFIELD', KEYS[5], 'SET', 'u4', '#' .. ARGV[1], 0)
 local seq = redis.call('INCR', KEYS[2])
 redis.call('LPUSH', KEYS[3], seq .. ',' .. ARGV[1] .. ',' .. ARGV[2])
 redis.call('LTRIM', KEYS[3], 0, tonumber(ARGV[4]) - 1)
@@ -128,16 +137,21 @@ const addressKey = (request: Request) => {
 
 const NO_STORE = { "cache-control": "no-store" };
 
-async function snapshot(redis: Redis): Promise<Response> {
+async function snapshot(redis: Redis, extra: object): Promise<Response> {
   const [seq, board] = (await redis(["EVAL", SNAPSHOT, 2, KEYS.board, KEYS.seq], { base64: true })) as [number, string];
-  return Response.json({ seq: Number(seq), size: SIZE, board: padBoard(board) }, { headers: NO_STORE });
+  return Response.json({ seq: Number(seq), size: SIZE, board: padBoard(board), ...extra }, { headers: NO_STORE });
 }
 
 export interface BoardOptions {
   redis?: Redis | null;
+  /** Agent turns: off when null. Defaults to Claude when ANTHROPIC_API_KEY is set. */
+  agents?: { ask?: Ask | null; defer?: (work: Promise<unknown>) => void } | null;
 }
 
-export async function handleBoard(request: Request, { redis = envRedis() }: BoardOptions = {}): Promise<Response> {
+export async function handleBoard(
+  request: Request,
+  { redis = envRedis(), agents = agentsEnabled() ? {} : null }: BoardOptions = {},
+): Promise<Response> {
   if (request.method !== "GET" && request.method !== "POST") {
     return Response.json({ error: "Method not allowed" }, { status: 405, headers: { allow: "GET, POST" } });
   }
@@ -145,14 +159,20 @@ export async function handleBoard(request: Request, { redis = envRedis() }: Boar
 
   try {
     if (request.method === "GET") {
+      if (agents) {
+        const work = maybeTurn(redis, agents.ask);
+        (agents.defer ?? waitUntil)(work);
+      }
+      const extra = agents ? { agents: await residents(redis) } : {};
+
       const since = Number(new URL(request.url).searchParams.get("since"));
-      if (!Number.isInteger(since) || since <= 0) return await snapshot(redis);
+      if (!Number.isInteger(since) || since <= 0) return await snapshot(redis, extra);
 
       const [seq, lines] = (await redis(["EVAL", TAIL, 2, KEYS.seq, KEYS.log, LOG_MAX])) as [number, string[]];
       const behind = Number(seq) - since;
       // Ahead of the server (it was reset) or further back than the log reaches.
-      if (behind < 0 || behind > lines.length) return await snapshot(redis);
-      return Response.json({ seq: Number(seq), changes: changesSince(lines, since) }, { headers: NO_STORE });
+      if (behind < 0 || behind > lines.length) return await snapshot(redis, extra);
+      return Response.json({ seq: Number(seq), changes: changesSince(lines, since), ...extra }, { headers: NO_STORE });
     }
 
     const placement = parsePlacement(await request.json().catch(() => null));
@@ -161,11 +181,12 @@ export async function handleBoard(request: Request, { redis = envRedis() }: Boar
     const [ok, value] = (await redis([
       "EVAL",
       PLACE,
-      4,
+      5,
       KEYS.board,
       KEYS.seq,
       KEYS.log,
       addressKey(request),
+      KEYS.owner,
       placement.cell,
       placement.colour,
       COOLDOWN_S,

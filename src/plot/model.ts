@@ -48,8 +48,12 @@ export function unpack(base64: string): Uint8Array {
   return cells;
 }
 
-export type Snapshot = { seq: number; board: string };
-export type Delta = { seq: number; changes: [number, number][] };
+/** A resident agent: where it stands (centre of its 32 × 32 window) and what it last said. */
+export type Resident = { id: string; name: string; hex: string; x: number; y: number; thought: string; at: number };
+export const AGENT_WINDOW = 32;
+
+export type Snapshot = { seq: number; board: string; agents?: Resident[] };
+export type Delta = { seq: number; changes: [number, number][]; agents?: Resident[] };
 
 const ENDPOINT = "/api/plot/board";
 
