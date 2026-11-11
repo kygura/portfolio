@@ -48,6 +48,8 @@ export interface EggDef {
 export interface SceneDef {
   scene: THREE.Scene;
   cam: THREE.PerspectiveCamera;
+  /** Drawn straight to the canvas at full resolution: no low-res target, dither or dissolve. */
+  clean?: boolean;
   fog: [number, number];
   fov: [number, number];
   /** Manual camera range: pitch in radians (+ = camera up / look up), zoom factor (+ = closer), yaw ± radians (omit = free). */

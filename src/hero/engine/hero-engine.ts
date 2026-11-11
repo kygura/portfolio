@@ -1,7 +1,8 @@
 /**
  * Hero engine: builds every sheet once, renders only the active one
  * (plus the outgoing one during a dither dissolve) into a quarter-resolution
- * target, then blits through a 15-bit quantize + Bayer dither pass.
+ * target, then blits through a 15-bit quantize + Bayer dither pass. A scene
+ * marked `clean` (Field) skips all of that and is drawn straight to the canvas.
  *
  * Loaded with a dynamic import from useHeroStage (home hero, /scenes), so three.js stays out of every
  * other route's bundle. The render loop only runs while there is something
@@ -301,7 +302,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   };
   const render = () => {
     const sc = scene(cur);
-    if (psxOn) {
+    if (psxOn && !sc.clean) {
       if (mixT < 1) {
         const ps = scene(prev);
         apply(ps);
@@ -547,6 +548,11 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   const ro = new ResizeObserver(resize);
   ro.observe(host);
 
+  // The stylesheet upscales the canvas with nearest-neighbour; a clean scene wants it smooth.
+  function setCrisp() {
+    canvas.style.imageRendering = scene(cur).clean ? "auto" : "";
+  }
+  setCrisp();
   buildLabels(scene(cur));
   resize();
   queueIdle();
@@ -571,7 +577,9 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       ptr.moved = false;
       yawT = pitchT = yawV = pitchV = 0;
       zoomT = 1;
-      mixT = psxOn && !o.reducedMotion ? 0 : 1;
+      // A clean scene has no low-res frame to dissolve, so it cuts in and out.
+      mixT = psxOn && !o.reducedMotion && !scene(prev).clean && !scene(cur).clean ? 0 : 1;
+      setCrisp();
       buildLabels(scene(cur));
       dirty = true;
       kick();
@@ -620,6 +628,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       host.removeEventListener("gesturestart", onGesture);
       host.removeEventListener("dblclick", onDouble);
       host.classList.remove("is-dragging");
+      canvas.style.imageRendering = "";
       document.removeEventListener("visibilitychange", onVisibility);
       canvas.removeEventListener("webglcontextlost", onLost);
       const geos = new Set<THREE.BufferGeometry>();

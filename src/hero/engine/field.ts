@@ -1,299 +1,202 @@
-/** Sheet 05 · Field: a living relief. Contours, a draped survey grid and a
- *  wave simulation share one height field. A tap sends a pulse out from the
- *  source, a drag drags the ambient fabric (contours and grid) along with it,
- *  and the cursor lifts a faint swell and leaves a wake. Kept deliberately quiet. */
+/** Sheet 05 · Field: an abstract contour sheet, seen from almost straight above.
+ *
+ *  One smooth height field is drawn as anti-aliased isolines in a fragment
+ *  shader (no PS1 treatment: the scene is `clean`, so the engine draws it at
+ *  full resolution without the low-res dither pass). The ground is one flat
+ *  colour and the lines a restrained tone of the palette; both come from the
+ *  shared accent uniforms, so a palette switch recolours it like every scene.
+ *
+ *  - Alive: the relief drifts slowly and every contour level breathes on its
+ *    own phase (brightness and weight).
+ *  - A click or tap drops a ripple into the height field itself: the isolines
+ *    bunch and part as the ring travels out, then settle.
+ *  - Holding (Shift+drag) presses a hollow the lines bend around; letting go
+ *    releases it as a ripple. The cursor alone lifts a faint swell.
+ *  - Reduced motion: nothing drifts, and a tap raises a soft swell that eases
+ *    back instead of sending a travelling ring. */
 import * as THREE from "three";
 import type { PsxKit, SceneDef } from "./psx";
 
-// Marching-squares edge pairs per cell case (edges: 0 top, 1 right, 2 bottom, 3 left).
-export const MS: Record<number, [number, number][]> = {
-  1: [[3, 2]], 2: [[2, 1]], 3: [[3, 1]], 4: [[0, 1]], 5: [[0, 1], [3, 2]], 6: [[0, 2]], 7: [[0, 3]],
-  8: [[0, 3]], 9: [[0, 2]], 10: [[0, 3], [2, 1]], 11: [[0, 1]], 12: [[3, 1]], 13: [[2, 1]], 14: [[3, 2]],
-};
+const MAXP = 6;
+/** Contour interval in height units; every fifth line is an index line. */
+const STEP = 0.5;
+const LIFE = 4.6, SPEED = 9;
 
-interface Pulse { x: number; z: number; age: number; seed: number }
+/* The relief, written once for the shader and mirrored below in JS (the JS
+   copy only places the pointer and the readout, so it skips the ripples). */
+const HEIGHT_GLSL = `
+uniform float uTime;
+uniform vec4 uPulse[${MAXP}];
+uniform vec3 uHover;
+uniform float uCalm;
+float relief(vec2 p){
+  vec2 q = p * 0.085;
+  q += 0.55 * vec2(sin(q.y * 1.3 + uTime * 0.05 + 1.7), cos(q.x * 1.1 - uTime * 0.04));
+  float h = 1.9 * sin(q.x + 0.3) * cos(q.y * 0.9)
+          + 1.2 * sin((q.x + q.y) * 0.7 + 1.3 + uTime * 0.03)
+          + 0.5 * sin(q.x * 2.3 - q.y * 1.9 + uTime * 0.06);
+  vec2 a = p - vec2(7.0, -5.0), b = p - vec2(-13.0, 8.0);
+  h += 3.0 * exp(-dot(a, a) * 0.010) - 2.2 * exp(-dot(b, b) * 0.014);
+  return h;
+}
+/* x: height added by the ripples and the pointer, y: how much of a wave front is here (0..1). */
+vec2 touch(vec2 p){
+  float h = 0.0, e = 0.0;
+  for (int i = 0; i < ${MAXP}; i++) {
+    vec4 u = uPulse[i];
+    if (u.w <= 0.0) continue;
+    float r = length(p - u.xy), life = clamp(u.z / ${LIFE.toFixed(1)}, 0.0, 1.0);
+    if (uCalm > 0.5) {
+      // A swell that rises and settles in place.
+      h += u.w * 1.3 * sin(3.14159 * life) * exp(-r * r * 0.02);
+    } else {
+      float d = r - ${SPEED.toFixed(1)} * u.z;
+      float env = exp(-d * d * 0.035) * (1.0 - life) * (1.0 - life) * smoothstep(0.0, 0.12, u.z);
+      h += u.w * (env * cos(d * 0.8) / (1.0 + r * 0.02) - 1.5 * exp(-r * r * 0.07) * exp(-u.z * 2.2));
+      e += env;
+    }
+  }
+  vec2 hv = p - uHover.xy;
+  h += uHover.z * exp(-dot(hv, hv) * 0.03);
+  return vec2(h, min(e, 1.0));
+}`;
+
+const VERT = `
+${HEIGHT_GLSL}
+varying vec2 vP; varying float vDist;
+void main(){
+  vP = position.xz;
+  // The sheet is really raised, so the slight tilt gives the relief parallax.
+  vec3 q = vec3(position.x, relief(vP) + touch(vP).x, position.z);
+  vec4 mv = modelViewMatrix * vec4(q, 1.0);
+  vDist = length(mv.xyz);
+  gl_Position = projectionMatrix * mv;
+}`;
+
+const FRAG = `
+${HEIGHT_GLSL}
+uniform vec3 uAccent; uniform vec3 uFogColor; uniform vec3 uZen;
+uniform float uPx; uniform vec2 uFade;
+varying vec2 vP; varying float vDist;
+void main(){
+  vec2 tc = touch(vP);
+  float h = relief(vP) + tc.x;
+  float f = h / ${STEP.toFixed(2)};
+  float df = max(fwidth(f), 1e-5);
+  float lid = floor(f + 0.5);
+  float dist = abs(f - lid);
+  float idx = 1.0 - step(0.5, mod(lid, 5.0));
+  // Each level breathes on its own phase.
+  float breath = 0.5 + 0.5 * sin(uTime * 0.55 + lid * 0.83);
+  float hn = clamp(h / 9.0 + 0.5, 0.0, 1.0);
+  // Half-width in device pixels: index lines and high ground are heavier.
+  float w = uPx * (mix(0.42, 0.8, idx) + 0.22 * breath + 0.3 * hn + 0.35 * tc.y);
+  float line = clamp(w + 0.5 - dist / df, 0.0, 1.0);
+  line *= 1.0 - smoothstep(0.2, 0.34, dist);        // no blobs on flat ground
+  line *= 1.0 - smoothstep(0.22, 0.5, df);          // no moire where lines crowd
+  float a = mix(0.44, 0.82, idx) * (0.62 + 0.38 * breath) * mix(0.6, 1.0, hn);
+  a = min(1.0, a + 0.45 * tc.y);
+
+  vec3 bg = mix(uZen, uFogColor, 0.2);
+  vec3 ground = bg + uFogColor * (hn - 0.5) * 0.09;  // a breath of hypsometric shading
+  vec3 ink = mix(mix(uFogColor, uAccent, 0.6), uAccent, max(idx * 0.6, tc.y));
+  vec3 c = mix(ground, ink, line * a);
+  c = mix(c, bg, smoothstep(uFade.x, uFade.y, vDist));
+  gl_FragColor = vec4(c, 1.0);
+}`;
 
 export function buildField(k: PsxKit): SceneDef {
-  const { mesh, psx, M, tex, view } = k;
-  const PIVOT = new THREE.Vector3(0, -1.5, 0);
+  const { U, view } = k;
+  const PIVOT = new THREE.Vector3(0, 0, 0);
   const scene = new THREE.Scene();
-  const cam = new THREE.PerspectiveCamera(50, 16 / 9, 0.1, 400);
-  const sky = k.skyDome(0, 0.35, 0.6);
-  scene.add(sky);
+  const bg = new THREE.Color();
+  scene.background = bg;
+  const cam = new THREE.PerspectiveCamera(50, 16 / 9, 0.5, 600);
+  const reduced = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // 144 m across, 1.5 m cells, 6 m survey grid. Wide enough that the edge stays out of frame.
-  const S = 144, N = 96, half = S / 2, cs = S / N, W = N + 1, GS = 4;
-  const hg = new Float32Array(W * W); // final heights
-  const wh = new Float32Array(W * W); // wave displacement
-  const wv = new Float32Array(W * W); // wave velocity
-  const wx = new Float32Array(W * W); // drag warp (m)
-  const wz = new Float32Array(W * W);
-  const dmp = new Float32Array(W * W); // damping: heavier near the rim so waves don't bounce back
-  const rim = new Float32Array(W * W); // relief scale: 1 inside, easing to 0 at the square edge so it meets the plain
-  for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) {
-    const X = -half + x * cs, Z = -half + y * cs;
-    const r = Math.hypot(X, Z) / half;
-    const e = Math.min(1, Math.max(0, (r - 0.7) / 0.3));
-    dmp[y * W + x] = 0.9 + 4 * e * e * (3 - 2 * e);
-    const f = Math.min(1, Math.max(0, (half - Math.max(Math.abs(X), Math.abs(Z))) / (half * 0.22)));
-    rim[y * W + x] = f * f * (3 - 2 * f);
-  }
+  const pulseU = Array.from({ length: MAXP }, () => new THREE.Vector4(0, 0, 0, 0));
+  const hoverU = new THREE.Vector3(0, 0, 0);
+  const fadeU = new THREE.Vector2(70, 150);
+  const pxU = { value: 1 };
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: U.uTime, uAccent: U.uAccent, uFogColor: U.uFogColor, uZen: U.uZen,
+      uPulse: { value: pulseU }, uHover: { value: hoverU }, uCalm: { value: reduced ? 1 : 0 },
+      uPx: pxU, uFade: { value: fadeU },
+    },
+    vertexShader: VERT,
+    fragmentShader: FRAG,
+  });
+  // Wide enough that the fade to the ground colour hides the edge at every camera setting.
+  const geo = new THREE.PlaneGeometry(420, 420, 200, 200);
+  geo.rotateX(-Math.PI / 2);
+  const sheet = new THREE.Mesh(geo, mat);
+  sheet.frustumCulled = false;
+  scene.add(sheet);
 
-  const ambient = (x: number, z: number, t: number) => {
-    const u = x * 0.11, v = z * 0.11;
-    return 1.7 * Math.sin(u * 1.1 + t * 0.05) * Math.cos(v * 0.9 - t * 0.04) + 1.2 * Math.sin((u + v) * 0.7 + 1.3 + t * 0.03) +
-      3.2 * Math.exp(-((x - 8) * (x - 8) + (z + 6) * (z + 6)) * 0.012) - 2.4 * Math.exp(-((x + 10) * (x + 10) + (z - 9) * (z - 9)) * 0.018) +
-      0.4 * Math.sin(u * 3.1 - v * 2.3 + t * 0.07);
-  };
-  const hAt = (x: number, z: number) => {
-    const fx = (x + half) / cs, fz = (z + half) / cs;
-    const ix = Math.max(0, Math.min(N - 1, Math.floor(fx))), iz = Math.max(0, Math.min(N - 1, Math.floor(fz)));
-    const tx = Math.min(1, Math.max(0, fx - ix)), tz = Math.min(1, Math.max(0, fz - iz)), i = iz * W + ix;
-    return (hg[i] * (1 - tx) + hg[i + 1] * tx) * (1 - tz) + (hg[i + W] * (1 - tx) + hg[i + W + 1] * tx) * tz;
-  };
-
-  const tg = new THREE.PlaneGeometry(S, S, N, N);
-  tg.rotateX(-Math.PI / 2);
-  const tgeo = tg.toNonIndexed();
-  tg.dispose();
-  const tpos = tgeo.attributes.position;
-  const vmap = new Int32Array(tpos.count);
-  for (let i = 0; i < tpos.count; i++) {
-    vmap[i] = Math.round((tpos.getZ(i) + half) / cs) * W + Math.round((tpos.getX(i) + half) / cs);
-  }
-  const terrain = mesh(tgeo, psx({ map: tex.tPlain, tint: "#56696a", uv: 1, hypso: 1, amb: "#3e4a52", sun: "#c9c2ae" }), scene);
-  terrain.frustumCulled = false;
-  // The plain: the relief settles to zero at its edge and carries on as flat ground into
-  // the fog, so the camera can pull back and tilt low without finding the end of the map.
-  const plainShape = new THREE.Shape([
-    new THREE.Vector2(-480, -480), new THREE.Vector2(480, -480), new THREE.Vector2(480, 480), new THREE.Vector2(-480, 480),
-  ]);
-  plainShape.holes.push(new THREE.Path([
-    new THREE.Vector2(-half, -half), new THREE.Vector2(-half, half), new THREE.Vector2(half, half), new THREE.Vector2(half, -half),
-  ]));
-  const plainGeo = new THREE.ShapeGeometry(plainShape);
-  plainGeo.rotateX(-Math.PI / 2);
-  mesh(plainGeo, terrain.material as THREE.Material, scene);
-
-  const LV0 = -10, LSTEP = 0.75, NLV = 32;
-  const minPos = new Float32Array(N * N * 4 * 8 * 3);
-  const idxPos = new Float32Array(N * N * 4 * 4 * 3);
-  const gridPos = new Float32Array((Math.floor(N / GS) + 1) * N * 12);
-  const ringPos = new Float32Array(6 * (64 * 2 + 2) * 3);
-  const retPos = new Float32Array((20 * 2 + 4) * 3);
-  const lineBuf = (arr: Float32Array, mat: THREE.Material) => {
-    const g = new THREE.BufferGeometry();
-    g.setAttribute("position", new THREE.BufferAttribute(arr, 3));
-    g.setDrawRange(0, 0);
-    const l = new THREE.LineSegments(g, mat);
-    l.frustumCulled = false;
-    scene.add(l);
-    return g;
-  };
-  const gMin = lineBuf(minPos, M.lBoneDim), gIdx = lineBuf(idxPos, M.lAccent), gGrid = lineBuf(gridPos, M.lDeep);
-  const gRing = lineBuf(ringPos, M.lAccent), gRet = lineBuf(retPos, M.lBone);
-
-  const cnt = [0, 0];
-  const edge = (out: Float32Array, ci: number, e: number, x: number, y: number, a: number, b: number, c: number, d: number, l: number) => {
-    const n = cnt[ci];
-    if (n + 3 > out.length) return;
-    let tt: number, qx: number, qy: number;
-    if (e === 0) { tt = (l - a) / (b - a); qx = x + tt; qy = y; }
-    else if (e === 1) { tt = (l - b) / (c - b); qx = x + 1; qy = y + tt; }
-    else if (e === 2) { tt = (l - d) / (c - d); qx = x + tt; qy = y + 1; }
-    else { tt = (l - a) / (d - a); qx = x; qy = y + tt; }
-    out[n] = -half + qx * cs; out[n + 1] = l + 0.12; out[n + 2] = -half + qy * cs;
-    cnt[ci] = n + 3;
+  /* ---- the same relief in JS ---- */
+  const relief = (x: number, z: number, t: number) => {
+    let qx = x * 0.085, qz = z * 0.085;
+    const wx = 0.55 * Math.sin(qz * 1.3 + t * 0.05 + 1.7), wz = 0.55 * Math.cos(qx * 1.1 - t * 0.04);
+    qx += wx; qz += wz;
+    const ax = x - 7, az = z + 5, bx = x + 13, bz = z - 8;
+    return 1.9 * Math.sin(qx + 0.3) * Math.cos(qz * 0.9) + 1.2 * Math.sin((qx + qz) * 0.7 + 1.3 + t * 0.03) +
+      0.5 * Math.sin(qx * 2.3 - qz * 1.9 + t * 0.06) +
+      3.0 * Math.exp(-(ax * ax + az * az) * 0.01) - 2.2 * Math.exp(-(bx * bx + bz * bz) * 0.014);
   };
 
   /* ---- pointer state ---- */
+  interface Pulse { x: number; z: number; age: number; amp: number }
   const pulses: Pulse[] = [];
-  const LIFE = 3.4, SPEED = 9, MAXP = 6;
-  let seedN = 1;
-  let aimed = false, px = 0, pz = 0, lx = 0, lz = 0, mvx = 0, mvz = 0;
-  let pressed = false, hx = 0, hz = 0, lift = 0;
-  let waveE = 0, warpE = 0;
+  const cascade: { due: number; x: number; z: number }[] = [];
+  let aimed = false, pressed = false, px = 0, pz = 0, hx = 0, hz = 0, lift = 0;
+  let sceneT = 0, lastNow = performance.now();
   const hit = new THREE.Vector3(), plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-  // Ray onto the relief: a few plane intersections converge on the surface.
+  // Ray onto the raised sheet: a few plane intersections converge on it.
   const pick = (ray: THREE.Ray) => {
     let y = 0;
     for (let i = 0; i < 3; i++) {
       plane.constant = -y;
       if (!ray.intersectPlane(plane, hit)) return false;
-      y = hAt(hit.x, hit.z);
+      y = relief(hit.x, hit.z, sceneT);
     }
-    return Math.abs(hit.x) < half - 3 && Math.abs(hit.z) < half - 3;
+    return Math.abs(hit.x) < 150 && Math.abs(hit.z) < 150;
   };
-  const bump = (arr: Float32Array, cx: number, cz: number, rad: number, sigma: number, amt: number) => {
-    const x0 = Math.max(0, Math.floor((cx - rad + half) / cs)), x1 = Math.min(N, Math.ceil((cx + rad + half) / cs));
-    const z0 = Math.max(0, Math.floor((cz - rad + half) / cs)), z1 = Math.min(N, Math.ceil((cz + rad + half) / cs));
-    const k2 = 1 / (2 * sigma * sigma);
-    for (let y = z0; y <= z1; y++) for (let x = x0; x <= x1; x++) {
-      const dx = -half + x * cs - cx, dz = -half + y * cs - cz;
-      arr[y * W + x] += amt * Math.exp(-(dx * dx + dz * dz) * k2);
-    }
-  };
-  const drag = (cx: number, cz: number, dx: number, dz: number) => {
-    const rad = 11, sigma = 3.6, k2 = 1 / (2 * sigma * sigma);
-    const x0 = Math.max(0, Math.floor((cx - rad + half) / cs)), x1 = Math.min(N, Math.ceil((cx + rad + half) / cs));
-    const z0 = Math.max(0, Math.floor((cz - rad + half) / cs)), z1 = Math.min(N, Math.ceil((cz + rad + half) / cs));
-    for (let y = z0; y <= z1; y++) for (let x = x0; x <= x1; x++) {
-      const ox = -half + x * cs - cx, oz = -half + y * cs - cz, i = y * W + x;
-      const g = Math.exp(-(ox * ox + oz * oz) * k2) * 0.6;
-      wx[i] += dx * g; wz[i] += dz * g;
-      const m = Math.hypot(wx[i], wz[i]);
-      if (m > 7) { wx[i] *= 7 / m; wz[i] *= 7 / m; }
-    }
-  };
-  const spawn = (x: number, z: number) => {
+  const spawn = (x: number, z: number, amp = 1.25) => {
     if (pulses.length >= MAXP) pulses.shift();
-    pulses.push({ x, z, age: 0, seed: seedN++ * 17.31 });
-    bump(wh, x, z, 9, 1.8, 4.5);
+    pulses.push({ x, z, age: 0, amp });
   };
-
-  /* ---- simulation ---- */
-  let acc = 0, lastNow = performance.now(), lastT = -1;
-  const C2 = (SPEED * SPEED) / (cs * cs), STEP = 1 / 60;
-  const stepWave = () => {
-    for (let y = 1; y < N; y++) for (let x = 1; x < N; x++) {
-      const i = y * W + x;
-      const lap = wh[i - 1] + wh[i + 1] + wh[i - W] + wh[i + W] - 4 * wh[i];
-      wv[i] += (C2 * lap - dmp[i] * wv[i] - 0.3 * wh[i]) * STEP;
-    }
-    for (let i = 0; i < wh.length; i++) wh[i] += wv[i] * STEP;
-  };
-
-  const trig = new THREE.Vector3(8, 0, -6);
-  const trigM = mesh(new THREE.ConeGeometry(0.42, 0.85, 3), M.glyph, scene, trig.x, 0, trig.z);
-  let lo = 0, hi = 0;
-
-  const rebuild = (t: number) => {
-    lo = 1e9; hi = -1e9;
-    const hr2 = 144, hk = 1 / (2 * 3.2 * 3.2);
-    for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) {
-      const i = y * W + x, X = -half + x * cs, Z = -half + y * cs;
-      let h = ambient(X - wx[i], Z - wz[i], t) + wh[i];
-      if (lift !== 0) {
-        const dx = X - hx, dz = Z - hz, r2 = dx * dx + dz * dz;
-        if (r2 < hr2) h += lift * Math.exp(-r2 * hk);
-      }
-      h *= rim[i];
-      hg[i] = h;
-      if (h < lo) lo = h;
-      if (h > hi) hi = h;
-    }
-    for (let i = 0; i < tpos.count; i++) tpos.setY(i, hg[vmap[i]]);
-    tpos.needsUpdate = true;
-    tgeo.computeVertexNormals();
-
-    cnt[0] = 0; cnt[1] = 0;
-    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-      const a = hg[y * W + x], b = hg[y * W + x + 1], c = hg[(y + 1) * W + x + 1], d = hg[(y + 1) * W + x];
-      const mn = Math.min(a, b, c, d), mx = Math.max(a, b, c, d);
-      const k0 = Math.max(0, Math.ceil((mn - LV0) / LSTEP)), k1 = Math.min(NLV - 1, Math.floor((mx - LV0) / LSTEP));
-      for (let lv = k0; lv <= k1; lv++) {
-        const l = LV0 + lv * LSTEP, isIdx = lv % 4 === 0, out = isIdx ? idxPos : minPos, ci = isIdx ? 1 : 0;
-        const s = MS[(a > l ? 8 : 0) | (b > l ? 4 : 0) | (c > l ? 2 : 0) | (d > l ? 1 : 0)];
-        if (!s) continue;
-        for (let i = 0; i < s.length; i++) {
-          edge(out, ci, s[i][0], x, y, a, b, c, d, l);
-          edge(out, ci, s[i][1], x, y, a, b, c, d, l);
-        }
-      }
-    }
-    gMin.setDrawRange(0, cnt[0] / 3); gMin.attributes.position.needsUpdate = true;
-    gIdx.setDrawRange(0, cnt[1] / 3); gIdx.attributes.position.needsUpdate = true;
-
-    // The survey grid rides the warp, so a drag visibly stretches the fabric.
-    let n = 0;
-    const gv = (ix: number, iz: number) => {
-      const i = iz * W + ix;
-      gridPos[n++] = -half + ix * cs + wx[i]; gridPos[n++] = hg[i] + 0.14; gridPos[n++] = -half + iz * cs + wz[i];
-    };
-    for (let gl = 0; gl <= N; gl += GS) for (let sg = 0; sg < N; sg++) {
-      gv(gl, sg); gv(gl, sg + 1);
-      gv(sg, gl); gv(sg + 1, gl);
-    }
-    gGrid.setDrawRange(0, n / 3); gGrid.attributes.position.needsUpdate = true;
-
-    trig.y = hAt(trig.x, trig.z) + 0.55;
-    trigM.position.y = trig.y;
-  };
-
-  const rh = (n: number) => { const s = Math.sin(n * 12.9898) * 43758.5453; return s - Math.floor(s); };
-  const drawOverlays = () => {
-    let n = 0;
-    const put = (x: number, y: number, z: number) => { ringPos[n++] = x; ringPos[n++] = y; ringPos[n++] = z; };
-    for (const p of pulses) {
-      const r = SPEED * p.age, keep = 1 - p.age / LIFE;
-      for (let i = 0; i < 64; i++) {
-        if (rh(i * 7.13 + p.seed) > keep) continue;
-        const a0 = (i / 64) * Math.PI * 2, a1 = ((i + 1) / 64) * Math.PI * 2;
-        const x0 = p.x + Math.cos(a0) * r, z0 = p.z + Math.sin(a0) * r, x1 = p.x + Math.cos(a1) * r, z1 = p.z + Math.sin(a1) * r;
-        if (Math.abs(x0) > half - 1 || Math.abs(z0) > half - 1 || Math.abs(x1) > half - 1 || Math.abs(z1) > half - 1) continue;
-        put(x0, hAt(x0, z0) + 0.35, z0);
-        put(x1, hAt(x1, z1) + 0.35, z1);
-      }
-      const y0 = hAt(p.x, p.z);
-      put(p.x, y0, p.z);
-      put(p.x, y0 + 0.4 + 3.2 * keep, p.z);
-    }
-    gRing.setDrawRange(0, n / 3);
-    gRing.attributes.position.needsUpdate = true;
-
-    n = 0;
-    const show = aimed && Math.abs(lift) > 0.03;
-    if (show) {
-      const rad = pressed ? 0.9 : 1.5;
-      const rp = (x: number, y: number, z: number) => { retPos[n++] = x; retPos[n++] = y; retPos[n++] = z; };
-      for (let i = 0; i < 20; i++) {
-        const a0 = (i / 20) * Math.PI * 2, a1 = ((i + 1) / 20) * Math.PI * 2;
-        const x0 = hx + Math.cos(a0) * rad, z0 = hz + Math.sin(a0) * rad, x1 = hx + Math.cos(a1) * rad, z1 = hz + Math.sin(a1) * rad;
-        rp(x0, hAt(x0, z0) + 0.3, z0);
-        rp(x1, hAt(x1, z1) + 0.3, z1);
-      }
-    }
-    gRet.setDrawRange(0, n / 3);
-    gRet.attributes.position.needsUpdate = true;
-  };
-
-  // easter egg: the benchmark answers with a cascade of pulses
-  const cascade: { due: number; x: number; z: number }[] = [];
   const busy = () =>
-    cascade.length > 0 || pressed || pulses.length > 0 || waveE > 0.004 || warpE > 0.01 || Math.abs(lift) > 0.01 ||
+    cascade.length > 0 || pressed || pulses.length > 0 || Math.abs(lift) > 0.01 ||
     (aimed && Math.hypot(px - hx, pz - hz) > 0.05);
 
-  /* ---- camera range ----
-     Same controls as every scene (drag or two fingers orbit, pinch or Ctrl+wheel zooms).
-     The plain around the relief fills the frame at any of these settings, so the range
-     only has to stop short of skimming the ground or pulling the relief into a speck. */
+  const summit = new THREE.Vector3(7, 0, -5);
+
   return {
-    scene, cam, fog: [55, 150], fov: [50, 64], limits: { pitch: [-0.4, 0.5], zoom: [0.55, 1.8] },
+    scene, cam, clean: true, fog: [70, 150], fov: [50, 66], limits: { pitch: [-0.24, 0.42], zoom: [0.6, 1.9] },
     labels: [],
     eggs: [
       {
-        id: "field-benchmark", r: 40,
-        at: (v) => { v.copy(trig); },
+        // The summit answers with a ring of ripples around it.
+        id: "field-benchmark", r: 34,
+        at: (v) => { v.copy(summit); },
         fire: () => {
           const now = performance.now();
-          [[0, 0, 0], [220, 9, 0], [440, 0, 9], [660, -9, 0], [880, 0, -9]].forEach(([d, dx, dz]) =>
-            cascade.push({ due: now + d, x: trig.x + dx, z: trig.z + dz }));
+          [[0, 0, 0], [240, 10, 0], [480, 0, 10], [720, -10, 0], [960, 0, -10]].forEach(([d, dx, dz]) =>
+            cascade.push({ due: now + d, x: summit.x + dx, z: summit.z + dz }));
         },
       },
     ],
     pointer: {
-      aim(ray, moved) {
+      aim(ray) {
         const ok = ray ? pick(ray) : false;
-        if (ok) {
-          px = hit.x; pz = hit.z;
-          if (aimed && moved) { mvx = px - lx; mvz = pz - lz; }
-          lx = px; lz = pz;
-        }
+        if (ok) { px = hit.x; pz = hit.z; }
         aimed = ok;
       },
       press() { pressed = true; },
       release(tap) {
-        if (pressed && aimed && tap) spawn(px, pz);
+        // A tap ripples where it landed; a held press lets its hollow go as a ripple too.
+        if (pressed && aimed && (tap || lift < -0.6)) spawn(px, pz);
         pressed = false;
       },
       busy,
@@ -302,79 +205,54 @@ export function buildField(k: PsxKit): SceneDef {
       const now = performance.now();
       const dt = Math.max(0, Math.min(0.05, (now - lastNow) / 1000));
       lastNow = now;
+      sceneT = t;
 
-      const a = 0.6 + t * 0.025 + view.yaw, r = 22;
-      cam.position.set(Math.cos(a) * r, 34 - view.py * 4, Math.sin(a) * r);
-      cam.lookAt(0, -1.5, 0);
+      // Almost top-down, turning very slowly; the engine's orbit tilts and dollies from here.
+      const a = 0.9 + t * 0.012 + view.yaw;
+      cam.position.set(Math.cos(a) * 15 + view.px * 2, 46, Math.sin(a) * 15 + view.py * 2);
+      cam.lookAt(PIVOT);
       k.orbit(cam, PIVOT);
-      sky.position.copy(cam.position);
+      const d = cam.position.distanceTo(PIVOT);
+      fadeU.set(d * 1.45, d * 3.1);
+      // Lines stay hairlines on dense screens: weight grows slower than the pixel ratio.
+      pxU.value = 1 + (Math.min(window.devicePixelRatio || 1, 2) - 1) * 0.6;
+      bg.copy(U.uZen.value).lerp(U.uFogColor.value, 0.2);
 
-      // Cursor: ease the swell toward the pointer; it dips under a press.
+      // Pointer: a faint swell follows the cursor and sinks into a hollow under a press.
       if (aimed) {
         if (Math.abs(lift) < 0.02) { hx = px; hz = pz; }
-        const e = 1 - Math.pow(1 - 0.3, dt * 60);
+        const e = 1 - Math.pow(1 - 0.2, dt * 60);
         hx += (px - hx) * e; hz += (pz - hz) * e;
       }
-      const liftT = pressed ? -0.5 : aimed ? 0.35 : 0;
-      lift += (liftT - lift) * (1 - Math.pow(1 - 0.12, dt * 60));
-      if (!aimed && Math.abs(lift) < 0.01) lift = 0;
-
-      // Movement leaves a wake; a held drag also pulls the fabric along.
-      if (dt > 0 && (mvx || mvz)) {
-        const speed = Math.hypot(mvx, mvz) / dt;
-        if (speed > 2) {
-          bump(wv, px, pz, 6, 1.5, -(pressed ? 5 : 2.5) * Math.min(speed, 30) / 30);
-        }
-        if (pressed) drag(px, pz, mvx, mvz);
-      }
-      mvx = mvz = 0;
+      const liftT = pressed ? -1.7 : aimed ? 0.32 : 0;
+      lift += (liftT - lift) * (1 - Math.pow(1 - (pressed ? 0.1 : 0.06), dt * 60));
+      if (!aimed && !pressed && Math.abs(lift) < 0.01) lift = 0;
+      hoverU.set(hx, hz, lift);
 
       for (let i = cascade.length - 1; i >= 0; i--) {
         if (cascade[i].due > now) continue;
-        spawn(cascade[i].x, cascade[i].z);
+        spawn(cascade[i].x, cascade[i].z, 0.9);
         cascade.splice(i, 1);
       }
-
-      // Warp relaxes back; pulses age out.
-      const f = Math.exp(-dt / 2.4);
-      let we = 0;
-      for (let i = 0; i < wx.length; i++) {
-        wx[i] *= f; wz[i] *= f;
-        const m = Math.abs(wx[i]) + Math.abs(wz[i]);
-        if (m > we) we = m;
-      }
-      warpE = we;
-      if (we < 0.01) { wx.fill(0); wz.fill(0); warpE = 0; }
       for (let i = pulses.length - 1; i >= 0; i--) {
         pulses[i].age += dt;
         if (pulses[i].age > LIFE) pulses.splice(i, 1);
       }
-
-      acc += dt;
-      let steps = 0;
-      while (acc >= STEP && steps < 3) { stepWave(); acc -= STEP; steps++; }
-      if (acc > STEP) acc = 0;
-      let e = 0;
-      for (let i = 0; i < wh.length; i++) {
-        const m = Math.abs(wh[i]) + Math.abs(wv[i]) * 0.1;
-        if (m > e) e = m;
+      for (let i = 0; i < MAXP; i++) {
+        const p = pulses[i];
+        if (p) pulseU[i].set(p.x, p.z, p.age, p.amp);
+        else pulseU[i].set(0, 0, 0, 0);
       }
-      waveE = e;
-      if (e < 0.004) { wh.fill(0); wv.fill(0); waveE = 0; }
-
-      if (busy() || Math.abs(t - lastT) > 0.06 || lastT < 0) {
-        rebuild(t);
-        lastT = t;
-      }
-      drawOverlays();
+      summit.y = relief(summit.x, summit.z, t);
     },
     readout() {
+      const e = relief(aimed ? px : 0, aimed ? pz : 0, sceneT) * 10;
       return [
         ["Scale", "1:2 500"],
-        ["CI", "0.5 m · index 2.5 m"],
-        ["Relief", `${((hi - lo) * 10).toFixed(0)} m`],
+        ["CI", "5 m · index 25 m"],
+        ["Elev", `${e < 0 ? "−" : "+"}${k.pad(Math.abs(Math.round(e)), 2)} m`],
         ["Brg", `${k.pad(Math.round(k.bearing(cam)), 3)}°`],
-        ["Pulses", String(pulses.length)],
+        ["Ripples", String(pulses.length)],
       ];
     },
   };
