@@ -62,8 +62,8 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "field",
     name: "Field",
-    aria: "Interactive abstract contour map seen from above: fine, smooth topographic lines in one restrained tone on a single flat ground colour trace slow hills and hollows, each line gently brightening and fading on its own rhythm. A click or tap drops a ripple into the terrain that travels outward, bunching and bending the contour lines before they settle; pressing and holding sinks a hollow the lines curve around, and the cursor lifts a faint swell.",
-    hint: "CLICK TO RIPPLE \u00b7 DRAG TO ORBIT \u00b7 SHIFT+HOLD TO PRESS",
+    aria: "Interactive abstract contour map seen from above, drawn like an identity piece: heavy index lines over hairline contours ring a single summit on one flat ground colour, with a spot height, a basin depth and a faint lattice of survey ticks, all in the colours of the current palette, each line gently brightening and fading on its own rhythm. A click or tap drops a ripple into the terrain that travels outward, bunching and bending the contour lines before they settle, and dragging lays a wake of ripples that the lines flow around behind the pointer. The camera can be orbited from straight overhead down to a low oblique view, panned and zoomed.",
+    hint: "DRAG OR CLICK TO RIPPLE \u00b7 SHIFT/RIGHT-DRAG TO ORBIT \u00b7 MIDDLE-DRAG TO PAN \u00b7 WHEEL TO ZOOM",
   },
   {
     id: "matrix",

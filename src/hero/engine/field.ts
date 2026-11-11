@@ -1,83 +1,100 @@
-/** Sheet 05 · Field: an abstract contour sheet, seen from almost straight above.
+/** Sheet 05 · Field: an abstract contour sheet, a map drawn as an identity piece.
  *
  *  One smooth height field is drawn as anti-aliased isolines in a fragment
  *  shader (no PS1 treatment: the scene is `clean`, so the engine draws it at
- *  full resolution without the low-res dither pass). The ground is one flat
- *  colour and the lines a restrained tone of the palette; both come from the
- *  shared accent uniforms, so a palette switch recolours it like every scene.
+ *  full resolution without the low-res dither pass). Ground, lines and
+ *  lettering all come from the shared accent uniforms, so a palette switch
+ *  recolours every part of it live.
  *
+ *  - Composition: one summit carries the sheet, ringed by heavy index lines
+ *    over hairline intermediates, with a spot height, a basin depth and a
+ *    faint lattice of survey ticks.
  *  - Alive: the relief drifts slowly and every contour level breathes on its
  *    own phase (brightness and weight).
- *  - A click or tap drops a ripple into the height field itself: the isolines
- *    bunch and part as the ring travels out, then settle.
- *  - Holding (Shift+drag) presses a hollow the lines bend around; letting go
- *    releases it as a ripple. The cursor alone lifts a faint swell.
- *  - Reduced motion: nothing drifts, and a tap raises a soft swell that eases
- *    back instead of sending a travelling ring. */
+ *  - A press drops a ripple into the height field itself, and a drag lays a
+ *    continuous wake of smaller ones: the isolines bunch, part and flow
+ *    behind the pointer, then settle.
+ *  - Free camera (`freeCam`): the plain drag paints, so the engine moves the
+ *    camera to Shift/Alt/right-drag (orbit, from straight down to a low
+ *    oblique), middle-drag (pan), wheel and two fingers.
+ *  - Reduced motion: nothing drifts, and a touch raises soft swells that ease
+ *    back in place instead of travelling rings. */
 import * as THREE from "three";
 import type { PsxKit, SceneDef } from "./psx";
 
-const MAXP = 6;
-/** Contour interval in height units; every fifth line is an index line. */
+/** Ripples alive at once: presses and the stamps of a drag share the pool. */
+const MAXP = 24;
+/** Contour interval in height units (1 unit reads as 100 m); every fifth line is an index line. */
 const STEP = 0.5;
-const LIFE = 4.6, SPEED = 9;
+/** Summit and basin, on the ground plane (x, z). */
+const SUMMIT: [number, number] = [8, -3], BASIN: [number, number] = [-15, 8];
+/** Survey tick spacing. */
+const TICK = 12;
+/** Spot-height lettering: line height in CSS px, and the strip's width over its height. */
+const LABEL_PX = 26, LABEL_ASPECT = 8;
+/** Camera at rest: elevation above the ground (rad) and distance from its target. */
+const ELEV = 1.2, DIST = 50, MIN_ELEV = 0.32;
 
-/* The relief, written once for the shader and mirrored below in JS (the JS
-   copy only places the pointer and the readout, so it skips the ripples). */
-const HEIGHT_GLSL = `
+const v2 = (p: [number, number]) => `vec2(${p[0].toFixed(1)}, ${p[1].toFixed(1)})`;
+
+/* The relief, written once for the shaders and mirrored below in JS (the JS
+   copy places the pointer, the spot heights and the readout). */
+const RELIEF_GLSL = `
 uniform float uTime;
-uniform vec4 uPulse[${MAXP}];
-uniform vec3 uHover;
-uniform float uCalm;
 float relief(vec2 p){
   vec2 q = p * 0.085;
   q += 0.55 * vec2(sin(q.y * 1.3 + uTime * 0.05 + 1.7), cos(q.x * 1.1 - uTime * 0.04));
-  float h = 1.9 * sin(q.x + 0.3) * cos(q.y * 0.9)
-          + 1.2 * sin((q.x + q.y) * 0.7 + 1.3 + uTime * 0.03)
-          + 0.5 * sin(q.x * 2.3 - q.y * 1.9 + uTime * 0.06);
-  vec2 a = p - vec2(7.0, -5.0), b = p - vec2(-13.0, 8.0);
-  h += 3.0 * exp(-dot(a, a) * 0.010) - 2.2 * exp(-dot(b, b) * 0.014);
+  float h = 1.5 * sin(q.x + 0.3) * cos(q.y * 0.9)
+          + 1.0 * sin((q.x + q.y) * 0.7 + 1.3 + uTime * 0.03)
+          + 0.4 * sin(q.x * 2.3 - q.y * 1.9 + uTime * 0.06);
+  vec2 a = p - ${v2(SUMMIT)}, b = p - ${v2(BASIN)};
+  h += 4.4 * exp(-dot(a, a) * 0.0075) - 2.4 * exp(-dot(b, b) * 0.012);
   return h;
-}
+}`;
+
+const VERT = `
+${RELIEF_GLSL}
+varying vec2 vP; varying float vDist;
+void main(){
+  vP = position.xz;
+  // The sheet is really raised, so a tilted camera sees the relief in parallax.
+  vec4 mv = modelViewMatrix * vec4(position.x, relief(vP), position.z, 1.0);
+  vDist = length(mv.xyz);
+  gl_Position = projectionMatrix * mv;
+}`;
+
+const FRAG = `
+${RELIEF_GLSL}
+uniform vec4 uPulse[${MAXP}];   // x, z, age, amplitude
+uniform vec2 uPulseB[${MAXP}];  // lifetime, speed
+uniform vec3 uHover;
+uniform float uCalm;
+uniform vec3 uAccent; uniform vec3 uAccent2; uniform vec3 uFogColor; uniform vec3 uZen;
+uniform float uPx; uniform vec2 uFade;
+varying vec2 vP; varying float vDist;
+
 /* x: height added by the ripples and the pointer, y: how much of a wave front is here (0..1). */
 vec2 touch(vec2 p){
   float h = 0.0, e = 0.0;
   for (int i = 0; i < ${MAXP}; i++) {
     vec4 u = uPulse[i];
     if (u.w <= 0.0) continue;
-    float r = length(p - u.xy), life = clamp(u.z / ${LIFE.toFixed(1)}, 0.0, 1.0);
+    vec2 b = uPulseB[i];
+    float r = length(p - u.xy), life = clamp(u.z / b.x, 0.0, 1.0);
     if (uCalm > 0.5) {
       // A swell that rises and settles in place.
       h += u.w * 1.3 * sin(3.14159 * life) * exp(-r * r * 0.02);
     } else {
-      float d = r - ${SPEED.toFixed(1)} * u.z;
+      float d = r - b.y * u.z;
       float env = exp(-d * d * 0.035) * (1.0 - life) * (1.0 - life) * smoothstep(0.0, 0.12, u.z);
-      h += u.w * (env * cos(d * 0.8) / (1.0 + r * 0.02) - 1.5 * exp(-r * r * 0.07) * exp(-u.z * 2.2));
-      e += env;
+      h += u.w * (env * cos(d * 0.8) / (1.0 + r * 0.02) - 1.5 * exp(-r * r * 0.07) * exp(-u.z * 1.6));
+      e += env * u.w;
     }
   }
   vec2 hv = p - uHover.xy;
   h += uHover.z * exp(-dot(hv, hv) * 0.03);
   return vec2(h, min(e, 1.0));
-}`;
-
-const VERT = `
-${HEIGHT_GLSL}
-varying vec2 vP; varying float vDist;
-void main(){
-  vP = position.xz;
-  // The sheet is really raised, so the slight tilt gives the relief parallax.
-  vec3 q = vec3(position.x, relief(vP) + touch(vP).x, position.z);
-  vec4 mv = modelViewMatrix * vec4(q, 1.0);
-  vDist = length(mv.xyz);
-  gl_Position = projectionMatrix * mv;
-}`;
-
-const FRAG = `
-${HEIGHT_GLSL}
-uniform vec3 uAccent; uniform vec3 uFogColor; uniform vec3 uZen;
-uniform float uPx; uniform vec2 uFade;
-varying vec2 vP; varying float vDist;
+}
 void main(){
   vec2 tc = touch(vP);
   float h = relief(vP) + tc.x;
@@ -88,69 +105,139 @@ void main(){
   float idx = 1.0 - step(0.5, mod(lid, 5.0));
   // Each level breathes on its own phase.
   float breath = 0.5 + 0.5 * sin(uTime * 0.55 + lid * 0.83);
-  float hn = clamp(h / 9.0 + 0.5, 0.0, 1.0);
-  // Half-width in device pixels: index lines and high ground are heavier.
-  float w = uPx * (mix(0.42, 0.8, idx) + 0.22 * breath + 0.3 * hn + 0.35 * tc.y);
+  float hn = clamp(h / 10.0 + 0.45, 0.0, 1.0);
+  // Half-width in device pixels: hairline intermediates under heavy index lines.
+  float w = uPx * (mix(0.3, 0.95, idx) + 0.16 * breath + 0.2 * hn + 0.35 * tc.y);
   float line = clamp(w + 0.5 - dist / df, 0.0, 1.0);
   line *= 1.0 - smoothstep(0.2, 0.34, dist);        // no blobs on flat ground
   line *= 1.0 - smoothstep(0.22, 0.5, df);          // no moire where lines crowd
-  float a = mix(0.44, 0.82, idx) * (0.62 + 0.38 * breath) * mix(0.6, 1.0, hn);
+  float a = mix(0.4, 0.95, idx) * (0.64 + 0.36 * breath) * mix(0.62, 1.0, hn);
   a = min(1.0, a + 0.45 * tc.y);
 
-  vec3 bg = mix(uZen, uFogColor, 0.2);
-  vec3 ground = bg + uFogColor * (hn - 0.5) * 0.09;  // a breath of hypsometric shading
-  vec3 ink = mix(mix(uFogColor, uAccent, 0.6), uAccent, max(idx * 0.6, tc.y));
+  // Ground and ink both belong to the palette.
+  vec3 bg = mix(uZen, uFogColor, 0.36) + uAccent2 * 0.08;
+  vec3 ground = bg + uFogColor * (hn - 0.5) * 0.1 + uAccent * smoothstep(0.6, 1.0, hn) * 0.06;
+  vec3 minor = mix(uFogColor, uAccent, 0.62);
+  vec3 ink = mix(minor, uAccent, max(idx, tc.y));
   vec3 c = mix(ground, ink, line * a);
+
+  // Graphic furniture, printed on the ground: survey ticks, the summit mark, the basin point.
+  float wpp = length(fwidth(vP)) * 0.7071;           // world units per pixel
+  float near = 1.0 - smoothstep(0.07, 0.2, wpp);
+  vec2 g = abs(mod(vP + ${(TICK / 2).toFixed(1)}, ${TICK.toFixed(1)}) - ${(TICK / 2).toFixed(1)});
+  float tw = 0.55 * wpp * uPx;
+  float tick = max((1.0 - smoothstep(0.5, 0.5 + wpp, g.x)) * (1.0 - smoothstep(tw, tw + wpp, g.y)),
+                   (1.0 - smoothstep(0.5, 0.5 + wpp, g.y)) * (1.0 - smoothstep(tw, tw + wpp, g.x)));
+  c = mix(c, minor, tick * 0.5 * near);
+  float sr = length(vP - ${v2(SUMMIT)});
+  float mark = max(1.0 - smoothstep(0.2, 0.2 + wpp, sr), 1.0 - smoothstep(tw, tw + wpp, abs(sr - 0.85)));
+  float pit = (1.0 - smoothstep(0.16, 0.16 + wpp, length(vP - ${v2(BASIN)}))) * 0.7;
+  c = mix(c, uAccent, max(mark, pit) * near);
+
   c = mix(c, bg, smoothstep(uFade.x, uFade.y, vDist));
   gl_FragColor = vec4(c, 1.0);
 }`;
 
 export function buildField(k: PsxKit): SceneDef {
   const { U, view } = k;
-  const PIVOT = new THREE.Vector3(0, 0, 0);
   const scene = new THREE.Scene();
   const bg = new THREE.Color();
   scene.background = bg;
-  const cam = new THREE.PerspectiveCamera(50, 16 / 9, 0.5, 600);
+  const cam = new THREE.PerspectiveCamera(50, 16 / 9, 0.5, 900);
   const reduced = typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-  const pulseU = Array.from({ length: MAXP }, () => new THREE.Vector4(0, 0, 0, 0));
-  const hoverU = new THREE.Vector3(0, 0, 0);
-  const fadeU = new THREE.Vector2(70, 150);
-  const pxU = { value: 1 };
-  const mat = new THREE.ShaderMaterial({
-    uniforms: {
-      uTime: U.uTime, uAccent: U.uAccent, uFogColor: U.uFogColor, uZen: U.uZen,
-      uPulse: { value: pulseU }, uHover: { value: hoverU }, uCalm: { value: reduced ? 1 : 0 },
-      uPx: pxU, uFade: { value: fadeU },
-    },
-    vertexShader: VERT,
-    fragmentShader: FRAG,
-  });
-  // Wide enough that the fade to the ground colour hides the edge at every camera setting.
-  const geo = new THREE.PlaneGeometry(420, 420, 200, 200);
-  geo.rotateX(-Math.PI / 2);
-  const sheet = new THREE.Mesh(geo, mat);
-  sheet.frustumCulled = false;
-  scene.add(sheet);
 
   /* ---- the same relief in JS ---- */
   const relief = (x: number, z: number, t: number) => {
     let qx = x * 0.085, qz = z * 0.085;
     const wx = 0.55 * Math.sin(qz * 1.3 + t * 0.05 + 1.7), wz = 0.55 * Math.cos(qx * 1.1 - t * 0.04);
     qx += wx; qz += wz;
-    const ax = x - 7, az = z + 5, bx = x + 13, bz = z - 8;
-    return 1.9 * Math.sin(qx + 0.3) * Math.cos(qz * 0.9) + 1.2 * Math.sin((qx + qz) * 0.7 + 1.3 + t * 0.03) +
-      0.5 * Math.sin(qx * 2.3 - qz * 1.9 + t * 0.06) +
-      3.0 * Math.exp(-(ax * ax + az * az) * 0.01) - 2.2 * Math.exp(-(bx * bx + bz * bz) * 0.014);
+    const ax = x - SUMMIT[0], az = z - SUMMIT[1], bx = x - BASIN[0], bz = z - BASIN[1];
+    return 1.5 * Math.sin(qx + 0.3) * Math.cos(qz * 0.9) + 1.0 * Math.sin((qx + qz) * 0.7 + 1.3 + t * 0.03) +
+      0.4 * Math.sin(qx * 2.3 - qz * 1.9 + t * 0.06) +
+      4.4 * Math.exp(-(ax * ax + az * az) * 0.0075) - 2.4 * Math.exp(-(bx * bx + bz * bz) * 0.012);
   };
+  const metres = (h: number) => `${h < 0 ? "−" : ""}${Math.abs(Math.round(h * 100))} M`;
+
+  /* ---- lettering: spot heights in the site's mono face, as sprites that always face the reader ---- */
+  const label = (text: string, key: string) => {
+    const c = document.createElement("canvas");
+    c.width = 64 * LABEL_ASPECT; c.height = 64;
+    const tex = new THREE.CanvasTexture(c);
+    tex.minFilter = THREE.LinearFilter;
+    tex.generateMipmaps = false;
+    const draw = () => {
+      const g = c.getContext("2d");
+      if (!g) return;
+      const face = getComputedStyle(document.documentElement).getPropertyValue("--f-mono").trim() || "ui-monospace, monospace";
+      g.clearRect(0, 0, c.width, c.height);
+      g.fillStyle = "#fff";
+      g.textBaseline = "middle";
+      g.font = `500 34px ${face}`;
+      (g as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = "5px";
+      g.fillText(text, 0, 34);
+      tex.needsUpdate = true;
+    };
+    draw();
+    // The web font may land after the scene is built.
+    void document.fonts?.ready.then(draw).catch(() => undefined);
+    // The engine disposes the kit's textures with everything else.
+    (k.tex as Record<string, THREE.Texture>)[key] = tex;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false, sizeAttenuation: false }));
+    sp.center.set(0, 0.5);
+    sp.renderOrder = 2;
+    scene.add(sp);
+    return sp;
+  };
+  const marks = [
+    { sp: label(metres(relief(SUMMIT[0], SUMMIT[1], 18)), "fieldSummit"), at: SUMMIT, gap: 1.2, ink: 0.95 },
+    { sp: label(metres(relief(BASIN[0], BASIN[1], 18)), "fieldBasin"), at: BASIN, gap: 0.5, ink: 0.6 },
+  ];
+
+  const pulseU = Array.from({ length: MAXP }, () => new THREE.Vector4(0, 0, 0, 0));
+  const pulseB = Array.from({ length: MAXP }, () => new THREE.Vector2(1, 1));
+  const hoverU = new THREE.Vector3(0, 0, 0);
+  const fadeU = new THREE.Vector2(75, 160);
+  const pxU = { value: 1 };
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      uTime: U.uTime, uAccent: U.uAccent, uAccent2: U.uAccent2, uFogColor: U.uFogColor, uZen: U.uZen,
+      uPulse: { value: pulseU }, uPulseB: { value: pulseB }, uHover: { value: hoverU }, uCalm: { value: reduced ? 1 : 0 },
+      uPx: pxU, uFade: { value: fadeU },
+    },
+    vertexShader: VERT,
+    fragmentShader: FRAG,
+  });
+  // Wide enough that the fade to the ground colour hides the edge at every camera setting.
+  const geo = new THREE.PlaneGeometry(840, 840, 280, 280);
+  geo.rotateX(-Math.PI / 2);
+  const sheet = new THREE.Mesh(geo, mat);
+  sheet.frustumCulled = false;
+  scene.add(sheet);
+  // The lettering is sized in CSS px, so it needs the height of the canvas it is drawn on.
+  const size = new THREE.Vector2(1, window.innerHeight || 800);
+  sheet.onBeforeRender = (renderer) => { renderer.getSize(size); };
+  const right = new THREE.Vector3();
+
+  /* ---- ripples: presses and drag stamps share one pool ---- */
+  interface Pulse { x: number; z: number; age: number; amp: number; life: number; speed: number }
+  const pool: Pulse[] = Array.from({ length: MAXP }, () => ({ x: 0, z: 0, age: 0, amp: 0, life: 1, speed: 1 }));
+  let live = 0;
+  const spawn = (x: number, z: number, amp: number, life: number, speed: number) => {
+    // A free slot, or else the ripple with the least left in it.
+    let best = pool[0], least = Infinity;
+    for (const p of pool) {
+      const left = p.amp <= 0 ? -1 : p.amp * (1 - p.age / p.life) ** 2;
+      if (left < least) { least = left; best = p; }
+    }
+    best.x = x; best.z = z; best.age = 0; best.amp = amp; best.life = life; best.speed = speed;
+  };
+  const ripple = (x: number, z: number, amp = 1.25) => spawn(x, z, amp, 4.6, 9);
 
   /* ---- pointer state ---- */
-  interface Pulse { x: number; z: number; age: number; amp: number }
-  const pulses: Pulse[] = [];
   const cascade: { due: number; x: number; z: number }[] = [];
   let aimed = false, pressed = false, px = 0, pz = 0, hx = 0, hz = 0, lift = 0;
-  let sceneT = 0, lastNow = performance.now();
+  let sx = 0, sz = 0, stampAt = 0; // last drag stamp
+  let sceneT = 18, lastNow = performance.now();
   const hit = new THREE.Vector3(), plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
   // Ray onto the raised sheet: a few plane intersections converge on it.
   const pick = (ray: THREE.Ray) => {
@@ -160,25 +247,24 @@ export function buildField(k: PsxKit): SceneDef {
       if (!ray.intersectPlane(plane, hit)) return false;
       y = relief(hit.x, hit.z, sceneT);
     }
-    return Math.abs(hit.x) < 150 && Math.abs(hit.z) < 150;
-  };
-  const spawn = (x: number, z: number, amp = 1.25) => {
-    if (pulses.length >= MAXP) pulses.shift();
-    pulses.push({ x, z, age: 0, amp });
+    return Math.abs(hit.x) < 300 && Math.abs(hit.z) < 300;
   };
   const busy = () =>
-    cascade.length > 0 || pressed || pulses.length > 0 || Math.abs(lift) > 0.01 ||
+    cascade.length > 0 || pressed || live > 0 || Math.abs(lift) > 0.01 ||
     (aimed && Math.hypot(px - hx, pz - hz) > 0.05);
 
-  const summit = new THREE.Vector3(7, 0, -5);
+  const pivot = new THREE.Vector3();
+  const summit = new THREE.Vector3(SUMMIT[0], 0, SUMMIT[1]);
 
   return {
-    scene, cam, clean: true, fog: [70, 150], fov: [50, 66], limits: { pitch: [-0.24, 0.42], zoom: [0.6, 1.9] },
+    scene, cam, clean: true, freeCam: { pan: 60 }, fog: [75, 160], fov: [50, 66],
+    // From straight overhead down to a low oblique, and from a wide sheet to a close study.
+    limits: { pitch: [MIN_ELEV - ELEV, Math.PI / 2 - ELEV], zoom: [0.4, 3.2] },
     labels: [],
     eggs: [
       {
         // The summit answers with a ring of ripples around it.
-        id: "field-benchmark", r: 34,
+        id: "field-benchmark", r: 30,
         at: (v) => { v.copy(summit); },
         fire: () => {
           const now = performance.now();
@@ -188,17 +274,27 @@ export function buildField(k: PsxKit): SceneDef {
       },
     ],
     pointer: {
-      aim(ray) {
+      aim(ray, moved) {
         const ok = ray ? pick(ray) : false;
-        if (ok) { px = hit.x; pz = hit.z; }
+        if (ok) {
+          px = hit.x; pz = hit.z;
+          // A drag lays a wake: one small ripple every couple of metres of travel.
+          const now = performance.now(), run = Math.hypot(px - sx, pz - sz);
+          if (pressed && moved && run > 2.2 && now - stampAt > 100) {
+            const pace = Math.min(1, run / Math.max(0.1, (now - stampAt) / 1000) / 45);
+            spawn(px, pz, 0.55 + 0.4 * pace, 2.6, 6);
+            sx = px; sz = pz; stampAt = now;
+          }
+        }
         aimed = ok;
       },
-      press() { pressed = true; },
-      release(tap) {
-        // A tap ripples where it landed; a held press lets its hollow go as a ripple too.
-        if (pressed && aimed && (tap || lift < -0.6)) spawn(px, pz);
-        pressed = false;
+      press() {
+        pressed = true;
+        if (!aimed) return;
+        ripple(px, pz);
+        sx = px; sz = pz; stampAt = performance.now();
       },
+      release() { pressed = false; },
       busy,
     },
     update(t) {
@@ -207,52 +303,74 @@ export function buildField(k: PsxKit): SceneDef {
       lastNow = now;
       sceneT = t;
 
-      // Almost top-down, turning very slowly; the engine's orbit tilts and dollies from here.
-      const a = 0.9 + t * 0.012 + view.yaw;
-      cam.position.set(Math.cos(a) * 15 + view.px * 2, 46, Math.sin(a) * 15 + view.py * 2);
-      cam.lookAt(PIVOT);
-      k.orbit(cam, PIVOT);
-      const d = cam.position.distanceTo(PIVOT);
-      fadeU.set(d * 1.45, d * 3.1);
+      // Free camera about a target on the ground. `up` is the heading, so straight down is no special case.
+      const yaw = Math.PI / 2 + view.yaw;
+      const elev = Math.max(MIN_ELEV, Math.min(Math.PI / 2, ELEV + view.pitch));
+      const d = DIST / view.zoom, flat = Math.cos(elev) * d;
+      pivot.set(view.panX, 0, view.panZ);
+      cam.position.set(pivot.x + Math.cos(yaw) * flat, Math.sin(elev) * d, pivot.z + Math.sin(yaw) * flat);
+      cam.up.set(-Math.cos(yaw), 0, -Math.sin(yaw));
+      cam.lookAt(pivot);
+      // A low camera sees further across the sheet before it fades into the ground colour.
+      const low = 1 - Math.sin(elev), far = Math.min(d * (3.2 + 3.5 * low), 400);
+      fadeU.set(Math.min(d * (1.5 + 1.2 * low), far * 0.55), far);
       // Lines stay hairlines on dense screens: weight grows slower than the pixel ratio.
       pxU.value = 1 + (Math.min(window.devicePixelRatio || 1, 2) - 1) * 0.6;
-      bg.copy(U.uZen.value).lerp(U.uFogColor.value, 0.2);
+      // The clear colour is the shader's ground, so the sheet has no visible edge.
+      const z = U.uZen.value, f = U.uFogColor.value, a2 = U.uAccent2.value;
+      bg.setRGB(z.r + (f.r - z.r) * 0.36 + a2.r * 0.08, z.g + (f.g - z.g) * 0.36 + a2.g * 0.08, z.b + (f.b - z.b) * 0.36 + a2.b * 0.08);
 
       // Pointer: a faint swell follows the cursor and sinks into a hollow under a press.
       if (aimed) {
         if (Math.abs(lift) < 0.02) { hx = px; hz = pz; }
-        const e = 1 - Math.pow(1 - 0.2, dt * 60);
+        const e = 1 - Math.pow(1 - 0.25, dt * 60);
         hx += (px - hx) * e; hz += (pz - hz) * e;
       }
-      const liftT = pressed ? -1.7 : aimed ? 0.32 : 0;
-      lift += (liftT - lift) * (1 - Math.pow(1 - (pressed ? 0.1 : 0.06), dt * 60));
+      const liftT = pressed ? -0.9 : aimed ? 0.32 : 0;
+      lift += (liftT - lift) * (1 - Math.pow(1 - (pressed ? 0.14 : 0.06), dt * 60));
       if (!aimed && !pressed && Math.abs(lift) < 0.01) lift = 0;
       hoverU.set(hx, hz, lift);
 
       for (let i = cascade.length - 1; i >= 0; i--) {
         if (cascade[i].due > now) continue;
-        spawn(cascade[i].x, cascade[i].z, 0.9);
+        ripple(cascade[i].x, cascade[i].z, 0.9);
         cascade.splice(i, 1);
       }
-      for (let i = pulses.length - 1; i >= 0; i--) {
-        pulses[i].age += dt;
-        if (pulses[i].age > LIFE) pulses.splice(i, 1);
-      }
+      live = 0;
       for (let i = 0; i < MAXP; i++) {
-        const p = pulses[i];
-        if (p) pulseU[i].set(p.x, p.z, p.age, p.amp);
-        else pulseU[i].set(0, 0, 0, 0);
+        const p = pool[i];
+        if (p.amp > 0) {
+          p.age += dt;
+          if (p.age > p.life) p.amp = 0;
+          else live++;
+        }
+        pulseU[i].set(p.x, p.z, p.age, p.amp);
+        pulseB[i].set(p.life, p.speed);
       }
       summit.y = relief(summit.x, summit.z, t);
+
+      // Spot heights: a fixed size on screen, set off to the right of their point whichever way the map is turned.
+      cam.updateMatrixWorld();
+      right.setFromMatrixColumn(cam.matrixWorld, 0);
+      const tan = 2 * Math.tan((cam.fov * Math.PI) / 360), wpp = (d * tan) / size.y;
+      const sy = (LABEL_PX / size.y) * tan;
+      for (const m of marks) {
+        m.sp.position.set(m.at[0], relief(m.at[0], m.at[1], t), m.at[1]).addScaledVector(right, m.gap + 7 * wpp);
+        m.sp.scale.set(sy * LABEL_ASPECT, sy, 1);
+        const far = cam.position.distanceTo(m.sp.position);
+        const fade = Math.min(1, Math.max(0, (far - fadeU.x) / (fadeU.y - fadeU.x)));
+        m.sp.material.color.copy(U.uAccent.value);
+        m.sp.material.opacity = m.ink * (1 - fade * fade * (3 - 2 * fade));
+      }
     },
     readout() {
-      const e = relief(aimed ? px : 0, aimed ? pz : 0, sceneT) * 10;
+      const e = relief(aimed ? px : pivot.x, aimed ? pz : pivot.z, sceneT);
       return [
-        ["Scale", "1:2 500"],
-        ["CI", "5 m · index 25 m"],
-        ["Elev", `${e < 0 ? "−" : "+"}${k.pad(Math.abs(Math.round(e)), 2)} m`],
+        ["Scale", "1:25 000"],
+        ["CI", "50 m · index 250 m"],
+        ["Elev", metres(e).toLowerCase()],
         ["Brg", `${k.pad(Math.round(k.bearing(cam)), 3)}°`],
-        ["Ripples", String(pulses.length)],
+        ["Ripples", String(live)],
       ];
     },
   };
