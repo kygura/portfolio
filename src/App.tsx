@@ -28,6 +28,7 @@ const Projects = lazy(() => import("./pages/Projects"));
 const Codebase = lazy(() => import("./pages/Codebase"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Artifacts = lazy(() => import("./pages/Artifacts"));
+const Canvas = lazy(() => import("./pages/Canvas"));
 const CV = lazy(() => import("./pages/CV"));
 const Scenes = lazy(() => import("./pages/Scenes"));
 const Boot = lazy(() => import("./pages/Boot"));
@@ -80,6 +81,14 @@ const App = () => (
               element={
                 <Layout>
                   <Artifacts />
+                </Layout>
+              }
+            />
+            <Route
+              path="/artifacts/commons"
+              element={
+                <Layout>
+                  <Canvas />
                 </Layout>
               }
             />
