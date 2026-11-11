@@ -10,7 +10,7 @@ import { AGENT_WINDOW, PALETTE, RGBA, SIZE, place, pull, readLocal, unpack, writ
  * people's marks every few seconds while the tab is visible. When the server
  * has no storage the sheet is kept in this browser only.
  *
- * Resident agents (api/plot/agents.ts) work the sheet too. Each poll says
+ * Resident agents (api/plot/_agents.ts) work the sheet too. Each poll says
  * where they stand; the board draws each one's window with a name tag, and
  * the console shows what they last said.
  */

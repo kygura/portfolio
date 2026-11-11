@@ -13,7 +13,7 @@ import {
   parseState,
   parseTurn,
   windowOrigin,
-} from "./agents.ts";
+} from "./_agents.ts";
 
 const mason = RESIDENTS.find((r) => r.id === "mason")!;
 

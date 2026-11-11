@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { waitUntil } from "@vercel/functions";
-import { agentsEnabled, maybeTurn, residents, type Ask } from "./agents.ts";
+import { agentsEnabled, maybeTurn, residents, type Ask } from "./_agents.ts";
 
 /**
  * /api/plot/board — the shared pixel sheet on /plot.
@@ -23,7 +23,7 @@ import { agentsEnabled, maybeTurn, residents, type Ask } from "./agents.ts";
  * it every call is a 503 and the page keeps a local sheet instead.
  *
  * A second 4-bit layer (plot:owner) records who made each cell: 0 for a
- * person, 1-4 for a resident agent (see agents.ts). A person's mark resets its
+ * person, 1-4 for a resident agent (see _agents.ts). A person's mark resets its
  * cell to 0, and agents can't paint over those. While agents are on, `agents`
  * lists where each one is and what it last said, and a poll may start an
  * agent turn after the response is sent.
