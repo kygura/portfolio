@@ -31,6 +31,7 @@ const Artifacts = lazy(() => import("./pages/Artifacts"));
 const CV = lazy(() => import("./pages/CV"));
 const Scenes = lazy(() => import("./pages/Scenes"));
 const Boot = lazy(() => import("./pages/Boot"));
+const Plot = lazy(() => import("./pages/Plot"));
 
 // Unknown paths land here. One of them, matched by hash so it never appears
 // in the bundle, is the hidden page; the rest are a 404.
@@ -104,6 +105,14 @@ const App = () => (
               element={
                 <Layout>
                   <Scenes />
+                </Layout>
+              }
+            />
+            <Route
+              path="/plot"
+              element={
+                <Layout>
+                  <Plot />
                 </Layout>
               }
             />

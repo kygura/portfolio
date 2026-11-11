@@ -1,7 +1,8 @@
 {
   "buildCommand": "bun run build",
   "functions": {
-    "api/github/codebase.ts": { "maxDuration": 300 }
+    "api/github/codebase.ts": { "maxDuration": 300 },
+    "api/plot/board.ts": { "maxDuration": 60 }
   },
   "redirects": [
     {

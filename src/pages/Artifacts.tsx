@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 
 const Artifacts = () => {
   return (
@@ -8,9 +10,16 @@ const Artifacts = () => {
           A collection of digital objects and experiments.
         </p>
 
-        <div className="p-12 border border-dashed border-primary/20 rounded-lg text-center text-muted-foreground bg-card/50">
-          <p className="italic">The gallery is currently empty.</p>
-        </div>
+        <Link to="/plot" className="artifact-card not-prose">
+          <span className="artifact-card__no">01</span>
+          <span className="artifact-card__body">
+            <span className="artifact-card__title">Plot</span>
+            <span className="artifact-card__text">
+              One shared 256 × 256 sheet. Anyone can mark one cell every five seconds.
+            </span>
+          </span>
+          <span className="artifact-card__go" aria-hidden="true">→</span>
+        </Link>
       </div>
     </div>
   );

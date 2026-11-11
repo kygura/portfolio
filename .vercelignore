@@ -1,0 +1,3 @@
+# Every .ts file under api/ becomes a serverless function, and the Hobby plan
+# allows 12 per deployment. Tests never run on Vercel, so keep them out.
+api/**/*.test.ts
