@@ -1,9 +1,11 @@
-/** Sheet 05 · Strata: an abstract relief read from straight above. One plane is
- *  displaced into terraces by a slow, drifting height function, and the same
- *  function is evaluated per pixel to draw it as stacked plates: a flat tone per
- *  level (dark low, accent at the summits), a hairline at every level with every
- *  fifth one in the accent colour, and a soft shadow each plate casts on the one
- *  below. A tap sends a ripple out through the levels; the cursor lifts a swell.
+/** Sheet 05 · Strata: an abstract relief read from straight above, drawn with
+ *  strokes only. One plane is displaced by a slow, drifting height function and
+ *  the same function is evaluated per pixel to rule a hairline at every level on
+ *  a near-black ground that takes its cast from the palette. No fills, no grid:
+ *  height reads from the strokes themselves (low levels sink into the ground,
+ *  high ones brighten and thicken, every fifth is in the accent) and from the
+ *  way they slide over one another as the eye moves. A tap sends a ripple out
+ *  through the levels as one thin accent stroke; the cursor lifts a swell.
  *
  *  A `clean` scene: it is drawn at full resolution with no PS1 pass, so its lines
  *  are anti-aliased in the shader instead (screen-space derivatives). */
@@ -18,6 +20,8 @@ const MAXP = 4, LIFE = 4.5, SPEED = 14;
 const SWELL = 2.2;
 /** Datum benchmark: a ring drawn on the surface, and the scene's hidden target. */
 const BM = { x: 26, z: -15 };
+/** Ground: the palette's zenith colour pulled most of the way to black. */
+const GROUND = 0.4;
 /** Plane size (m) and segments. The edge fades out long before the camera can reach it. */
 const SIZE = 400, SEG = 144;
 
@@ -57,17 +61,14 @@ ${RELIEF}
 void main(){
   vec3 p = position;
   vP = p.xz;
-  float h = relief(vP);
-  // Terraces: flat plates with a short riser just under each level.
-  float q = h / ${f(STEP)}, fl = floor(q);
-  float terr = (fl + smoothstep(0.7, 1.0, q - fl)) * ${f(STEP)};
-  p.y = mix(h, terr, 0.85);
+  // Real height, so the strokes slide over one another as the eye moves.
+  p.y = relief(vP);
   gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
 }`;
 
 const FRAG = `
 varying vec2 vP;
-uniform vec3 uAccent; uniform vec3 uAccent2; uniform vec3 uZen; uniform vec3 uFogColor;
+uniform vec3 uAccent; uniform vec3 uZen;
 uniform float uDpr;
 uniform vec2 uMark;
 ${RELIEF}
@@ -75,48 +76,33 @@ float aa(float d, float w){ return 1.0 - smoothstep(w - 0.5, w + 0.5, d); }
 void main(){
   float q = relief(vP) / ${f(STEP)};
   float fw = max(fwidth(q), 1e-5);
-  vec2 pw = max(fwidth(vP), vec2(1e-5));
-  float lvl = floor(q), fr = q - lvl;
+  float pw = max(fwidth(vP.x), 1e-5);
+  float fr = fract(q);
+  vec3 ground = uZen * ${f(GROUND)};
   vec3 bone = mix(uAccent, vec3(1.0), 0.62);
+  vec3 col = ground;
 
-  // One flat tone per level: zenith dark in the hollows, haze, then the deep accent; summits in full accent.
-  float tone = clamp((lvl - ${f(LV_LO)}) / ${f(LV_HI - LV_LO)}, 0.0, 1.0);
-  vec3 col = mix(uZen * 0.85, uFogColor, smoothstep(0.0, 0.62, tone));
-  col = mix(col, uAccent2, smoothstep(0.45, 1.0, tone) * 0.72);
-  float top = step(${f(LV_HI - 1)}, lvl);
-  col = mix(col, uAccent, top);
-
-  // Each plate shades the edge of the one below it; where levels crowd, the whole slope darkens.
-  col *= 1.0 - 0.5 * exp(-(1.0 - fr) / (fw * 9.0 * uDpr));
-
-  // Survey grid (10 m) with registration crosses (40 m).
-  vec2 g = vP / 10.0;
-  vec2 gd = abs(fract(g - 0.5) - 0.5) / max(fwidth(g), vec2(1e-5));
-  col = mix(col, bone, 0.07 * aa(min(gd.x, gd.y), 0.5 * uDpr));
-  vec2 c = (fract(vP / 40.0 - 0.5) - 0.5) * 40.0;
-  float reg = max(aa(abs(c.x) / pw.x, 0.6 * uDpr) * step(abs(c.y), 1.7), aa(abs(c.y) / pw.y, 0.6 * uDpr) * step(abs(c.x), 1.7));
-  col = mix(col, bone, 0.5 * reg);
-
-  // Level lines: hairlines that brighten with height, every ${IDX}th in the accent.
+  // Level strokes, nothing else. Height reads from the stroke alone: low levels sink
+  // into the ground, high ones come up brighter and a touch heavier, every ${IDX}th in the accent.
   float li = floor(q + 0.5);
   float idx = 1.0 - step(0.5, mod(li, ${f(IDX)}));
-  float line = aa(min(fr, 1.0 - fr) / fw, mix(0.55, 1.05, idx) * uDpr) * (1.0 - smoothstep(0.4, 0.8, fw));
   float lt = clamp((li - ${f(LV_LO)}) / ${f(LV_HI - LV_LO)}, 0.0, 1.0);
-  vec3 lc = mix(mix(col, bone, 0.22 + 0.5 * lt), uAccent, idx);
-  col = mix(col, mix(lc, uZen, top * (1.0 - idx) * 0.6), line);
+  float w = mix(mix(0.45, 0.75, lt), mix(0.8, 1.2, lt), idx) * uDpr;
+  float line = aa(min(fr, 1.0 - fr) / fw, w) * (1.0 - smoothstep(0.4, 0.8, fw));
+  float a = mix(0.07 + 0.63 * lt * lt, 0.3 + 0.7 * lt, idx);
+  col = mix(col, mix(bone, uAccent, idx), line * a);
 
-  // Ripple fronts and the datum benchmark.
+  // Ripple fronts: one thin accent stroke each. The datum benchmark: a small open ring.
   float ring = 0.0;
   for (int i = 0; i < ${MAXP}; i++) {
     vec3 u = uPulse[i];
-    if (u.z >= 0.0) ring = max(ring, aa(abs(distance(vP, u.xy) - ${f(SPEED)} * u.z) / pw.x, 0.7 * uDpr) * (1.0 - u.z / ${f(LIFE)}));
+    if (u.z >= 0.0) ring = max(ring, aa(abs(distance(vP, u.xy) - ${f(SPEED)} * u.z) / pw, 0.6 * uDpr) * (1.0 - u.z / ${f(LIFE)}));
   }
   col = mix(col, uAccent, ring);
-  float md = distance(vP, uMark);
-  col = mix(col, bone, max(aa(abs(md - 1.7) / pw.x, 0.7 * uDpr), aa(md / pw.x, 0.45 / pw.x)));
+  col = mix(col, bone, 0.8 * aa(abs(distance(vP, uMark) - 1.5) / pw, 0.55 * uDpr));
 
-  // The sheet runs out into the dark well before its edge.
-  col = mix(col, uZen * 0.85, smoothstep(150.0, 195.0, max(abs(vP.x), abs(vP.y))));
+  // The sheet runs out into the ground well before its edge.
+  col = mix(col, ground, smoothstep(150.0, 195.0, max(abs(vP.x), abs(vP.y))));
   gl_FragColor = vec4(col, 1.0);
 }`;
 
@@ -137,7 +123,8 @@ export function buildStrata(k: PsxKit): SceneDef {
   const { U, view } = k;
   const PIVOT = new THREE.Vector3(0, 0, 0);
   const scene = new THREE.Scene();
-  scene.background = U.uZen.value; // shared colour object: follows the accent
+  const ground = new THREE.Color();
+  scene.background = ground; // refreshed from the palette every frame
   const cam = new THREE.PerspectiveCamera(50, 16 / 9, 1, 600);
 
   const pulses = Array.from({ length: MAXP }, () => new THREE.Vector3(0, 0, -1));
@@ -148,7 +135,7 @@ export function buildStrata(k: PsxKit): SceneDef {
     fragmentShader: FRAG,
     extensions: { derivatives: true },
     uniforms: {
-      uTime: U.uTime, uAccent: U.uAccent, uAccent2: U.uAccent2, uZen: U.uZen, uFogColor: U.uFogColor,
+      uTime: U.uTime, uAccent: U.uAccent, uZen: U.uZen,
       uPulse: { value: pulses }, uSwell: { value: swell }, uDpr,
       uMark: { value: new THREE.Vector2(BM.x, BM.z) },
     },
@@ -207,6 +194,7 @@ export function buildStrata(k: PsxKit): SceneDef {
     },
     update(t) {
       time = t;
+      ground.copy(U.uZen.value).multiplyScalar(GROUND);
       now = performance.now();
       const dt = Math.max(0, Math.min(0.05, (now - lastNow) / 1000));
       lastNow = now;
