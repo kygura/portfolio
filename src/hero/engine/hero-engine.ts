@@ -1,7 +1,8 @@
 /**
  * Hero engine: builds every sheet once, renders only the active one
  * (plus the outgoing one during a dither dissolve) into a quarter-resolution
- * target, then blits through a 15-bit quantize + Bayer dither pass.
+ * target, then blits through a 15-bit quantize + Bayer dither pass. A scene
+ * marked `clean` (Field) skips all of that and is drawn straight to the canvas.
  *
  * Loaded with a dynamic import from useHeroStage (home hero, /scenes), so three.js stays out of every
  * other route's bundle. The render loop only runs while there is something
@@ -172,12 +173,12 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   let tpx = 0, tpy = 0;
   // Manual camera: targets are set by input, kit.view eases toward them.
   const view = kit.view;
-  let yawT = 0, pitchT = 0, zoomT = 1;
+  let yawT = 0, pitchT = 0, zoomT = 1, panXT = 0, panZT = 0;
   let yawV = 0, pitchV = 0;
-  let drag: { id: number; x: number; y: number; sx: number; sy: number; own: boolean } | null = null;
+  let drag: { id: number; x: number; y: number; sx: number; sy: number; own: boolean; pan: boolean } | null = null;
   // Fingers down on the stage; two of them make a pinch (spread zooms, the midpoint orbits).
   const touches = new Map<number, { x: number; y: number }>();
-  let pinch: { d: number; mx: number; my: number } | null = null;
+  let pinch: { d: number; mx: number; my: number; a: number; n: number } | null = null;
   // After a pinch, the finger left behind does nothing until it lifts, so the view doesn't jump.
   let pinchHold = false;
   const clampView = () => {
@@ -185,10 +186,24 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     if (lim.yaw !== undefined) yawT = Math.max(-lim.yaw, Math.min(lim.yaw, yawT));
     pitchT = Math.max(lim.pitch[0], Math.min(lim.pitch[1], pitchT));
     zoomT = Math.max(lim.zoom[0], Math.min(lim.zoom[1], zoomT));
+    const reach = scene(cur).freeCam?.pan ?? 0, off = Math.hypot(panXT, panZT);
+    if (off > reach) { panXT *= reach / (off || 1); panZT *= reach / (off || 1); }
+  };
+  /** Slide a free camera's target so the ground follows a drag of (dx, dy) CSS px. */
+  const panBy = (dx: number, dy: number) => {
+    const c = scene(cur).cam, m = c.matrixWorld.elements;
+    const rl = Math.hypot(m[0], m[2]) || 1, rx = m[0] / rl, rz = m[2] / rl;
+    const dist = Math.hypot(c.position.x - view.panX, c.position.y, c.position.z - view.panZ);
+    const wpp = (2 * dist * Math.tan((c.fov * Math.PI) / 360)) / cssH;
+    // A low camera stretches a pixel along the ground: m[9] is the sine of its elevation.
+    const fy = (dy * wpp) / Math.max(0.3, m[9]);
+    panXT += -dx * wpp * rx + fy * rz;
+    panZT += -dx * wpp * rz - fy * rx;
   };
   const viewSettled = () =>
     !drag && !pinch && Math.abs(yawV) < 1e-4 && Math.abs(pitchV) < 1e-4 &&
-    Math.abs(yawT - view.yaw) < 5e-4 && Math.abs(pitchT - view.pitch) < 5e-4 && Math.abs(zoomT - view.zoom) < 5e-4;
+    Math.abs(yawT - view.yaw) < 5e-4 && Math.abs(pitchT - view.pitch) < 5e-4 && Math.abs(zoomT - view.zoom) < 5e-4 &&
+    Math.abs(panXT - view.panX) < 5e-3 && Math.abs(panZT - view.panZ) < 5e-3;
   let cssW = 1, cssH = 1, lw = 320, lh = 180;
   const tmp = new THREE.Vector3();
   // Pointer → world ray for scenes that take input; the scene turns it into a point on its own relief.
@@ -278,10 +293,18 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     if (psxOn) U.uSnap.value.set(lw * 0.5, lh * 0.5);
     else U.uSnap.value.set(1e5, 1e5);
   };
+  /* A clean scene shades every pixel of the drawing buffer itself, so its buffer is capped
+     lower than the 2x the low-res scenes blit at, and drops a step while frames run long. */
+  const CLEAN_RATIO = [1.5, 1.25, 1];
+  let ratioStep = 0, slow = 0, lastLoop = 0, lastDraw = 0;
+  const wantRatio = () => {
+    const dpr = window.devicePixelRatio || 1;
+    return scene(cur).clean ? Math.min(dpr, CLEAN_RATIO[ratioStep]) : Math.min(dpr, 2);
+  };
   const resize = () => {
     cssW = Math.max(1, host.clientWidth);
     cssH = Math.max(1, host.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(wantRatio());
     renderer.setSize(cssW, cssH, false);
     builtScenes().forEach(fitCam);
     lw = Math.max(200, Math.min(360, Math.round(cssW / 3.6)));
@@ -301,7 +324,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   };
   const render = () => {
     const sc = scene(cur);
-    if (psxOn) {
+    if (psxOn && !sc.clean) {
       if (mixT < 1) {
         const ps = scene(prev);
         apply(ps);
@@ -323,6 +346,24 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   const wants = () => visible && !document.hidden && (motion || dirty || mixT < 1 || !viewSettled() || Boolean(scene(cur).pointer?.busy()));
   function loop(now: number) {
     raf = 0;
+    const sc0 = scene(cur), gap = now - lastLoop;
+    lastLoop = now;
+    // With only ambient motion to show, a scene may ask for a lower frame rate.
+    if (sc0.idleFps && motion && !dirty && mixT >= 1 && viewSettled() && !sc0.pointer?.busy() && now - lastDraw < 1000 / sc0.idleFps - 3) {
+      raf = requestAnimationFrame(loop);
+      return;
+    }
+    lastDraw = now;
+    // Frames arriving under ~40 a second for a while: a clean scene gives up some resolution.
+    if (sc0.clean && ratioStep < CLEAN_RATIO.length - 1 && gap < 250) {
+      slow = gap > 25 ? slow + 1 : Math.max(0, slow - 1);
+      if (slow > 30 && wantRatio() > CLEAN_RATIO[ratioStep + 1]) {
+        ratioStep++;
+        slow = 0;
+        renderer.setPixelRatio(wantRatio());
+        renderer.setSize(cssW, cssH, false);
+      }
+    }
     const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
     if (motion) t += dt;
@@ -342,6 +383,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     view.yaw += (yawT - view.yaw) * ease;
     view.pitch += (pitchT - view.pitch) * ease;
     view.zoom += (zoomT - view.zoom) * ease;
+    view.panX += (panXT - view.panX) * ease;
+    view.panZ += (panZT - view.panZ) * ease;
     U.uTime.value = t;
     aimScene(scene(cur));
     scene(cur).update(t);
@@ -354,7 +397,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   }
   function kick() {
     if (raf || !wants()) return;
-    last = performance.now();
+    last = lastLoop = performance.now();
     raf = requestAnimationFrame(loop);
   }
 
@@ -377,8 +420,12 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   const RAD_PER_PX = 0.0065;
   const interactive = (el: EventTarget | null) => el instanceof Element && el.closest("button, a, input, kbd, [data-no-orbit]");
   const pinchSpan = () => {
-    const [a, b] = [...touches.values()];
-    return { d: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
+    const all = [...touches.values()], [a, b] = all, n = all.length;
+    // Span and twist come from the first two fingers; the centre is of every finger down.
+    return {
+      d: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), a: Math.atan2(b.y - a.y, b.x - a.x), n,
+      mx: all.reduce((q, t) => q + t.x, 0) / n, my: all.reduce((q, t) => q + t.y, 0) / n,
+    };
   };
   const startPinch = () => {
     // A second finger turns whatever the first was doing into a pinch.
@@ -398,16 +445,22 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       if (touches.size > 1) {
         host.setPointerCapture(e.pointerId);
         if (touches.size === 2) startPinch();
+        else if (pinch) pinch = pinchSpan();
         return;
       }
       if (pinchHold) return;
     }
     // Plain drags orbit in every scene. A scene with a pointer bridge gets Shift+drag
     // (the drag is its own) and taps; right-drag orbits there too.
-    const rc = e.button === 2 && Boolean(scene(cur).pointer);
-    if ((e.button !== 0 && !rc) || !e.isPrimary || interactive(e.target)) return;
-    const sc = scene(cur), own = Boolean(sc.pointer) && e.shiftKey && !rc;
-    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, own };
+    // A free-camera scene turns that round: the plain drag is its own, Shift/Alt+drag and
+    // right-drag orbit, and the middle button pans.
+    const sc = scene(cur), free = Boolean(sc.freeCam);
+    const rc = e.button === 2 && Boolean(sc.pointer);
+    const pan = free && e.button === 1;
+    if ((e.button !== 0 && !rc && !pan) || !e.isPrimary || interactive(e.target)) return;
+    const mod = e.shiftKey || e.altKey;
+    const own = Boolean(sc.pointer) && !rc && !pan && (free ? !mod : e.shiftKey);
+    drag = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, own, pan };
     yawV = pitchV = 0;
     tpx = tpy = 0;
     if (own) {
@@ -425,11 +478,23 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     if (pinch) {
       if (!tp) return;
       const n = pinchSpan();
-      zoomT *= n.d / pinch.d;
-      // Two fingers moving together orbit, so a touch screen can tilt as well as turn.
       const k = RAD_PER_PX / Math.sqrt(zoomT);
-      yawT += (n.mx - pinch.mx) * k;
-      pitchT += (n.my - pinch.my) * k;
+      if (n.n !== pinch.n) {
+        // A finger joined or left: start again from here.
+      } else if (scene(cur).freeCam && n.n === 2) {
+        // Free camera: two fingers pan, twist and pinch.
+        zoomT *= n.d / pinch.d;
+        let da = n.a - pinch.a;
+        if (da > Math.PI) da -= Math.PI * 2;
+        else if (da < -Math.PI) da += Math.PI * 2;
+        yawT -= da;
+        panBy(n.mx - pinch.mx, n.my - pinch.my);
+      } else {
+        if (n.n === 2) zoomT *= n.d / pinch.d;
+        // Fingers moving together orbit, so a touch screen can tilt as well as turn.
+        yawT += (n.mx - pinch.mx) * k;
+        pitchT += (n.my - pinch.my) * k;
+      }
       pinch = n;
       clampView();
       dirty = true;
@@ -440,6 +505,13 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     drag.x = e.clientX;
     drag.y = e.clientY;
+    if (drag.pan) {
+      panBy(dx, dy);
+      clampView();
+      dirty = true;
+      kick();
+      return;
+    }
     // Closer in = finer steering.
     const k = RAD_PER_PX / Math.sqrt(zoomT);
     yawT += dx * k;
@@ -454,7 +526,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     if (e.pointerType === "touch" && touches.delete(e.pointerId)) {
       if (pinch || pinchHold) {
         if (touches.size < 2) pinch = null;
-        if (touches.size === 2) pinch = pinchSpan();
+        if (touches.size >= 2) pinch = pinchSpan();
         pinchHold = touches.size > 0;
         if (!pinch) host.classList.remove("is-dragging");
         if (host.hasPointerCapture(e.pointerId)) host.releasePointerCapture(e.pointerId);
@@ -494,10 +566,18 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     if (e.touches.length > 1 && e.cancelable && !interactive(e.target)) e.preventDefault();
   };
   const onGesture = (e: Event) => e.preventDefault();
+  // The middle button pans a free camera, so it must not start the browser's autoscroll.
+  const onMouseDown = (e: MouseEvent) => {
+    if (e.button === 1 && scene(cur).freeCam && !interactive(e.target)) e.preventDefault();
+  };
   // Ctrl/⌘ + wheel (also what a trackpad pinch sends) zooms; a plain wheel scrolls the page.
   const onWheel = (e: WheelEvent) => {
-    if (!(e.ctrlKey || e.metaKey) || interactive(e.target)) return;
+    // A free-camera scene also zooms on a plain wheel where the page gives it every gesture (/scenes).
+    const plain = Boolean(scene(cur).freeCam) && getComputedStyle(host).touchAction === "none";
+    if (!(e.ctrlKey || e.metaKey || plain) || interactive(e.target)) return;
     e.preventDefault();
+    // Lenis smooth-scrolls from a window wheel listener that ignores defaultPrevented.
+    e.stopPropagation();
     zoomT *= Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.04 : 0.0022));
     clampView();
     dirty = true;
@@ -529,6 +609,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   };
   host.addEventListener("contextmenu", onContext);
   host.addEventListener("pointerdown", onDown);
+  host.addEventListener("mousedown", onMouseDown);
   host.addEventListener("pointermove", onDragMove);
   host.addEventListener("pointerup", onUp);
   host.addEventListener("pointercancel", onUp);
@@ -547,6 +628,13 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   const ro = new ResizeObserver(resize);
   ro.observe(host);
 
+  // The stylesheet upscales the canvas with nearest-neighbour; a clean scene wants it smooth.
+  function setCrisp() {
+    canvas.style.imageRendering = scene(cur).clean ? "auto" : "";
+    // A free-camera scene draws with the plain drag, so the grab hand would mislead.
+    host.style.cursor = scene(cur).freeCam ? "crosshair" : "";
+  }
+  setCrisp();
   buildLabels(scene(cur));
   resize();
   queueIdle();
@@ -569,9 +657,14 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       prev = cur;
       cur = i;
       ptr.moved = false;
-      yawT = pitchT = yawV = pitchV = 0;
+      yawT = pitchT = yawV = pitchV = panXT = panZT = 0;
+      view.panX = view.panZ = 0;
       zoomT = 1;
-      mixT = psxOn && !o.reducedMotion ? 0 : 1;
+      // A clean scene has no low-res frame to dissolve, so it cuts in and out.
+      mixT = psxOn && !o.reducedMotion && !scene(prev).clean && !scene(cur).clean ? 0 : 1;
+      setCrisp();
+      ratioStep = slow = 0;
+      if (renderer.getPixelRatio() !== wantRatio()) resize();
       buildLabels(scene(cur));
       dirty = true;
       kick();
@@ -596,7 +689,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       kick();
     },
     resetView() {
-      yawT = pitchT = yawV = pitchV = 0;
+      yawT = pitchT = yawV = pitchV = panXT = panZT = 0;
       zoomT = 1;
       dirty = true;
       kick();
@@ -611,6 +704,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       host.removeEventListener("pointerleave", onLeave);
       host.removeEventListener("contextmenu", onContext);
       host.removeEventListener("pointerdown", onDown);
+      host.removeEventListener("mousedown", onMouseDown);
       host.removeEventListener("pointermove", onDragMove);
       host.removeEventListener("pointerup", onUp);
       host.removeEventListener("pointercancel", onUp);
@@ -620,6 +714,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       host.removeEventListener("gesturestart", onGesture);
       host.removeEventListener("dblclick", onDouble);
       host.classList.remove("is-dragging");
+      canvas.style.imageRendering = "";
+      host.style.cursor = "";
       document.removeEventListener("visibilitychange", onVisibility);
       canvas.removeEventListener("webglcontextlost", onLost);
       const geos = new Set<THREE.BufferGeometry>();

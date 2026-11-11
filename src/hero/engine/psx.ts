@@ -48,6 +48,12 @@ export interface EggDef {
 export interface SceneDef {
   scene: THREE.Scene;
   cam: THREE.PerspectiveCamera;
+  /** Drawn straight to the canvas at full resolution: no low-res target, dither or dissolve.
+   *  Its drawing buffer is capped at 1.5x and steps down while frames run long. */
+  clean?: boolean;
+  /** Frame rate while nothing but the scene's own ambient motion is happening. Input, ripples and
+   *  camera moves always draw at the display's rate. */
+  idleFps?: number;
   fog: [number, number];
   fov: [number, number];
   /** Manual camera range: pitch in radians (+ = camera up / look up), zoom factor (+ = closer), yaw ± radians (omit = free). */
@@ -55,6 +61,11 @@ export interface SceneDef {
   labels: LabelDef[];
   eggs?: EggDef[];
   moteMat?: THREE.PointsMaterial;
+  /** Free camera (opt-in). The plain drag belongs to the scene's pointer bridge, and the camera
+   *  moves to Shift/Alt+drag or right-drag (orbit), middle-drag (pan), wheel and two fingers
+   *  (pan, twist, pinch; three fingers orbit). The pan target arrives in `view.panX/panZ`,
+   *  world units on the y = 0 plane, held within `pan` of the origin. */
+  freeCam?: { pan: number };
   /** Optional pointer bridge. Plain drags orbit like every scene and a tap presses it; Shift+drag hands the drag to the scene. */
   pointer?: {
     /** Pointer ray in world space, or null when it is away. `moved` is false while the cursor itself is still. */
@@ -444,7 +455,7 @@ export function createKit(accent: Accent) {
   /* Manual camera. Orbit scenes add view.yaw to their own camera angle (so
      terrain height stays correct), then call orbit() after lookAt(): it
      tilts the camera about the pivot and dollies along the same ray. */
-  const view = { px: 0, py: 0, yaw: 0, pitch: 0, zoom: 1 };
+  const view = { px: 0, py: 0, yaw: 0, pitch: 0, zoom: 1, panX: 0, panZ: 0 };
   const off = new THREE.Vector3(), axis = new THREE.Vector3(), qp = new THREE.Quaternion();
   const orbit = (cam: THREE.Camera, pivot: THREE.Vector3) => {
     off.copy(cam.position).sub(pivot);

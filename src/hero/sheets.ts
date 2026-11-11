@@ -62,8 +62,8 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "field",
     name: "Field",
-    aria: "Interactive low-poly relief map that behaves like a living field: tap or click to send a pulse rippling out through the contours, drag to pull the contour fabric and survey grid along, and move the cursor to lift a swell and leave a wake.",
-    hint: "CLICK TO PULSE \u00b7 DRAG TO ORBIT \u00b7 SHIFT+DRAG TO WARP",
+    aria: "Interactive abstract contour map seen from above: nothing but contour lines on one completely flat ground colour, heavy index lines over hairline contours ringing a single summit, both in the colours of the current palette, each line gently brightening and fading on its own rhythm. A click or tap drops a ripple into the terrain that travels outward, bunching and bending the contour lines before they settle, and dragging lays a wake of ripples that the lines flow around behind the pointer. The camera can be orbited from straight overhead down to a low oblique view, panned and zoomed.",
+    hint: "DRAG OR CLICK TO RIPPLE \u00b7 SHIFT/RIGHT-DRAG TO ORBIT \u00b7 MIDDLE-DRAG TO PAN \u00b7 WHEEL TO ZOOM",
   },
   {
     id: "matrix",
