@@ -1,7 +1,7 @@
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { QUOTES_ARRAY } from "../lib/consts";
 import { useState, useEffect, useCallback } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { isTyping } from "@/theme/keymap";
 import { cv } from "../../content/cv";
@@ -53,17 +53,20 @@ const Footer = () => {
   const hasNext = currentQuote.index < QUOTES_ARRAY.length - 1;
   const lines = currentQuote.content.split("<br>");
 
+  // Blunt carousel: the old quote is cut, the new one shifts in a short
+  // step from the side it came from. Reduced motion swaps them in place.
+  const reduce = useReducedMotion();
   const variants = {
-    enter: (d: number) => ({ opacity: 0, x: d * 40, scale: 0.97 }),
-    center: { opacity: 1, x: 0, scale: 1 },
-    exit: (d: number) => ({ opacity: 0, x: d * -30, scale: 0.97 }),
+    enter: (d: number) => ({ opacity: 0, x: reduce ? 0 : d * 12 }),
+    center: { opacity: 1, x: 0, transition: { duration: reduce ? 0 : 0.14, ease: [0.2, 0, 0, 1] as const } },
+    exit: { opacity: 0, transition: { duration: reduce ? 0 : 0.05, ease: "linear" as const } },
   };
 
   return (
     <footer className="w-full relative overflow-hidden flex flex-col mt-auto bg-background">
       {/* Divider line */}
       <div
-        className="w-full h-px mx-auto"
+        className="w-full h-[2px] mx-auto"
         style={{
           background: "var(--rule-2)",
           maxWidth: "900px",
@@ -76,9 +79,9 @@ const Footer = () => {
           <motion.button
             onClick={hasPrev ? handlePrev : undefined}
             disabled={!hasPrev}
-            whileTap={hasPrev ? { scale: 0.85 } : undefined}
-            transition={{ type: "spring", stiffness: 500, damping: 22 }}
-            className={`group p-2 border border-transparent transition-all duration-300 ${
+            whileTap={hasPrev && !reduce ? { x: -2, y: 2 } : undefined}
+            transition={{ duration: 0.06, ease: "linear" }}
+            className={`group p-2 border-2 border-transparent transition-none ${
               hasPrev
                 ? "hover:border-[var(--accent-terracotta)] hover:text-[var(--accent-terracotta)]"
                 : "opacity-20 cursor-not-allowed hidden sm:block"
@@ -86,7 +89,7 @@ const Footer = () => {
             aria-label="Previous quote"
           >
             <ArrowLeft
-              className="w-5 h-5 md:w-6 md:h-6 transition-transform duration-300 ease-out group-hover:-translate-x-1 group-active:-translate-x-1.5"
+              className="w-5 h-5 md:w-6 md:h-6 transition-transform duration-100 ease-out group-hover:-translate-x-1 group-active:-translate-x-1.5"
               strokeWidth={1.5}
             />
           </motion.button>
@@ -132,7 +135,6 @@ const Footer = () => {
               initial="enter"
               animate="center"
               exit="exit"
-              transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
               className="absolute inset-0 w-full flex flex-col items-center justify-center"
             >
               <p
@@ -163,9 +165,9 @@ const Footer = () => {
           <motion.button
             onClick={hasNext ? handleNext : undefined}
             disabled={!hasNext}
-            whileTap={hasNext ? { scale: 0.85 } : undefined}
-            transition={{ type: "spring", stiffness: 500, damping: 22 }}
-            className={`group p-2 border border-transparent transition-all duration-300 ${
+            whileTap={hasNext && !reduce ? { x: 2, y: 2 } : undefined}
+            transition={{ duration: 0.06, ease: "linear" }}
+            className={`group p-2 border-2 border-transparent transition-none ${
               hasNext
                 ? "hover:border-[var(--accent-sage)] hover:text-[var(--accent-sage)]"
                 : "opacity-20 cursor-not-allowed hidden sm:block"
@@ -173,7 +175,7 @@ const Footer = () => {
             aria-label="Next quote"
           >
             <ArrowRight
-              className="w-5 h-5 md:w-6 md:h-6 transition-transform duration-300 ease-out group-hover:translate-x-1 group-active:translate-x-1.5"
+              className="w-5 h-5 md:w-6 md:h-6 transition-transform duration-100 ease-out group-hover:translate-x-1 group-active:translate-x-1.5"
               strokeWidth={1.5}
             />
           </motion.button>

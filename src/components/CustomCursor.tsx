@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
+import { motion, steps, useMotionValue, useReducedMotion, useSpring, AnimatePresence } from "framer-motion";
 
 /**
  * Returns true only for devices that actually have a hovering pointer.
@@ -28,12 +28,17 @@ export default function CustomCursor() {
 }
 
 const SIZE = { rest: 20, hover: 38 };
+// --ease-blunt in index.css.
+const BLUNT = [0.2, 0, 0, 1] as const;
 
 function Cursor() {
   const cursorX = useMotionValue(-100);
   const cursorY = useMotionValue(-100);
-  const ringX = useSpring(cursorX, { stiffness: 220, damping: 24 });
-  const ringY = useSpring(cursorY, { stiffness: 220, damping: 24 });
+  // Tight and critically damped: the ring trails by a frame or two and
+  // stops dead, with no float or overshoot.
+  const ringX = useSpring(cursorX, { stiffness: 900, damping: 60 });
+  const ringY = useSpring(cursorY, { stiffness: 900, damping: 60 });
+  const reduce = useReducedMotion();
   const [isHovering, setIsHovering] = useState(false);
   const [isDown, setIsDown] = useState(false);
   // Inside an iframe the page gets no mouse events, so the cursor would
@@ -68,13 +73,14 @@ function Cursor() {
       }
     };
 
-    // Press squeezes the ring; the click leaves a square that expands and fades.
+    // Press squeezes the ring; the click stamps a square that snaps outward.
     const onDown = (e: MouseEvent) => {
       if (e.button !== 0) return;
       setIsDown(true);
+      if (reduce) return;
       const n = ++id;
       setClicks((c) => [...c.slice(-3), { id: n, x: e.clientX, y: e.clientY }]);
-      window.setTimeout(() => setClicks((c) => c.filter((k) => k.id !== n)), 520);
+      window.setTimeout(() => setClicks((c) => c.filter((k) => k.id !== n)), 260);
     };
     const onUp = () => setIsDown(false);
 
@@ -91,7 +97,7 @@ function Cursor() {
       document.removeEventListener("mouseover", onEnter);
       document.removeEventListener("mouseout", onLeave);
     };
-  }, [cursorX, cursorY]);
+  }, [cursorX, cursorY, reduce]);
 
   const ring = isHovering ? SIZE.hover : SIZE.rest;
   return (
@@ -102,7 +108,7 @@ function Cursor() {
         style={{ x: cursorX, y: cursorY, opacity: inFrame ? 0 : 1 }}
         className="fixed top-0 left-0 z-[99999] pointer-events-none"
         animate={{ width: isHovering ? 4 : 6, height: isHovering ? 4 : 6, scale: isDown ? 0.6 : 1 }}
-        transition={{ duration: 0.15, ease: "easeOut" }}
+        transition={{ duration: reduce ? 0 : 0.09, ease: BLUNT }}
       >
         <div className="-translate-x-1/2 -translate-y-1/2" style={{ width: "100%", height: "100%", background: "var(--text-primary)" }} />
       </motion.div>
@@ -113,16 +119,18 @@ function Cursor() {
         style={{ x: ringX, y: ringY, opacity: inFrame ? 0 : 1 }}
         className="fixed top-0 left-0 z-[99998] pointer-events-none"
         animate={{ width: ring, height: ring, scale: isDown ? 0.82 : 1 }}
-        transition={{ duration: 0.22, ease: "easeOut" }}
+        transition={{ duration: reduce ? 0 : 0.09, ease: BLUNT }}
       >
         <div
           className="-translate-x-1/2 -translate-y-1/2"
           style={{
             width: "100%",
             height: "100%",
-            border: `1px solid ${isHovering ? accentColor : "color-mix(in srgb, var(--text-primary) 35%, transparent)"}`,
+            // Colour cuts with no fade; over a target the frame doubles to 2px.
+            border: isHovering
+              ? `2px solid ${accentColor}`
+              : "1px solid color-mix(in srgb, var(--text-primary) 35%, transparent)",
             background: isHovering ? `color-mix(in srgb, ${accentColor} 7%, transparent)` : "transparent",
-            transition: "border-color 0.2s ease, background 0.2s ease",
           }}
         />
       </motion.div>
@@ -136,10 +144,10 @@ function Cursor() {
           >
             <motion.div
               className="-translate-x-1/2 -translate-y-1/2"
-              initial={{ width: 14, height: 14, opacity: 0.85 }}
-              animate={{ width: 56, height: 56, opacity: 0 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              style={{ border: "1px solid var(--accent)" }}
+              initial={{ width: 14, height: 14, opacity: 1 }}
+              animate={{ width: 44, height: 44, opacity: 0 }}
+              transition={{ duration: 0.22, ease: steps(4, "end") }}
+              style={{ border: "2px solid var(--accent)" }}
             />
           </motion.div>
         ))}

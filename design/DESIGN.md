@@ -13,7 +13,7 @@ One dark world, no light theme. A survey sheet: slate ground with a green-blue b
 | `--rule` / `--rule-2` | `#2b3739` / `#3d4b4d` | hairlines |
 | `--accent` / `--accent-deep` / `--on-accent` | per variant | links, keys, selection, fills |
 
-The only fills are the accent and the sheet. Corners are square and shadows flat everywhere: `--radius: 0`, and `tailwind.config.ts` overrides every `rounded-*`/`shadow-*` step to 0/none. Tokens live in `src/index.css`. The names the existing components already read (`--bg-primary`, `--text-primary`, `--accent-amber`, `--border-muted`, …) are aliases onto the palette, and the shadcn HSL tokens are remapped too (the kit's accent is `--ui-accent`, fed by `--accent-h`, so `bg-accent/50` style modifiers follow the accent switch). `next-themes` is forced to dark; there is no light theme. Accent state: `src/theme/accent.ts`.
+The only fills are the accent and the sheet. Corners are square and there are no soft shadows anywhere: `--radius: 0`, and `tailwind.config.ts` overrides every `rounded-*`/`shadow-*` step to 0/none. The only shadows are the hard offset ones in "Brutalist undertone" below (`shadow-hard`, `shadow-hard-ink`, `shadow-hard-deep`). Tokens live in `src/index.css`. The names the existing components already read (`--bg-primary`, `--text-primary`, `--accent-amber`, `--border-muted`, …) are aliases onto the palette, and the shadcn HSL tokens are remapped too (the kit's accent is `--ui-accent`, fed by `--accent-h`, so `bg-accent/50` style modifiers follow the accent switch). `next-themes` is forced to dark; there is no light theme. Accent state: `src/theme/accent.ts`.
 
 ### Accent variants
 
@@ -44,6 +44,40 @@ Palette data lives in `src/theme/accent.ts` (`FAMILIES`, `ACCENTS`); tokens in `
 - Vermilion `#ff5a3c` (`vermilion`): soot-black ground, bone ink, one hot red like a seal stamp.
 
 The surface texture is two tokens, `--tex` and `--tex-size`, which `body` reads; a variant that sets both changes the page's texture. Fonts and layout stay as they are in every variant.
+
+## Brutalist undertone
+
+An undertone on the survey sheet, not a second style: same palettes, faces, layout and content. Three things carry it: heavier rules on the frames that hold the page together, blunt blocks for interactive states, and motion that cuts or stamps where it used to float. Tokens are in `:root` in `src/index.css`; every palette inherits them, since they only read `--accent`, `--ink` and `--accent-deep`.
+
+| Token | Value | Use |
+| --- | --- | --- |
+| `--rule-hard` | `2px` | key frames: page and post head rule, hero strip, footer divider, nav bar once scrolled, scenes console, repo windows, code blocks, command palette, help sheet, the top edge of flyouts and the theme panel |
+| `--shadow-hard` | `4px 4px 0 0 var(--accent)` | cards lifting on hover (repo windows). Tailwind `shadow-hard` |
+| `--shadow-hard-ink` | `3px 3px 0 0 var(--ink)` | accent-filled buttons on hover. Tailwind `shadow-hard-ink` |
+| `--shadow-hard-deep` | `6px 6px 0 0 var(--accent-deep)` | floating panels: palette, help sheet, flyouts, theme panel, toasts. Tailwind `shadow-hard-deep` |
+| `--ease-blunt` | `cubic-bezier(0.2, 0, 0, 1)` | every eased UI transition. Tailwind `ease-blunt` |
+| `--ease-step` | `steps(3, end)` | stamps: things that arrive or wipe in three frames. Tailwind `ease-step` |
+| `--dur-snap` / `--dur-blunt` | `90ms` / `140ms` | hover and press / entrances and wipes. Tailwind `duration-snap`, `duration-blunt` |
+
+Patterns (one block in `src/index.css`, "BRUTALIST UNDERTONE"):
+
+- **Hard rules.** Hairlines stay for inner divisions; the frames above take `--rule-hard`. Page and post heads close on a 2px rule whose first 48px (one grid module) is struck in the accent.
+- **Blunt buttons.** Route links on the home intro, repo links, the CV download, the scenes tools and steppers, "Ask the code" and the help close share one behaviour: a bordered box at rest; on hover or focus a solid accent block with `--on-accent` ink that lifts 2px up-left onto `--shadow-hard-ink`; on press it stamps back flat.
+- **Inverted rows.** The pointed row in the nav flyouts, the command palette and the 404 route list is one accent block with `--on-accent` ink, the same pair as `::selection`. Writings rows keep the sheet fill; their accent bar is 4px and the entry number becomes the inverted block.
+- **Type.** Literata 600 with tighter tracking on page titles, repo titles and the 404 numeral; body and post titles stay at 400. Toasts and the code block's language bar are Fragment Mono, uppercase and tracked like the other labels.
+- **Focus.** One ring everywhere: 2px accent outline, 2px offset (the nav links, hero strip link and scenes rail used a 1px ring before).
+
+Motion rules:
+
+- Colour does not fade: fills, ink and borders cut. Only transforms and shadows are eased, with `--ease-blunt` over `--dur-snap` or `--dur-blunt`. No springs with overshoot, no blur, no scale-in.
+- Things that arrive are stamped with `--ease-step`: panels (`stampIn`: 6px drop in three frames, using `translate` so it composes with centring transforms), writings rows, repo cards, code-map cells, the scenes caption, the hero tagline, monogram and strip (in that order after the name wipes in over 0.55s).
+- Wipes run on steps: the nav underline (now 2px), the writings row bar, the scenes rail marker. Carets and the scroll cue blink with `step-end`.
+- Page change (`PageTransition.tsx`): the old page is cut in 50ms, the new one stamps down 8px in three frames over 140ms.
+- The theme reveal keeps its circle from the clicked chip but opens in eight hard frames over 320ms.
+- Scroll progress is a 3px bar bound straight to scroll position, with no spring. The cursor ring follows on a stiff, critically damped spring, doubles its frame to 2px over a target, and a click stamps a 2px square that snaps out in four frames. The footer quote cuts out and shifts in 12px from the side it came from; its arrows nudge 2px on press.
+- Not touched: the tape deck, the familiar, the post contents rail and everything inside the hero canvas keep their own timing.
+
+Reduced motion: the global net at the end of `src/index.css` already drops every CSS animation and transition to nothing. On top of it, hover lifts lose their `transform` (the block fill and hard shadow remain), panel stamps and the scroll cue are `animation: none`, and the framer-motion pieces read `useReducedMotion()`: page change and footer quote swap in place, the cursor skips its click stamp and resizes instantly, `MagneticButton` does not pull.
 
 ## Type
 
@@ -119,7 +153,7 @@ Additive to master's keys (terminal `` ` ``/Ctrl+K, quotes A/D). Ignored while t
 
 ## Command palette
 
-`:` (vim's command line) or `⌘K` opens a filterable list of every route, writing, theme and page action (`src/components/CommandPalette.tsx`, lazy-loaded by `CommandHost.tsx` like the terminal). Same panel as the help sheet: `--bg-2` ground, accent hairline, Fragment Mono, Silkscreen group headings in the accent, a `:` prompt. The selected row takes the sheet fill and an accent left rule; each row shows its own shortcut. Actions that belong to other components (help sheet, terminal, hero scenes) are run by pressing their key. Under 1024px a `:` button in the nav opens it (`openCommands` in `src/theme/keymap.ts`), for touch screens that can't press `:`.
+`:` (vim's command line) or `⌘K` opens a filterable list of every route, writing, theme and page action (`src/components/CommandPalette.tsx`, lazy-loaded by `CommandHost.tsx` like the terminal). Same panel as the help sheet: `--bg-2` ground, accent hairline, Fragment Mono, Silkscreen group headings in the accent, a `:` prompt. The selected row is an inverted block (ink-on-accent, the selection pair); each row shows its own shortcut. Actions that belong to other components (help sheet, terminal, hero scenes) are run by pressing their key. Under 1024px a `:` button in the nav opens it (`openCommands` in `src/theme/keymap.ts`), for touch screens that can't press `:`.
 
 ## Tape deck
 

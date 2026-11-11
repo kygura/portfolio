@@ -55,6 +55,13 @@ export interface SceneDef {
   labels: LabelDef[];
   eggs?: EggDef[];
   moteMat?: THREE.PointsMaterial;
+  /**
+   * Opts the scene out of the PS1 pipeline: the engine draws it straight to the canvas at
+   * full device resolution, with no low-res target, dither/quantize pass or vertex snapping,
+   * and cuts to and from it instead of dissolving. A clean scene brings its own materials
+   * (and its own anti-aliasing); the kit's `psx()` and line materials are not meant for it.
+   */
+  clean?: boolean;
   /** Optional pointer bridge. Plain drags orbit like every scene and a tap presses it; Shift+drag hands the drag to the scene. */
   pointer?: {
     /** Pointer ray in world space, or null when it is away. `moved` is false while the cursor itself is still. */

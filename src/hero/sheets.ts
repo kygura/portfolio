@@ -1,7 +1,7 @@
 /** Hero scene metadata. Kept free of three.js so the tabs can render
  *  before (or without) the lazily loaded engine. */
 export interface SheetMeta {
-  id: "ocean" | "sea" | "astral" | "ruins" | "drift" | "dunes" | "rift" | "frost" | "field" | "matrix" | "beach" | "cliff" | "orb" | "cipher";
+  id: "ocean" | "sea" | "astral" | "ruins" | "drift" | "dunes" | "rift" | "frost" | "strata" | "matrix" | "beach" | "cliff" | "orb" | "cipher";
   name: string;
   aria: string;
   /** Overrides the default drag/zoom hint under the tabs. */
@@ -60,10 +60,10 @@ const ALL_SHEETS: SheetMeta[] = [
     aria: "Animated low-poly frozen wasteland: a sea locked in cracked ice under polar twilight, ice spires pushed up in pressure ridges and splayed clusters, wreckage caught in the freeze, a crown of ice shards round a dark blade with glowing seams, falling snow, hanging stone, upside-down islands, a low moon and an aurora folding across the sky.",
   },
   {
-    id: "field",
-    name: "Field",
-    aria: "Interactive low-poly relief map that behaves like a living field: tap or click to send a pulse rippling out through the contours, drag to pull the contour fabric and survey grid along, and move the cursor to lift a swell and leave a wake.",
-    hint: "CLICK TO PULSE \u00b7 DRAG TO ORBIT \u00b7 SHIFT+DRAG TO WARP",
+    id: "strata",
+    name: "Strata",
+    aria: "Interactive abstract relief seen from directly above, drawn sharp rather than pixelated: stacked terraces in flat tones that darken in the hollows and take the accent colour at the summits, edged with fine level lines and soft shadows, drifting and reshaping slowly under a survey grid. Tap or click to send a ripple out through the levels, and move the cursor to lift a swell.",
+    hint: "CLICK TO PULSE \u00b7 DRAG TO TURN \u00b7 SCROLL TO ZOOM",
   },
   {
     id: "matrix",

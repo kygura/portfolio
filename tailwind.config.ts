@@ -18,8 +18,11 @@ export default {
   	borderRadius: {
   		none: '0', sm: '0', DEFAULT: '0', md: '0', lg: '0', xl: '0', '2xl': '0', '3xl': '0', full: '0'
   	},
+  	// The only shadows are the hard offset ones (no blur), from the
+  	// brutalist-undertone tokens in src/index.css.
   	boxShadow: {
-  		none: 'none', '2xs': 'none', xs: 'none', sm: 'none', DEFAULT: 'none', md: 'none', lg: 'none', xl: 'none', '2xl': 'none', inner: 'none'
+  		none: 'none', '2xs': 'none', xs: 'none', sm: 'none', DEFAULT: 'none', md: 'none', lg: 'none', xl: 'none', '2xl': 'none', inner: 'none',
+  		hard: 'var(--shadow-hard)', 'hard-ink': 'var(--shadow-hard-ink)', 'hard-deep': 'var(--shadow-hard-deep)'
   	},
   	extend: {
   		// One serif (Literata) for reading and headings, Fragment Mono for
@@ -79,6 +82,15 @@ export default {
   				ring: 'hsl(var(--sidebar-ring))'
   			}
   		},
+  		// Blunt motion: one sharp ease-out, one three-frame step, two short durations.
+  		transitionTimingFunction: {
+  			blunt: 'var(--ease-blunt)',
+  			step: 'var(--ease-step)'
+  		},
+  		transitionDuration: {
+  			snap: 'var(--dur-snap)',
+  			blunt: 'var(--dur-blunt)'
+  		},
   		keyframes: {
   			'accordion-down': {
   				from: { height: '0' },
@@ -93,15 +105,15 @@ export default {
   				to: { transform: 'scale(1)', opacity: '1' }
   			},
   			'fade-up': {
-  				from: { opacity: '0', transform: 'translateY(24px)' },
+  				from: { opacity: '0', transform: 'translateY(8px)' },
   				to: { opacity: '1', transform: 'translateY(0)' }
   			},
   		},
   		animation: {
-  			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out',
-  			'cursor-enter': 'cursor-enter 0.3s ease-out forwards',
-  			'fade-up': 'fade-up 0.6s ease-out forwards',
+  			'accordion-down': 'accordion-down var(--dur-blunt) var(--ease-blunt)',
+  			'accordion-up': 'accordion-up var(--dur-blunt) var(--ease-blunt)',
+  			'cursor-enter': 'cursor-enter var(--dur-blunt) var(--ease-blunt) forwards',
+  			'fade-up': 'fade-up var(--dur-blunt) var(--ease-step) forwards',
   		},
   	}
   },

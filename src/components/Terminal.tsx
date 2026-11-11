@@ -463,7 +463,7 @@ export const Terminal = ({ defaultOpen = false }: TerminalProps = {}) => {
         onClick={() => setIsOpen(false)}
       >
         <div
-          className={`relative w-full max-w-2xl h-96 ${themes[theme].bg} border ${themes[theme].border} flex flex-col font-mono text-sm overflow-hidden animate-in fade-in zoom-in-95 duration-200`}
+          className={`relative w-full max-w-2xl h-96 ${themes[theme].bg} border ${themes[theme].border} flex flex-col font-mono text-sm overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150 ease-step`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Texture Overlay - Almanac Sketch Effect */}

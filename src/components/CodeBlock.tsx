@@ -26,22 +26,20 @@ const CodeBlock = ({ language, value, className }: CodeBlockProps) => {
 
   return (
     <div className={cn("codeblock relative group overflow-hidden my-6 border", className)}>
-      <div className="absolute right-4 top-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+      <div className="absolute right-4 top-12 z-10 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100">
         <button
           onClick={handleCopy}
-          className="p-2 border border-[var(--rule-2)] bg-[var(--bg-2)] text-[var(--ink-2)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-colors"
+          className="p-2 border border-[var(--rule-2)] bg-[var(--bg-2)] text-[var(--ink-2)] hover:bg-[var(--accent)] hover:text-[var(--on-accent)] hover:border-[var(--accent)] focus-visible:bg-[var(--accent)] focus-visible:text-[var(--on-accent)] focus-visible:border-[var(--accent)]"
           aria-label="Copy code"
         >
           {isCopied ? (
-            <Check className="w-4 h-4 text-[var(--accent)]" />
+            <Check className="w-4 h-4" />
           ) : (
             <Copy className="w-4 h-4" />
           )}
         </button>
       </div>
-      <div className="pt-2 pl-4 text-xs text-[var(--ink-3)] select-none uppercase tracking-wider font-mono">
-        {language || "text"}
-      </div>
+      <div className="codeblock__bar">{language || "text"}</div>
       <SyntaxHighlighter
         language={language || "text"}
         style={tokenTheme}

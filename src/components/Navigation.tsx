@@ -219,12 +219,13 @@ const Navigation = () => {
 
   return (
     <nav
-      className={`nav-bar sticky top-0 z-50 border-b transition-[background-color,border-color] duration-300 ${
-        scrolled ? "border-[var(--border-subtle)]" : "border-transparent"
+      className={`nav-bar sticky top-0 z-50 border-b-2 ${
+        scrolled ? "border-[var(--border-muted)]" : "border-transparent"
       }`}
       style={{
         // No backdrop-blur: re-blurring the animating hero canvas every
         // frame was the main scroll-jank source. Near-opaque bg instead.
+        // The bar cuts in with its 2px rule; it does not fade.
         backgroundColor: scrolled
           ? "color-mix(in srgb, var(--bg-primary) 96%, transparent)"
           : "transparent",

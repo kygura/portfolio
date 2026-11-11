@@ -2,6 +2,8 @@
  * Hero engine: builds every sheet once, renders only the active one
  * (plus the outgoing one during a dither dissolve) into a quarter-resolution
  * target, then blits through a 15-bit quantize + Bayer dither pass.
+ * A scene marked `clean` skips all of that: it is drawn straight to the canvas
+ * at full resolution, and the switch to or from it is a hard cut.
  *
  * Loaded with a dynamic import from useHeroStage (home hero, /scenes), so three.js stays out of every
  * other route's bundle. The render loop only runs while there is something
@@ -20,7 +22,7 @@ import { buildDunes } from "./dunes";
 import { buildRift } from "./rift";
 import { buildFrost } from "./frost";
 import { buildSea } from "./sea";
-import { buildField } from "./field";
+import { buildStrata } from "./strata";
 import { buildMatrix } from "./matrix";
 import { buildVoid } from "./void";
 import { buildBeach } from "./beach";
@@ -88,7 +90,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   /* Only scenes enabled in sheets.ts are built, in tab order. */
   const BUILD: Record<SheetMeta["id"], (k: PsxKit) => SceneDef> = {
     cipher: () => buildVoid(), ocean: buildOcean, sea: buildSea, astral: buildAstral, ruins: buildRuins, drift: buildDrift, dunes: buildDunes, rift: buildRift, frost: buildFrost,
-    field: buildField, matrix: buildMatrix, beach: buildBeach, cliff: buildCliff, orb: buildOrb,
+    strata: buildStrata, matrix: buildMatrix, beach: buildBeach, cliff: buildCliff, orb: buildOrb,
   };
   /* Scenes are built on first use, not all up front: building all thirteen in
      one go blocked the main thread for over a second on load. The rest are
@@ -275,7 +277,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   /* ---- sizing ---- */
   const setSnap = () => {
-    if (psxOn) U.uSnap.value.set(lw * 0.5, lh * 0.5);
+    if (psxOn && !scene(cur).clean) U.uSnap.value.set(lw * 0.5, lh * 0.5);
     else U.uSnap.value.set(1e5, 1e5);
   };
   const resize = () => {
@@ -301,7 +303,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   };
   const render = () => {
     const sc = scene(cur);
-    if (psxOn) {
+    if (psxOn && !sc.clean) {
       if (mixT < 1) {
         const ps = scene(prev);
         apply(ps);
@@ -571,7 +573,9 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       ptr.moved = false;
       yawT = pitchT = yawV = pitchV = 0;
       zoomT = 1;
-      mixT = psxOn && !o.reducedMotion ? 0 : 1;
+      // A clean scene is never drawn into the low-res targets, so there is nothing to dissolve: cut.
+      mixT = psxOn && !o.reducedMotion && !scene(cur).clean && !scene(prev).clean ? 0 : 1;
+      setSnap();
       buildLabels(scene(cur));
       dirty = true;
       kick();
