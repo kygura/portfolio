@@ -79,14 +79,14 @@ vec2 touch(vec2 p){
     float r = length(p - u.xy), life = clamp(u.z / b.x, 0.0, 1.0);
     if (uCalm > 0.5) {
       // A swell that rises and settles in place.
-      if (r > 17.0) continue;
-      h += u.w * 1.3 * sin(3.14159 * life) * exp(-r * r * 0.02);
+      if (r > 24.0) continue;
+      h += u.w * 1.3 * sin(3.14159 * life) * exp(-r * r * 0.01);
     } else {
       float d = r - b.y * u.z;
       // Nothing of this ripple reaches here: ahead of its front, or behind it and clear of the centre.
-      if (d > 13.0 || (d < -13.0 && r > 9.0)) continue;
-      float env = exp(-d * d * 0.035) * (1.0 - life) * (1.0 - life) * smoothstep(0.0, 0.12, u.z);
-      h += u.w * (env * cos(d * 0.8) / (1.0 + r * 0.02) - 1.5 * exp(-r * r * 0.07) * exp(-u.z * 1.6));
+      if (d > 19.0 || (d < -19.0 && r > 13.0)) continue;
+      float env = exp(-d * d * 0.017) * (1.0 - life) * (1.0 - life) * smoothstep(0.0, 0.12, u.z);
+      h += u.w * (env * cos(d * 0.56) / (1.0 + r * 0.014) - 1.5 * exp(-r * r * 0.035) * exp(-u.z * 1.6));
       e += env * u.w;
     }
   }
@@ -178,7 +178,7 @@ export function buildField(k: PsxKit): SceneDef {
     }
     best.x = x; best.z = z; best.age = 0; best.amp = amp; best.life = life; best.speed = speed;
   };
-  const ripple = (x: number, z: number, amp = 1.25) => spawn(x, z, amp, 4.6, 9);
+  const ripple = (x: number, z: number, amp = 1.25) => spawn(x, z, amp, 4.6, 13);
 
   /* ---- pointer state ---- */
   const cascade: { due: number; x: number; z: number }[] = [];
@@ -229,7 +229,7 @@ export function buildField(k: PsxKit): SceneDef {
           const now = performance.now(), run = Math.hypot(px - sx, pz - sz);
           if (pressed && moved && run > 3 && now - stampAt > 140) {
             const pace = Math.min(1, run / Math.max(0.1, (now - stampAt) / 1000) / 45);
-            spawn(px, pz, 0.6 + 0.4 * pace, 2.2, 6);
+            spawn(px, pz, 0.6 + 0.4 * pace, 2.2, 8);
             sx = px; sz = pz; stampAt = now;
           }
         }
