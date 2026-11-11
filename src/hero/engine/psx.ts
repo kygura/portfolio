@@ -62,7 +62,15 @@ export interface SceneDef {
    * (and its own anti-aliasing); the kit's `psx()` and line materials are not meant for it.
    */
   clean?: boolean;
-  /** Optional pointer bridge. Plain drags orbit like every scene and a tap presses it; Shift+drag hands the drag to the scene. */
+  /**
+   * The scene takes plain drags for itself (it needs a `pointer` bridge): a left-button or
+   * one-finger drag goes to `pointer.press/aim/release` instead of orbiting. The camera is
+   * then turned with Shift+drag, a right-drag or two fingers. Touch keeps the stage's
+   * `touch-action: pan-y`, so a swipe that starts vertically still scrolls the page and
+   * only reaches the scene as a press that is released as cancelled.
+   */
+  ownsDrag?: boolean;
+  /** Optional pointer bridge. Plain drags orbit like every scene and a tap presses it; Shift+drag hands the drag to the scene (the other way round when `ownsDrag` is set). */
   pointer?: {
     /** Pointer ray in world space, or null when it is away. `moved` is false while the cursor itself is still. */
     aim: (ray: THREE.Ray | null, moved: boolean) => void;

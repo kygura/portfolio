@@ -405,10 +405,11 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       if (pinchHold) return;
     }
     // Plain drags orbit in every scene. A scene with a pointer bridge gets Shift+drag
-    // (the drag is its own) and taps; right-drag orbits there too.
+    // (the drag is its own) and taps; right-drag orbits there too. A scene that sets
+    // `ownsDrag` has it the other way round: plain drags are its own, Shift+drag orbits.
     const rc = e.button === 2 && Boolean(scene(cur).pointer);
     if ((e.button !== 0 && !rc) || !e.isPrimary || interactive(e.target)) return;
-    const sc = scene(cur), own = Boolean(sc.pointer) && e.shiftKey && !rc;
+    const sc = scene(cur), own = Boolean(sc.pointer) && e.shiftKey !== Boolean(sc.ownsDrag) && !rc;
     drag = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, own };
     yawV = pitchV = 0;
     tpx = tpy = 0;

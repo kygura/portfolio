@@ -62,8 +62,8 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "strata",
     name: "Strata",
-    aria: "Interactive abstract relief seen from directly above, drawn sharp rather than pixelated and with lines only: fine contour strokes on a near-black ground, faint in the hollows and brighter toward the summits with every fifth in the accent colour, drifting and reshaping slowly. Tap or click to send a ripple out through the contours, and move the cursor to lift a swell.",
-    hint: "CLICK TO PULSE \u00b7 DRAG TO TURN \u00b7 SCROLL TO ZOOM",
+    aria: "Interactive abstract relief seen from directly above, drawn sharp rather than pixelated and with lines only: fine contour strokes on a near-black ground, faint in the hollows and brighter toward the summits with every fifth in the accent colour, drifting and reshaping slowly. Drag to pull the contour lines along with the pointer, tap or click to push them apart into a dent, and move the cursor to part them; they ease back when let go.",
+    hint: "DRAG TO PULL THE LINES \u00b7 CLICK TO DENT \u00b7 SHIFT+DRAG TO TURN",
   },
   {
     id: "matrix",
