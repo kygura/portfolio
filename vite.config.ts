@@ -6,12 +6,15 @@ import { Readable } from "node:stream";
 import { buildShowcase, parseRepoList, type Showcase } from "./api/github/repos";
 import { handleCodebase } from "./api/github/codebase";
 import { handleQuip } from "./api/familiar/quip";
+import { handleBoard } from "./api/canvas/board";
 
 /**
- * Serves /api/github/repos, /api/github/codebase and /api/familiar/quip under `vite dev` with the
- * same code the Vercel functions run. The index is cached for ten minutes so
- * reloads stay inside GitHub's unauthenticated rate limit; the codebase chat
- * and Bit's quips need ANTHROPIC_API_KEY, as in production.
+ * Serves /api/github/repos, /api/github/codebase, /api/familiar/quip and
+ * /api/canvas/board under `vite dev` with the same code the Vercel functions
+ * run. The index is cached for ten minutes so reloads stay inside GitHub's
+ * unauthenticated rate limit; the codebase chat and Bit's quips need
+ * ANTHROPIC_API_KEY, and the pixel board KV_REST_API_URL/TOKEN, as in
+ * production.
  */
 function devGithubApi(): Plugin {
   let cached: { at: number; body: Showcase } | null = null;
@@ -30,6 +33,20 @@ function devGithubApi(): Plugin {
           new Request(`http://localhost${req.originalUrl ?? req.url}`, {
             method: req.method,
             headers: { "content-type": "application/json" },
+            body: req.method === "POST" ? Buffer.concat(chunks) : undefined,
+          })
+        );
+        res.statusCode = response.status;
+        res.setHeader("content-type", "application/json");
+        res.end(await response.text());
+      });
+      server.middlewares.use("/api/canvas/board", async (req, res) => {
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) chunks.push(chunk as Buffer);
+        const response = await handleBoard(
+          new Request(`http://localhost${req.originalUrl ?? req.url}`, {
+            method: req.method,
+            headers: { "content-type": "application/json", "x-forwarded-for": req.socket.remoteAddress ?? "local" },
             body: req.method === "POST" ? Buffer.concat(chunks) : undefined,
           })
         );

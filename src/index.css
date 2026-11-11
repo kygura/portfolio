@@ -3824,3 +3824,97 @@ kbd {
   .familiar__caret { animation: none; }
   .bay__runes span { animation-duration: 0s; }
 }
+
+/* ─────────────────────────────────────────────
+   ARTIFACTS — the gallery list
+   ───────────────────────────────────────────── */
+.artifact-list { display: grid; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.artifact-card {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1.4rem 1.6rem;
+  background: var(--bg);
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.artifact-card:hover, .artifact-card:focus-visible { background: var(--sheet); outline: none; }
+.artifact-card__kind {
+  font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3);
+}
+.artifact-card__name {
+  font-family: var(--f-body); font-style: italic; font-size: clamp(1.5rem, 3vw, 2rem); line-height: 1.1; color: var(--ink);
+  transition: color 0.2s;
+}
+.artifact-card:hover .artifact-card__name, .artifact-card:focus-visible .artifact-card__name { color: var(--accent); }
+.artifact-card__blurb { max-width: 52ch; color: var(--ink-2); line-height: 1.55; }
+
+/* ─────────────────────────────────────────────
+   COMMONS — the shared pixel board
+   ───────────────────────────────────────────── */
+.commons__frame { border: 1px solid var(--rule-2); background: var(--code); }
+.commons__stage {
+  position: relative;
+  height: clamp(320px, 58vh, 640px);
+  overflow: hidden;
+  cursor: crosshair;
+  touch-action: none;
+  user-select: none;
+  background:
+    linear-gradient(var(--rule) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, var(--rule) 1px, transparent 1px) 0 0 / 24px 24px,
+    var(--bg);
+}
+.commons__stage.is-panning { cursor: grabbing; }
+@media (max-width: 640px) { .commons__stage { height: auto; aspect-ratio: 1; } }
+.commons__layer {
+  position: absolute; top: 0; left: 0;
+  transform-origin: 0 0;
+  box-shadow: 0 0 0 calc(1px / var(--z, 1)) var(--rule-2);
+}
+.commons__canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+.commons__mark {
+  position: absolute; top: 0; left: 0; width: 1px; height: 1px;
+  pointer-events: none;
+  background: var(--mark);
+  opacity: 0.85;
+  box-shadow: 0 0 0 calc(1px / var(--z, 1)) var(--ink), 0 0 0 calc(2px / var(--z, 1)) var(--bg);
+}
+
+.commons__bar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--rule-2);
+}
+.commons__palette { display: grid; grid-template-columns: repeat(16, 22px); gap: 4px; }
+@media (max-width: 560px) { .commons__palette { grid-template-columns: repeat(8, 28px); } .commons__swatch { height: 28px; } }
+.commons__swatch {
+  height: 22px;
+  border: 1px solid var(--rule-2);
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.commons__swatch:hover { transform: translateY(-1px); }
+.commons__swatch:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
+.commons__swatch[aria-checked="true"] { box-shadow: 0 0 0 1px var(--code), 0 0 0 2px var(--ink); transform: translateY(-2px); }
+
+.commons__status {
+  display: flex; align-items: center; gap: 14px;
+  font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2);
+}
+.commons__dot { width: 7px; height: 7px; background: var(--ink-3); }
+.commons__dot.is-live { background: var(--accent); animation: commonsPulse 2s ease-in-out infinite; }
+.commons__coords { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.commons__fit {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px;
+  color: var(--ink-2); border: 1px solid var(--rule-2);
+  transition: color 0.2s, border-color 0.2s;
+}
+.commons__fit:hover, .commons__fit:focus-visible { color: var(--accent); border-color: var(--accent); outline: none; }
+.commons__fit kbd { font-family: var(--f-mono); font-size: 9.5px; color: var(--ink-3); }
+.commons__hint {
+  margin: 0; padding: 8px 12px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3);
+}
+@media (hover: none) { .commons__coords, .commons__fit kbd { display: none; } }
+@keyframes commonsPulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .commons__dot.is-live { animation: none; } }
