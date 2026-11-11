@@ -3824,3 +3824,128 @@ kbd {
   .familiar__caret { animation: none; }
   .bay__runes span { animation-duration: 0s; }
 }
+
+/* ─────────────────────────────────────────────
+   BRUTALIST UNDERTONE
+   Laid over the survey sheet, not in place of it: heavier closing rules,
+   inverted ink labels, hard offset shadows instead of soft glows, and
+   motion that snaps (a hard in-out curve or plain steps) rather than
+   drifting. Kept in one block so it reads as one decision and can be
+   tuned or dropped together.
+   ───────────────────────────────────────────── */
+:root {
+  --ease-hard: cubic-bezier(0.85, 0, 0.15, 1);
+  --rule-heavy: 3px;
+  --slab: 6px; /* offset of a hard shadow */
+}
+
+/* Entrances: a mechanical clip wipe on a hard curve. Redefining the
+   keyframes keeps every existing caller (hero, repo cards, ledger rows);
+   the timing function set in the first frame overrides their soft `ease`. */
+@keyframes cartoFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    clip-path: inset(0 0 100% 0);
+    animation-timing-function: var(--ease-hard);
+  }
+  to { opacity: 1; transform: none; clip-path: inset(0 0 -20% 0); }
+}
+@keyframes ledger-in {
+  from {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+    animation-timing-function: var(--ease-hard);
+  }
+  to { opacity: 1; clip-path: inset(0 0 0 0); }
+}
+
+/* Heavy closing rules on every head and on the last line of the page. */
+.page-head,
+.post-head { border-bottom: var(--rule-heavy) solid var(--ink); }
+.colophon { border-top: var(--rule-heavy) solid var(--ink); }
+.post-next { border-top-width: var(--rule-heavy); border-top-color: var(--ink); }
+
+/* The page number reads as a stamped ink block, not a whisper. */
+.page-head__eyebrow {
+  display: inline-block;
+  padding: 0.35em 0.6em 0.3em;
+  background: var(--ink);
+  color: var(--bg);
+}
+.page-head__title { letter-spacing: -0.03em; line-height: 0.88; }
+
+/* Focus: a thick, square, flush ring. */
+:focus-visible { outline-width: 3px; outline-offset: 0; }
+
+/* Nav: the underline is a slab that snaps in. */
+.nav-label { transition: background-size 0.22s steps(4, end); }
+.nav-link:hover .nav-label,
+.nav-link:focus-visible .nav-label,
+.nav-link--active .nav-label { background-size: 100% 2px; }
+
+/* Ledger rows: hover inverts to a sheet with a thick accent spine that
+   drops in by steps; the arrow jumps instead of easing. */
+.ledger__row { border-bottom-style: solid; }
+.ledger__link { transition: none; }
+.ledger__link::before { width: 6px; transition: transform 0.2s steps(3, end); }
+.ledger__num, .ledger__title, .ledger__ticks i { transition: none; }
+.ledger__arrow { transition: opacity 0s, transform 0.18s steps(2, end); }
+
+/* Repo previews: no lift-and-glow; the window slides off a hard accent slab. */
+.repo-card__preview { transition: transform 0.18s var(--ease-hard); }
+.repo-window { transition: border-color 0s, box-shadow 0.18s var(--ease-hard); }
+.repo-card__preview:hover,
+.repo-card__preview:focus-within { transform: translate(calc(var(--slab) * -1), calc(var(--slab) * -1)); }
+.repo-card__preview:hover .repo-window,
+.repo-card__preview:focus-within .repo-window {
+  border-color: var(--ink);
+  box-shadow: var(--slab) var(--slab) 0 0 var(--accent);
+}
+
+/* Buttons press down into their slab. */
+.cv-download-btn {
+  box-shadow: 4px 4px 0 0 var(--ink);
+  transition: transform 0.1s steps(2, end), box-shadow 0.1s steps(2, end), background-color 0s, color 0s;
+}
+.cv-download-btn:hover,
+.cv-download-btn:focus-visible { box-shadow: 4px 4px 0 0 var(--accent); }
+.cv-download-btn:active { transform: translate(4px, 4px); box-shadow: 0 0 0 0 var(--accent); }
+
+/* Older / newer: the title flips to an inverted block on hover. */
+.post-next__title { transition: none; }
+.post-next__link:hover .post-next__title,
+.post-next__link:focus-visible .post-next__title {
+  background: var(--accent);
+  color: var(--on-accent);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+/* States: solid frames rather than dashed. */
+.notice { border: 2px solid var(--rule-2); }
+.notice--error { border-color: var(--danger); }
+
+/* Route change: an ink shutter crosses the viewport (PageTransition). */
+.route-shutter {
+  position: fixed;
+  inset: 0;
+  z-index: 99996; /* under the cursor and scroll bar, over everything else */
+  pointer-events: none;
+  background: var(--ink);
+  color: var(--bg);
+  display: flex;
+  align-items: flex-end;
+  padding: var(--page-gutter);
+  font-family: var(--f-pixel);
+  font-size: clamp(1.5rem, 6vw, 4rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-shutter { display: none; }
+  .nav-label, .ledger__link::before, .ledger__arrow,
+  .repo-card__preview, .repo-window, .cv-download-btn { transition: none; }
+}
