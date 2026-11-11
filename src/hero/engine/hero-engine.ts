@@ -301,7 +301,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   };
   const render = () => {
     const sc = scene(cur);
-    if (psxOn) {
+    if (psxOn && !sc.clean) {
       if (mixT < 1) {
         const ps = scene(prev);
         apply(ps);
@@ -571,7 +571,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       ptr.moved = false;
       yawT = pitchT = yawV = pitchV = 0;
       zoomT = 1;
-      mixT = psxOn && !o.reducedMotion ? 0 : 1;
+      // The dissolve happens in the low-res targets, so a clean scene cuts in and out.
+      mixT = psxOn && !o.reducedMotion && !scene(cur).clean && !scene(prev).clean ? 0 : 1;
       buildLabels(scene(cur));
       dirty = true;
       kick();

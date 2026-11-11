@@ -55,6 +55,8 @@ export interface SceneDef {
   labels: LabelDef[];
   eggs?: EggDef[];
   moteMat?: THREE.PointsMaterial;
+  /** Opt out of the PS1 post pass: drawn straight to the canvas at full resolution, with no dither, quantize or dissolve. The scene's own materials must not snap vertices. */
+  clean?: boolean;
   /** Optional pointer bridge. Plain drags orbit like every scene and a tap presses it; Shift+drag hands the drag to the scene. */
   pointer?: {
     /** Pointer ray in world space, or null when it is away. `moved` is false while the cursor itself is still. */
