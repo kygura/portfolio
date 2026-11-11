@@ -226,6 +226,7 @@ export default function CommandPalette({
 
   const opens: Entry[] = [
     { value: "open terminal", label: "Terminal", keywords: ["shell", "console"], run: () => pressKey("`"), keys: ["`"] },
+    { value: "open plot", label: "Plot", keywords: ["pixel", "canvas", "place", "draw", "artifacts"], run: () => navigate("/plot") },
     { value: "open help", label: "Keyboard shortcuts", keywords: ["help", "keys"], run: () => pressKey("?"), keys: ["?"] },
     { value: "open cv pdf", label: "CV", keywords: ["pdf", "resume"], run: () => openTab("/CV_NCA.pdf"), meta: "PDF ↗" },
     { value: "open github", label: "GitHub", keywords: ["source"], run: () => openTab("https://github.com/kygura"), meta: "↗" },
