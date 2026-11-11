@@ -1,14 +1,13 @@
-/** Sheet 05 · Field: an abstract contour sheet, a map drawn as an identity piece.
+/** Sheet 05 · Field: nothing but contour lines on one flat ground colour.
  *
  *  One smooth height field is drawn as anti-aliased isolines in a fragment
  *  shader (no PS1 treatment: the scene is `clean`, so the engine draws it at
- *  full resolution without the low-res dither pass). Ground, lines and
- *  lettering all come from the shared accent uniforms, so a palette switch
- *  recolours every part of it live.
+ *  full resolution without the low-res dither pass). The ground is a single
+ *  palette colour, the same in every pixel at every camera angle: no shading,
+ *  no fade, no marks. Ground and ink both come from the shared accent
+ *  uniforms, so a palette switch recolours both live.
  *
- *  - Composition: one summit carries the sheet, ringed by heavy index lines
- *    over hairline intermediates, with a spot height, a basin depth and a
- *    faint lattice of survey ticks.
+ *  - Heavy index lines over hairline intermediates, around one summit.
  *  - Alive: the relief drifts slowly and every contour level breathes on its
  *    own phase (brightness and weight).
  *  - A press drops a ripple into the height field itself, and a drag lays a
@@ -23,15 +22,11 @@ import * as THREE from "three";
 import type { PsxKit, SceneDef } from "./psx";
 
 /** Ripples alive at once: presses and the stamps of a drag share the pool. */
-const MAXP = 24;
+const MAXP = 12;
 /** Contour interval in height units (1 unit reads as 100 m); every fifth line is an index line. */
 const STEP = 0.5;
 /** Summit and basin, on the ground plane (x, z). */
 const SUMMIT: [number, number] = [8, -3], BASIN: [number, number] = [-15, 8];
-/** Survey tick spacing. */
-const TICK = 12;
-/** Spot-height lettering: line height in CSS px, and the strip's width over its height. */
-const LABEL_PX = 26, LABEL_ASPECT = 8;
 /** Camera at rest: elevation above the ground (rad) and distance from its target. */
 const ELEV = 1.2, DIST = 50, MIN_ELEV = 0.32;
 
@@ -67,6 +62,7 @@ const FRAG = `
 ${RELIEF_GLSL}
 uniform vec4 uPulse[${MAXP}];   // x, z, age, amplitude
 uniform vec2 uPulseB[${MAXP}];  // lifetime, speed
+uniform int uCount;              // live ripples, packed at the front
 uniform vec3 uHover;
 uniform float uCalm;
 uniform vec3 uAccent; uniform vec3 uAccent2; uniform vec3 uFogColor; uniform vec3 uZen;
@@ -77,15 +73,18 @@ varying vec2 vP; varying float vDist;
 vec2 touch(vec2 p){
   float h = 0.0, e = 0.0;
   for (int i = 0; i < ${MAXP}; i++) {
+    if (i >= uCount) break;
     vec4 u = uPulse[i];
-    if (u.w <= 0.0) continue;
     vec2 b = uPulseB[i];
     float r = length(p - u.xy), life = clamp(u.z / b.x, 0.0, 1.0);
     if (uCalm > 0.5) {
       // A swell that rises and settles in place.
+      if (r > 17.0) continue;
       h += u.w * 1.3 * sin(3.14159 * life) * exp(-r * r * 0.02);
     } else {
       float d = r - b.y * u.z;
+      // Nothing of this ripple reaches here: ahead of its front, or behind it and clear of the centre.
+      if (d > 13.0 || (d < -13.0 && r > 9.0)) continue;
       float env = exp(-d * d * 0.035) * (1.0 - life) * (1.0 - life) * smoothstep(0.0, 0.12, u.z);
       h += u.w * (env * cos(d * 0.8) / (1.0 + r * 0.02) - 1.5 * exp(-r * r * 0.07) * exp(-u.z * 1.6));
       e += env * u.w;
@@ -114,27 +113,15 @@ void main(){
   float a = mix(0.4, 0.95, idx) * (0.64 + 0.36 * breath) * mix(0.62, 1.0, hn);
   a = min(1.0, a + 0.45 * tc.y);
 
-  // Ground and ink both belong to the palette.
-  vec3 bg = mix(uZen, uFogColor, 0.36) + uAccent2 * 0.08;
-  vec3 ground = bg + uFogColor * (hn - 0.5) * 0.1 + uAccent * smoothstep(0.6, 1.0, hn) * 0.06;
+  // Far lines thin out into the ground; the ground itself is never touched.
+  a *= 1.0 - smoothstep(uFade.x, uFade.y, vDist);
+
+  // Ground and ink both belong to the palette. The ground is one flat colour, the same as the clear colour.
+  vec3 ground = mix(uZen, uFogColor, 0.36) + uAccent2 * 0.08;
   vec3 minor = mix(uFogColor, uAccent, 0.62);
   vec3 ink = mix(minor, uAccent, max(idx, tc.y));
   vec3 c = mix(ground, ink, line * a);
 
-  // Graphic furniture, printed on the ground: survey ticks, the summit mark, the basin point.
-  float wpp = length(fwidth(vP)) * 0.7071;           // world units per pixel
-  float near = 1.0 - smoothstep(0.07, 0.2, wpp);
-  vec2 g = abs(mod(vP + ${(TICK / 2).toFixed(1)}, ${TICK.toFixed(1)}) - ${(TICK / 2).toFixed(1)});
-  float tw = 0.55 * wpp * uPx;
-  float tick = max((1.0 - smoothstep(0.5, 0.5 + wpp, g.x)) * (1.0 - smoothstep(tw, tw + wpp, g.y)),
-                   (1.0 - smoothstep(0.5, 0.5 + wpp, g.y)) * (1.0 - smoothstep(tw, tw + wpp, g.x)));
-  c = mix(c, minor, tick * 0.5 * near);
-  float sr = length(vP - ${v2(SUMMIT)});
-  float mark = max(1.0 - smoothstep(0.2, 0.2 + wpp, sr), 1.0 - smoothstep(tw, tw + wpp, abs(sr - 0.85)));
-  float pit = (1.0 - smoothstep(0.16, 0.16 + wpp, length(vP - ${v2(BASIN)}))) * 0.7;
-  c = mix(c, uAccent, max(mark, pit) * near);
-
-  c = mix(c, bg, smoothstep(uFade.x, uFade.y, vDist));
   gl_FragColor = vec4(c, 1.0);
 }`;
 
@@ -156,68 +143,28 @@ export function buildField(k: PsxKit): SceneDef {
       0.4 * Math.sin(qx * 2.3 - qz * 1.9 + t * 0.06) +
       4.4 * Math.exp(-(ax * ax + az * az) * 0.0075) - 2.4 * Math.exp(-(bx * bx + bz * bz) * 0.012);
   };
-  const metres = (h: number) => `${h < 0 ? "−" : ""}${Math.abs(Math.round(h * 100))} M`;
-
-  /* ---- lettering: spot heights in the site's mono face, as sprites that always face the reader ---- */
-  const label = (text: string, key: string) => {
-    const c = document.createElement("canvas");
-    c.width = 64 * LABEL_ASPECT; c.height = 64;
-    const tex = new THREE.CanvasTexture(c);
-    tex.minFilter = THREE.LinearFilter;
-    tex.generateMipmaps = false;
-    const draw = () => {
-      const g = c.getContext("2d");
-      if (!g) return;
-      const face = getComputedStyle(document.documentElement).getPropertyValue("--f-mono").trim() || "ui-monospace, monospace";
-      g.clearRect(0, 0, c.width, c.height);
-      g.fillStyle = "#fff";
-      g.textBaseline = "middle";
-      g.font = `500 34px ${face}`;
-      (g as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = "5px";
-      g.fillText(text, 0, 34);
-      tex.needsUpdate = true;
-    };
-    draw();
-    // The web font may land after the scene is built.
-    void document.fonts?.ready.then(draw).catch(() => undefined);
-    // The engine disposes the kit's textures with everything else.
-    (k.tex as Record<string, THREE.Texture>)[key] = tex;
-    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false, sizeAttenuation: false }));
-    sp.center.set(0, 0.5);
-    sp.renderOrder = 2;
-    scene.add(sp);
-    return sp;
-  };
-  const marks = [
-    { sp: label(metres(relief(SUMMIT[0], SUMMIT[1], 18)), "fieldSummit"), at: SUMMIT, gap: 1.2, ink: 0.95 },
-    { sp: label(metres(relief(BASIN[0], BASIN[1], 18)), "fieldBasin"), at: BASIN, gap: 0.5, ink: 0.6 },
-  ];
-
   const pulseU = Array.from({ length: MAXP }, () => new THREE.Vector4(0, 0, 0, 0));
   const pulseB = Array.from({ length: MAXP }, () => new THREE.Vector2(1, 1));
   const hoverU = new THREE.Vector3(0, 0, 0);
   const fadeU = new THREE.Vector2(75, 160);
-  const pxU = { value: 1 };
+  const pxU = { value: 1 }, countU = { value: 0 };
   const mat = new THREE.ShaderMaterial({
     uniforms: {
       uTime: U.uTime, uAccent: U.uAccent, uAccent2: U.uAccent2, uFogColor: U.uFogColor, uZen: U.uZen,
       uPulse: { value: pulseU }, uPulseB: { value: pulseB }, uHover: { value: hoverU }, uCalm: { value: reduced ? 1 : 0 },
-      uPx: pxU, uFade: { value: fadeU },
+      uPx: pxU, uFade: { value: fadeU }, uCount: countU,
     },
     vertexShader: VERT,
     fragmentShader: FRAG,
   });
-  // Wide enough that the fade to the ground colour hides the edge at every camera setting.
+  // Wide enough that the lines have thinned out before the edge at every camera setting.
   const geo = new THREE.PlaneGeometry(840, 840, 280, 280);
   geo.rotateX(-Math.PI / 2);
   const sheet = new THREE.Mesh(geo, mat);
   sheet.frustumCulled = false;
   scene.add(sheet);
-  // The lettering is sized in CSS px, so it needs the height of the canvas it is drawn on.
-  const size = new THREE.Vector2(1, window.innerHeight || 800);
-  sheet.onBeforeRender = (renderer) => { renderer.getSize(size); };
-  const right = new THREE.Vector3();
-
+  // Lines stay hairlines on dense screens: weight grows slower than the drawing buffer's pixel ratio.
+  sheet.onBeforeRender = (renderer) => { pxU.value = 1 + (renderer.getPixelRatio() - 1) * 0.6; };
   /* ---- ripples: presses and drag stamps share one pool ---- */
   interface Pulse { x: number; z: number; age: number; amp: number; life: number; speed: number }
   const pool: Pulse[] = Array.from({ length: MAXP }, () => ({ x: 0, z: 0, age: 0, amp: 0, life: 1, speed: 1 }));
@@ -257,13 +204,13 @@ export function buildField(k: PsxKit): SceneDef {
   const summit = new THREE.Vector3(SUMMIT[0], 0, SUMMIT[1]);
 
   return {
-    scene, cam, clean: true, freeCam: { pan: 60 }, fog: [75, 160], fov: [50, 66],
+    scene, cam, clean: true, idleFps: 30, freeCam: { pan: 60 }, fog: [75, 160], fov: [50, 66],
     // From straight overhead down to a low oblique, and from a wide sheet to a close study.
     limits: { pitch: [MIN_ELEV - ELEV, Math.PI / 2 - ELEV], zoom: [0.4, 3.2] },
     labels: [],
     eggs: [
       {
-        // The summit answers with a ring of ripples around it.
+        // Unmarked: a tap on the summit answers with a ring of ripples around it.
         id: "field-benchmark", r: 30,
         at: (v) => { v.copy(summit); },
         fire: () => {
@@ -278,11 +225,11 @@ export function buildField(k: PsxKit): SceneDef {
         const ok = ray ? pick(ray) : false;
         if (ok) {
           px = hit.x; pz = hit.z;
-          // A drag lays a wake: one small ripple every couple of metres of travel.
+          // A drag lays a wake: one small ripple every few metres of travel.
           const now = performance.now(), run = Math.hypot(px - sx, pz - sz);
-          if (pressed && moved && run > 2.2 && now - stampAt > 100) {
+          if (pressed && moved && run > 3 && now - stampAt > 140) {
             const pace = Math.min(1, run / Math.max(0.1, (now - stampAt) / 1000) / 45);
-            spawn(px, pz, 0.55 + 0.4 * pace, 2.6, 6);
+            spawn(px, pz, 0.6 + 0.4 * pace, 2.2, 6);
             sx = px; sz = pz; stampAt = now;
           }
         }
@@ -311,11 +258,9 @@ export function buildField(k: PsxKit): SceneDef {
       cam.position.set(pivot.x + Math.cos(yaw) * flat, Math.sin(elev) * d, pivot.z + Math.sin(yaw) * flat);
       cam.up.set(-Math.cos(yaw), 0, -Math.sin(yaw));
       cam.lookAt(pivot);
-      // A low camera sees further across the sheet before it fades into the ground colour.
+      // A low camera sees further across the sheet before the lines thin out.
       const low = 1 - Math.sin(elev), far = Math.min(d * (3.2 + 3.5 * low), 400);
       fadeU.set(Math.min(d * (1.5 + 1.2 * low), far * 0.55), far);
-      // Lines stay hairlines on dense screens: weight grows slower than the pixel ratio.
-      pxU.value = 1 + (Math.min(window.devicePixelRatio || 1, 2) - 1) * 0.6;
       // The clear colour is the shader's ground, so the sheet has no visible edge.
       const z = U.uZen.value, f = U.uFogColor.value, a2 = U.uAccent2.value;
       bg.setRGB(z.r + (f.r - z.r) * 0.36 + a2.r * 0.08, z.g + (f.g - z.g) * 0.36 + a2.g * 0.08, z.b + (f.b - z.b) * 0.36 + a2.b * 0.08);
@@ -336,39 +281,26 @@ export function buildField(k: PsxKit): SceneDef {
         ripple(cascade[i].x, cascade[i].z, 0.9);
         cascade.splice(i, 1);
       }
+      // Age the pool and pack what is alive at the front of the uniforms, so the shader loops over that alone.
       live = 0;
       for (let i = 0; i < MAXP; i++) {
         const p = pool[i];
-        if (p.amp > 0) {
-          p.age += dt;
-          if (p.age > p.life) p.amp = 0;
-          else live++;
-        }
-        pulseU[i].set(p.x, p.z, p.age, p.amp);
-        pulseB[i].set(p.life, p.speed);
+        if (p.amp <= 0) continue;
+        p.age += dt;
+        if (p.age > p.life) { p.amp = 0; continue; }
+        pulseU[live].set(p.x, p.z, p.age, p.amp);
+        pulseB[live].set(p.life, p.speed);
+        live++;
       }
+      countU.value = live;
       summit.y = relief(summit.x, summit.z, t);
-
-      // Spot heights: a fixed size on screen, set off to the right of their point whichever way the map is turned.
-      cam.updateMatrixWorld();
-      right.setFromMatrixColumn(cam.matrixWorld, 0);
-      const tan = 2 * Math.tan((cam.fov * Math.PI) / 360), wpp = (d * tan) / size.y;
-      const sy = (LABEL_PX / size.y) * tan;
-      for (const m of marks) {
-        m.sp.position.set(m.at[0], relief(m.at[0], m.at[1], t), m.at[1]).addScaledVector(right, m.gap + 7 * wpp);
-        m.sp.scale.set(sy * LABEL_ASPECT, sy, 1);
-        const far = cam.position.distanceTo(m.sp.position);
-        const fade = Math.min(1, Math.max(0, (far - fadeU.x) / (fadeU.y - fadeU.x)));
-        m.sp.material.color.copy(U.uAccent.value);
-        m.sp.material.opacity = m.ink * (1 - fade * fade * (3 - 2 * fade));
-      }
     },
     readout() {
       const e = relief(aimed ? px : pivot.x, aimed ? pz : pivot.z, sceneT);
       return [
         ["Scale", "1:25 000"],
         ["CI", "50 m · index 250 m"],
-        ["Elev", metres(e).toLowerCase()],
+        ["Elev", `${e < 0 ? "\u2212" : ""}${Math.abs(Math.round(e * 100))} m`],
         ["Brg", `${k.pad(Math.round(k.bearing(cam)), 3)}°`],
         ["Ripples", String(live)],
       ];

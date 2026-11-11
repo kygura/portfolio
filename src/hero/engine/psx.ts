@@ -48,8 +48,12 @@ export interface EggDef {
 export interface SceneDef {
   scene: THREE.Scene;
   cam: THREE.PerspectiveCamera;
-  /** Drawn straight to the canvas at full resolution: no low-res target, dither or dissolve. */
+  /** Drawn straight to the canvas at full resolution: no low-res target, dither or dissolve.
+   *  Its drawing buffer is capped at 1.5x and steps down while frames run long. */
   clean?: boolean;
+  /** Frame rate while nothing but the scene's own ambient motion is happening. Input, ripples and
+   *  camera moves always draw at the display's rate. */
+  idleFps?: number;
   fog: [number, number];
   fov: [number, number];
   /** Manual camera range: pitch in radians (+ = camera up / look up), zoom factor (+ = closer), yaw ± radians (omit = free). */

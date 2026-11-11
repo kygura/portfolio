@@ -293,10 +293,18 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     if (psxOn) U.uSnap.value.set(lw * 0.5, lh * 0.5);
     else U.uSnap.value.set(1e5, 1e5);
   };
+  /* A clean scene shades every pixel of the drawing buffer itself, so its buffer is capped
+     lower than the 2x the low-res scenes blit at, and drops a step while frames run long. */
+  const CLEAN_RATIO = [1.5, 1.25, 1];
+  let ratioStep = 0, slow = 0, lastLoop = 0, lastDraw = 0;
+  const wantRatio = () => {
+    const dpr = window.devicePixelRatio || 1;
+    return scene(cur).clean ? Math.min(dpr, CLEAN_RATIO[ratioStep]) : Math.min(dpr, 2);
+  };
   const resize = () => {
     cssW = Math.max(1, host.clientWidth);
     cssH = Math.max(1, host.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(wantRatio());
     renderer.setSize(cssW, cssH, false);
     builtScenes().forEach(fitCam);
     lw = Math.max(200, Math.min(360, Math.round(cssW / 3.6)));
@@ -338,6 +346,24 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   const wants = () => visible && !document.hidden && (motion || dirty || mixT < 1 || !viewSettled() || Boolean(scene(cur).pointer?.busy()));
   function loop(now: number) {
     raf = 0;
+    const sc0 = scene(cur), gap = now - lastLoop;
+    lastLoop = now;
+    // With only ambient motion to show, a scene may ask for a lower frame rate.
+    if (sc0.idleFps && motion && !dirty && mixT >= 1 && viewSettled() && !sc0.pointer?.busy() && now - lastDraw < 1000 / sc0.idleFps - 3) {
+      raf = requestAnimationFrame(loop);
+      return;
+    }
+    lastDraw = now;
+    // Frames arriving under ~40 a second for a while: a clean scene gives up some resolution.
+    if (sc0.clean && ratioStep < CLEAN_RATIO.length - 1 && gap < 250) {
+      slow = gap > 25 ? slow + 1 : Math.max(0, slow - 1);
+      if (slow > 30 && wantRatio() > CLEAN_RATIO[ratioStep + 1]) {
+        ratioStep++;
+        slow = 0;
+        renderer.setPixelRatio(wantRatio());
+        renderer.setSize(cssW, cssH, false);
+      }
+    }
     const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
     last = now;
     if (motion) t += dt;
@@ -371,7 +397,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   }
   function kick() {
     if (raf || !wants()) return;
-    last = performance.now();
+    last = lastLoop = performance.now();
     raf = requestAnimationFrame(loop);
   }
 
@@ -637,6 +663,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       // A clean scene has no low-res frame to dissolve, so it cuts in and out.
       mixT = psxOn && !o.reducedMotion && !scene(prev).clean && !scene(cur).clean ? 0 : 1;
       setCrisp();
+      ratioStep = slow = 0;
+      if (renderer.getPixelRatio() !== wantRatio()) resize();
       buildLabels(scene(cur));
       dirty = true;
       kick();
