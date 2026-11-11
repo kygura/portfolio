@@ -22,8 +22,8 @@ export const WINDOW = 32;
 export const MAX_PIXELS = 40;
 export const TURN_GAP_MS = 15_000;
 export const DEFAULT_DAILY_TURNS = 240;
-// Opus 5.5 at low effort. Swap for "claude-haiku-5-5" to cut the cost per turn ~40x.
-export const MODEL = "claude-opus-5-5";
+// Haiku 5.5 at low effort: a turn is a small, well-specified drawing step.
+export const MODEL = "claude-haiku-5-5";
 
 export interface Resident {
   id: string;
@@ -343,11 +343,9 @@ export type Ask = (resident: Resident, prompt: string) => Promise<string | null>
 
 export function claudeAsk(client: Anthropic): Ask {
   return async (resident, prompt) => {
-    const message = await client.beta.messages.create({
+    const message = await client.messages.create({
       model: MODEL,
       max_tokens: 4000,
-      betas: ["server-side-fallback-2026-07-01"],
-      fallbacks: "default",
       output_config: { effort: "low", format: { type: "json_schema", schema: OUTPUT_SCHEMA } },
       system: [
         { type: "text", text: SYSTEM },
