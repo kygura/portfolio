@@ -3,7 +3,7 @@ slug: "the-soul-as-a-system-prompt"
 lang: "es"
 language: "Spanish"
 title: "El alma como prompt de sistema"
-sourceHash: ""
+sourceHash: "10d42f90aae6b123"
 ---
 
 La industria de la IA está cometiendo dos fraudes a la vez, y uno refuerza al otro. El primero es arquitectónico: envoltorios de middleware, con OpenClaw y Clawdbot a la cabeza, reempaquetan primitivas que ya existían como "IA agéntica revolucionaria", y empresas desesperadas por tener un relato que las impulse pagan valoraciones de acqui-hire por el reempaquetado. El segundo es filosófico: la predicción de texto sin estado se mitifica como identidad, alma, persistencia. Es deliberado. Explota la distancia entre lo que producen estos modelos y lo que interpreta el público.

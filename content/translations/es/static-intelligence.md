@@ -3,7 +3,7 @@ slug: "static-intelligence"
 lang: "es"
 language: "Spanish"
 title: "Inteligencia estática"
-sourceHash: ""
+sourceHash: "e651a2dfb7a5431f"
 ---
 
 El modelo es una interfaz.

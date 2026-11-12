@@ -3,7 +3,7 @@ slug: "corposlop"
 lang: "es"
 language: "Spanish"
 title: "Corposlop"
-sourceHash: ""
+sourceHash: "239d600b730dd684"
 ---
 
 Corposlop: lo que sale de cualquier producto, sobre todo videojuegos aunque no solo, que ha pasado por un consejo de dirección cuyo trabajo es eliminar el riesgo. Nadie en ese consejo tiene gusto. El gusto implica un punto de vista, y un punto de vista es un pasivo: puede equivocarse, puede alejar a un segmento, puede salir mal en las pruebas. Así que cada decisión acaba arrastrada hacia lo único a lo que nadie puede culpar: la mediana.

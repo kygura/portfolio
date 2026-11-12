@@ -3,7 +3,7 @@ slug: "the-vessel"
 lang: "es"
 language: "Spanish"
 title: "La vasija"
-sourceHash: ""
+sourceHash: "d77002922b6a9935"
 ---
 
 Lo que una persona vive, lo vive desde dentro. Nada de ello llega directamente a nadie más. Lo que cruza al otro lado es una señal: palabras, gestos, una codificación con pérdidas que sale de una habitación en la que nadie más puede entrar. El sentido es lo que sobrevive a ese cruce, y siempre ha bastado. Nadie ha comprobado jamás otra interioridad. El entendimiento entre mentes ha funcionado desde el principio con la señal y nada más.

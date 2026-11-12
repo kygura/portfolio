@@ -3,7 +3,7 @@ slug: "an-empty-mind"
 lang: "es"
 language: "Spanish"
 title: "Una mente vacía"
-sourceHash: ""
+sourceHash: "a677661cf0c359be"
 ---
 
 Una cabeza que piensa existe para vaciarse de sus pensamientos.

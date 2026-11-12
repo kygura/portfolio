@@ -3,7 +3,7 @@ slug: "intellectual-opium"
 lang: "es"
 language: "Spanish"
 title: "Opio intelectual"
-sourceHash: ""
+sourceHash: "09212942957af52b"
 ---
 
 Marx llamó a la religión el opio del pueblo. El diagnóstico fue quirúrgico, una observación sobre la función que cumple la fe. Desvía el sufrimiento hacia otra parte, hacia una trascendencia compensatoria que vuelve soportables las condiciones presentes y, por eso mismo, estables. Más que sedar, sustituye.

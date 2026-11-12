@@ -3,7 +3,7 @@ slug: "to-seek-higher-things"
 lang: "es"
 language: "Spanish"
 title: "Aspirar a cosas más altas"
-sourceHash: ""
+sourceHash: "3c55dcd10ebd31f2"
 ---
 
 Hay una forma de ambición que no merece ningún respeto. La variante de la cultura del esfuerzo sin descanso: la productividad como identidad, la acumulación como propósito, el estatus disfrazado de empuje. Inseguridad con plan de negocio.

@@ -3,7 +3,7 @@ slug: "on-the-state-of-things"
 lang: "es"
 language: "Spanish"
 title: "Sobre el estado de las cosas"
-sourceHash: ""
+sourceHash: "7963b741002d2f81"
 ---
 
 Hay un tipo de persona que llega a comprender, casi siempre por una mezcla de suerte y sufrimiento, que el juego que se juega en la superficie oculta el juego de verdad. Que la vida tal como se nos presenta hoy es un lento borrado y aniquilación de lo humano; a medida que lo maquinal ocupa su lugar.
