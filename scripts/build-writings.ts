@@ -44,7 +44,7 @@ const PUBLIC_POSTS_DIR = path.join(PUBLIC_DIR, "writings");
 const PUBLIC_MEDIA_DIR = path.join(PUBLIC_DIR, "media", "writings");
 const MEDIA_URL_PREFIX = "/media/writings";
 
-const SITE_TITLE = "Nicolas Cerrato Anton — Writings";
+const SITE_TITLE = "Nicolas Cerrato Anton: Writings";
 const SITE_DESCRIPTION =
   "Essays on the arts, engineering, the esoteric and the existential.";
 

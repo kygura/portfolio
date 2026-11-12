@@ -95,7 +95,7 @@ export const cv: Cv = {
       description: "Coursework: Machine Learning, Smart Contracts, System Programming.",
     },
     {
-      degree: "Abitur — Bilingual Diploma",
+      degree: "Abitur (Bilingual Diploma)",
       institution: "Deutsche Schule Las Palmas",
       period: "2006 – 2018",
       description: "",
