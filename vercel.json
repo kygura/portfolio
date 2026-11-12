@@ -1,12 +1,23 @@
 {
   "buildCommand": "bun run build",
   "functions": {
-    "api/github/codebase.ts": { "maxDuration": 300 }
+    "api/github/codebase.ts": {
+      "maxDuration": 300
+    },
+    "api/writings/translate.ts": {
+      "maxDuration": 300,
+      "includeFiles": "content/{writings,translations}/**/*.md"
+    }
   },
   "redirects": [
     {
       "source": "/(.*)",
-      "has": [{ "type": "host", "value": "(www\\.)?kygra\\.xyz" }],
+      "has": [
+        {
+          "type": "host",
+          "value": "(www\\.)?kygra\\.xyz"
+        }
+      ],
       "destination": "https://www.nca.ink/$1",
       "permanent": true
     },
@@ -14,18 +25,46 @@
       "source": "/writings/the-movement-of-the-world",
       "destination": "/writings/on-the-movements-of-the-world",
       "permanent": true
+    },
+    {
+      "source": "/writings/a-philosophy-of-pragmatic-sovereignity",
+      "destination": "/writings/the-last-sovereign-act",
+      "permanent": true
     }
   ],
   "rewrites": [
-    { "source": "/api/notion", "destination": "/api/notion/webhook" },
-    { "source": "/api/(.*)", "destination": "/api/$1" },
+    {
+      "source": "/api/notion",
+      "destination": "/api/notion/webhook"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    },
     {
       "source": "/cv",
-      "has": [{ "type": "header", "key": "accept", "value": "(.*)text/markdown(.*)" }],
+      "has": [
+        {
+          "type": "header",
+          "key": "accept",
+          "value": "(.*)text/markdown(.*)"
+        }
+      ],
       "destination": "/cv.md"
     },
-    { "source": "/cv", "destination": "/cv.html" },
-    { "source": "/((?!assets/).*)", "destination": "/index.html" }
+    {
+      "source": "/cv",
+      "destination": "/cv.html"
+    },
+    {
+      "source": "/((?!assets/).*)",
+      "destination": "/index.html"
+    }
   ],
-  "crons": [{ "path": "/api/notion/sync", "schedule": "0 5 * * *" }]
+  "crons": [
+    {
+      "path": "/api/notion/sync",
+      "schedule": "0 5 * * *"
+    }
+  ]
 }

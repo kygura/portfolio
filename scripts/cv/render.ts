@@ -20,7 +20,7 @@ export function cvDescription(cv: Cv): string {
 export function renderCvMarkdown(cv: Cv, origin = ""): string {
   const { contact } = cv;
   const lines = [
-    `# ${contact.name} — Curriculum Vitae`,
+    `# ${contact.name}: Curriculum Vitae`,
     "",
     `**${contact.headline}**`,
     "",
