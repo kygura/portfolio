@@ -28,7 +28,7 @@ La otra cara de la cuenta es la coerción. El IV Concilio de Letrán, en 1215, e
 
 ## Ética
 
-La ética es el punto donde la religión llega directamente a la gente. La moral llega en forma de mandatos de arriba, respaldados por premio y castigo. Portarse bien pasa a ser obedecer. Pensar mal pasa a ser pecado.
+La ética es el punto donde la religión alcanza directamente a la gente. La moral llega en forma de mandatos de arriba, respaldados por premio y castigo. Portarse bien pasa a ser obedecer. Pensar mal pasa a ser pecado.
 
 Mateo 5:28 convierte el deseo mismo en una ofensa: cualquiera que mira a una mujer para codiciarla "ya adulteró con ella en su corazón". El adulterio como delito necesita un acto y un testigo. Esto no necesita ninguna de las dos cosas, y como nadie deja de desear por decidirlo, garantiza que todo el mundo sea culpable antes de haber hecho nada. Una culpa de ese tamaño hace que la gente vuelva una y otra vez al único remedio que proporciona la Iglesia. Letrán IV aportó el procedimiento: todo cristiano con edad suficiente para distinguir el bien del mal debe confesar todos sus pecados a su propio sacerdote al menos una vez al año. La confesión convierte la vida interior en algo que hay que declarar, y quien escucha rinde cuentas ante la institución.
 
@@ -50,7 +50,7 @@ La respuesta de Pascal es la apuesta, y acierta en una cosa: "No es opcional. Es
 
 Kierkegaard es el que querría tener al otro lado de la mesa. Tira por la borda las pruebas, la cristiandad y al feligrés acomodado, y deja a un hombre solo con la pregunta, sin nada que demuestre que tiene razón. Eso está cerca de donde yo estoy, y me cae bien por ello. Luego manda a ese hombre monte arriba con un cuchillo. Abraham es su modelo: deja la ética a un lado porque se lo dijo una voz. Kierkegaard llevó al individuo hasta el borde, despojado de toda institución, con todo el peso sobre su propio juicio, y después lo elogió por entregarlo. Eso es la obediencia en estado puro, sin el cura de por medio. Y no hay manera, desde dentro, de distinguir a Abraham de cualquier otro hombre que oye una voz y coge un cuchillo.
 
-## Toda religión
+## Todas las religiones
 
 "Todas las religiones" incluye las que me gusta leer. Me gusta el zen y cito a los taoístas. No profeso ninguno de los dos, y no les hago ninguna excepción. Su dedo que señala la luna se convirtió en objeto de culto como cualquier otro.
 
