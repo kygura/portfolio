@@ -2,7 +2,7 @@
 slug: "thaumazein"
 title: "Thaumazein"
 excerpt: "For a long while, I had been in pursuit of freedom—of the greatest life I could imagine for myself—redefining, at every turn, the very terms of victory so that the chase might never end. I sought the liberation promised..."
-date: "2026-04-15T08:57:00.000Z"
+date: "2026-04-15"
 readTime: 1
 published: true
 notionPageId: "343143f2-8260-81ca-9032-cc199f79e00f"
@@ -30,6 +30,4 @@ There is beauty in the truth: that the ideals of discovery, freedom, and knowled
 
 The spirit of man is the spirit of history.
 
-Now I no longer run from the past.
-
-I run toward the future.
+Now, released from the past, I run toward the future.

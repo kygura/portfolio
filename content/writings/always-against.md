@@ -1,30 +1,30 @@
 ---
 slug: "always-against"
 title: "Always Against"
-excerpt: "Also: Perpetua Libertas Core Idea Every system built to free people from the previous system becomes, by virtue of its success and institutionalization, the next system people need freeing from. Not a bug. The game's loa..."
+excerpt: "Also: Perpetua Libertas Core Idea Every system built to free people from the previous system becomes, through its own success and institutionalization, the next system people need freeing from. The Mechanism Resistance p..."
 date: "2026-02-26T15:00:00.000Z"
 readTime: 5
 published: true
 notionPageId: "313143f2-8260-81ab-99b0-e14e38665690"
 ---
 
-_Also: Perpetua Libertas _
+_Also: Perpetua Libertas_
 
 ## Core Idea
 
-Every system built to free people from the previous system becomes, by virtue of its success and institutionalization, the next system people need freeing from. Not a bug. The game's load-bearing structure.
+Every system built to free people from the previous system becomes, through its own success and institutionalization, the next system people need freeing from.
 
 ## The Mechanism
 
-Humans don't revolt merely when conditions are bad enough — resistance precedes oppression. Submission itself is experienced as a kind of death. The will to express freedom is ontological, not reactive.
+Resistance precedes oppression. Submission itself is experienced as a kind of death. The will to express freedom is ontological.
 
-Which means any system that successfully contains and organizes human freedom will eventually be experienced as its negation. The more total the liberation, the more total the new cage.
+Which means any system that successfully contains and organizes human freedom will eventually be experienced as its negation, and the more total the liberation, the more total the new cage.
 
 ## Implications
 
-- History has no destination, only a rhythm: containment → pressure → rupture → new container → repeat
-- Every revolution germinates its own tyranny — not because humans are flawed but because that's the game's structure
-- The enemy is never just the current system. The enemy is _systematization itself_
+- History has no destination, only a rhythm: containment, pressure, rupture, new container, repeat
+- Every revolution germinates its own tyranny because the rhythm requires it
+- The enemy is _systematization itself_, of which the current system is one instance
 - Building for liberation means building for your own obsolescence
 
 ## The Design Question
@@ -35,13 +35,13 @@ If you know the pattern, how do you build something that accounts for its own ev
 
 - Hegel: history as Spirit's self-actualization through dialectical negation
 - Marx: material conditions as the grammar of what's possible
-- Nietzsche: the will to power as overflow — life expressing itself beyond its current container
-- The synthesis: neither Spirit nor matter drives history. Resistance does.
+- Nietzsche: the will to power as overflow, life expressing itself beyond its current container
+- The synthesis: resistance drives history.
 
 ## To Explore
 
 - Does naming the pattern break it or just make you a more self-aware participant?
-- Is there a structural design that builds in its own rupture point intentionally?
+- Is there a design that builds in its own rupture point intentionally?
 - How does this apply to Agora, and every platform built "against" the current system?
 
 ---

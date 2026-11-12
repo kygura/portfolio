@@ -6,28 +6,26 @@ title: "Thaumazein"
 sourceHash: "0723eb49ebf35a63"
 ---
 
-Durante mucho tiempo había perseguido la libertad —la vida más grande que podía imaginar para mí—, redefiniendo a cada paso los términos mismos de la victoria para que la persecución no terminara nunca.
+Durante mucho tiempo anduve tras la libertad, tras la vida más grande que alcanzaba a imaginar para mí, y a cada paso volvía a definir los términos mismos de la victoria para que la caza no acabase nunca.
 
-Buscaba la liberación que prometía la mano invisible, ese orden divino y oculto del cosmos; hacía tiempo que me había propuesto no convertirme jamás en esclavo de la causalidad, no verme arrastrado nunca a una vida cercada por la restricción y el límite, y así me entregué, en cambio, a la persecución de metas arbitrarias, de riqueza y éxito sin fin.
+Buscaba la liberación que prometía la mano invisible, aquel orden divino y oculto del cosmos. Hacía tiempo que me había jurado no ser nunca esclavo de la causalidad, no dejarme arrastrar a una vida cercada por la restricción y el límite, así que me entregué a perseguir metas arbitrarias, una riqueza y un éxito sin fin.
 
-Corría tras un espectro que prometía la salvación.
+Corría detrás de un espectro que prometía la salvación.
 
-Los movimientos ocultos del mundo me han traído hasta aquí, hasta este momento.
+Los movimientos ocultos del mundo me han traído hasta aquí, hasta este instante.
 
-He visto mucho y hecho mucho, y aun así nunca fue suficiente.
+He visto mucho y he hecho mucho, y aun así nunca bastó.
 
 Había olvidado la belleza que lo impregna todo.
 
 Es hora de deponer las armas.
 
-Es hora de vivir ahora.
+Es hora de vivir ya.
 
 ---
 
-Hay belleza en la verdad: en que los ideales del descubrimiento, la libertad y el conocimiento conducen tanto al individuo como a la historia entera hacia una libertad culminante.
+Hay belleza en la verdad: los ideales del descubrimiento, la libertad y el conocimiento llevan tanto al individuo como a la historia entera hacia una libertad en la que todo culmina.
 
 El espíritu del hombre es el espíritu de la historia.
 
-Ahora ya no huyo del pasado.
-
-Corro hacia el futuro.
+Ahora, libre del pasado, corro hacia el futuro.
