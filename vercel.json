@@ -25,6 +25,11 @@
       "source": "/writings/the-movement-of-the-world",
       "destination": "/writings/on-the-movements-of-the-world",
       "permanent": true
+    },
+    {
+      "source": "/writings/a-philosophy-of-pragmatic-sovereignity",
+      "destination": "/writings/the-last-sovereign-act",
+      "permanent": true
     }
   ],
   "rewrites": [
