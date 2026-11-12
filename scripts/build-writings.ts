@@ -188,6 +188,13 @@ async function emit(): Promise<PostSummary[]> {
     if (`${parsed.summary.slug}.md` !== file) {
       throw new Error(`content/writings/${file} declares slug "${parsed.summary.slug}"; rename the file to match`);
     }
+    // The author doesn't write em or en dashes; one showing up means an
+    // editor (human or model) slipped it in. Name the post so it gets fixed
+    // in Notion, the source every translation is made from.
+    const dashes = (raw.match(/[–—]/g) ?? []).length;
+    if (dashes > 0) {
+      console.warn(`[writings]   ${file}: ${dashes} em/en dash(es), fix them in Notion`);
+    }
     summaries.push(parsed.summary);
     await fs.writeFile(path.join(PUBLIC_POSTS_DIR, file), raw, "utf-8");
   }
