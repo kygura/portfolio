@@ -3,7 +3,7 @@ slug: "the-price-of-progress"
 lang: "es"
 language: "Spanish"
 title: "El precio del progreso"
-sourceHash: "d453c27764df0795"
+sourceHash: "4c92d977e7d352e1"
 ---
 
 ## La premisa central

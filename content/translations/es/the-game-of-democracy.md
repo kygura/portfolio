@@ -3,7 +3,7 @@ slug: "the-game-of-democracy"
 lang: "es"
 language: "Spanish"
 title: "El juego de la democracia"
-sourceHash: "f9bbf0ba325c4c53"
+sourceHash: "e3624249dd67dded"
 ---
 
 ## Punto de partida

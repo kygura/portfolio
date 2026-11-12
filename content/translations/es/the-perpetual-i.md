@@ -3,7 +3,7 @@ slug: "the-perpetual-i"
 lang: "es"
 language: "Spanish"
 title: "El yo perpetuo"
-sourceHash: "a63c77193dedc9c9"
+sourceHash: "1a959ce347e654d4"
 ---
 
 Un hombre libre puede escapar de muchas cosas, pero no de quien es. Igual que una lámpara no puede alumbrarse a sí misma, tú no puedes burlar ni trascender los límites de tu propio diseño.

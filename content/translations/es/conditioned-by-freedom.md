@@ -3,7 +3,7 @@ slug: "conditioned-by-freedom"
 lang: "es"
 language: "Spanish"
 title: "Condicionado por la libertad"
-sourceHash: "e4d0226a4063f21f"
+sourceHash: "ea325811ae0cc7cc"
 ---
 
 La libertad siempre es relacional. Puedes ser libre _de_ algo: de un trabajo, de un país, de un contrato social, de una institución. Pero nunca puedes ser libre de aquello que te libera. El agente es la única variable sobre la que no puede operar.
