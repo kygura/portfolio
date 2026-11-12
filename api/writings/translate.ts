@@ -27,7 +27,7 @@ import path from "node:path";
 export const MODEL = "claude-haiku-5-5";
 export const MAX_OUTPUT_TOKENS = 16_000;
 /** Bump when the prompt changes so Blob entries are written afresh. */
-export const PROMPT_VERSION = "v1";
+export const PROMPT_VERSION = "v2";
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const UNSUPPORTED = "UNSUPPORTED";
@@ -92,6 +92,11 @@ export function systemPrompt(language: string): string {
     "paragraph breaks, lists, blockquotes, emphasis and horizontal rules.",
     "Never change URLs, image paths, code blocks, inline code or alert markers such as [!NOTE]. Do translate link text, image alt text and quotations;",
     "for a well-known quotation, use its established translation if one exists.",
+    "",
+    "Punctuation and style: the author never uses em dashes or en dashes. Use none at all, even where the source has one.",
+    "Recast each dash the way a native writer of the target language would: a full stop, a comma, a colon, parentheses or a conjunction.",
+    "Avoid the tells of machine prose: reflexive groups of three, stacked 'not X but Y' contrasts, hedges, inflated words",
+    "and calques that read as translated. Vary sentence length the way a person does.",
     "",
     "Output format: the translated title alone on the first line, then one blank line, then the translated body. Nothing before or after it, no commentary, no code fences.",
     `If "${language}" is not a human language (natural or constructed), output exactly: ${UNSUPPORTED}`,
