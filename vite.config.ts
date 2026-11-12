@@ -6,9 +6,11 @@ import { Readable } from "node:stream";
 import { buildShowcase, parseRepoList, type Showcase } from "./api/github/repos";
 import { handleCodebase } from "./api/github/codebase";
 import { handleQuip } from "./api/familiar/quip";
+import { handleTranslate } from "./api/writings/translate";
 
 /**
- * Serves /api/github/repos, /api/github/codebase and /api/familiar/quip under `vite dev` with the
+ * Serves /api/github/repos, /api/github/codebase, /api/familiar/quip and
+ * /api/writings/translate under `vite dev` with the
  * same code the Vercel functions run. The index is cached for ten minutes so
  * reloads stay inside GitHub's unauthenticated rate limit; the codebase chat
  * and Bit's quips need ANTHROPIC_API_KEY, as in production.
@@ -36,6 +38,18 @@ function devGithubApi(): Plugin {
         res.statusCode = response.status;
         res.setHeader("content-type", "application/json");
         res.end(await response.text());
+      });
+      server.middlewares.use("/api/writings/translate", async (req, res) => {
+        const response = await handleTranslate(
+          new Request(`http://localhost${req.originalUrl ?? req.url}`, {
+            method: req.method,
+            headers: { "x-forwarded-for": req.socket.remoteAddress ?? "local" },
+          })
+        );
+        res.statusCode = response.status;
+        response.headers.forEach((value, key) => res.setHeader(key, value));
+        if (response.body) Readable.fromWeb(response.body as never).pipe(res);
+        else res.end();
       });
       server.middlewares.use("/api/github/repos", async (_req, res) => {
         res.setHeader("content-type", "application/json");

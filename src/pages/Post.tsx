@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { useParams, Link, Navigate } from "react-router-dom";
+import { useParams, useSearchParams, Link, Navigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -8,6 +8,9 @@ import CodeBlock from "../components/CodeBlock";
 import PostImage from "../components/PostImage";
 import Alert from "../components/Alert";
 import PostToc from "../components/PostToc";
+import TranslateMenu from "../components/TranslateMenu";
+import { usePostTranslation } from "../hooks/usePostTranslation";
+import { isRtl, langAttribute } from "../lib/languages";
 
 type MarkdownCodeProps = React.ComponentPropsWithoutRef<"code"> & {
   node?: unknown;
@@ -61,6 +64,19 @@ const Post = () => {
   const { post, loading, error } = useMarkdownPost(slug);
   const { posts } = useMarkdownPosts();
   const articleRef = useRef<HTMLElement>(null);
+  // ?lang=es keeps a translated view shareable and survives a reload.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const lang = searchParams.get("lang");
+  const translation = usePostTranslation(post ? slug : undefined, lang);
+  const setLang = (next: string | null) =>
+    setSearchParams(
+      (params) => {
+        if (next) params.set("lang", next);
+        else params.delete("lang");
+        return params;
+      },
+      { replace: true },
+    );
 
   if (loading) {
     return (
@@ -99,13 +115,22 @@ const Post = () => {
     ? parsed.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })
     : "";
 
+  const translated = translation.status === "streaming" || translation.status === "done";
+  const title = translated && translation.title ? translation.title : post.title;
+  const content = translated && translation.body ? translation.body : post.content;
+  const contentLang = translated && lang ? langAttribute(lang) : undefined;
+  const dir = translated && lang && isRtl(lang) ? "rtl" : undefined;
+
   return (
     <div className="page-shell page-shell--narrow animate-fade-in">
       <header className="post-head">
-        <Link to="/writings" className="post-head__back">
-          <ArrowLeft size={14} aria-hidden="true" />
-          Writings
-        </Link>
+        <div className="post-head__bar">
+          <Link to="/writings" className="post-head__back">
+            <ArrowLeft size={14} aria-hidden="true" />
+            Writings
+          </Link>
+          <TranslateMenu value={lang} onChange={setLang} />
+        </div>
 
         <p className="post-head__eyebrow">
           {number > 0 && <span>№{String(number).padStart(2, "0")}</span>}
@@ -113,12 +138,32 @@ const Post = () => {
           <span>{post.readTime} min read</span>
         </p>
 
-        <h1 className="post-head__title">{post.title}</h1>
+        <h1 className="post-head__title" lang={contentLang} dir={dir}>{title}</h1>
+
+        {lang && translation.status !== "idle" && (
+          <p className={`post-translate__status${translation.status === "error" ? " is-error" : ""}`} role="status">
+            {translation.status === "error" ? (
+              translation.error
+            ) : translation.status === "loading" ? (
+              "Fetching translation…"
+            ) : translation.status === "streaming" ? (
+              `Translating into ${translation.language}…`
+            ) : (
+              `Machine-translated into ${translation.language} by Claude`
+            )}
+            <button type="button" onClick={() => setLang(null)}>
+              Show original
+            </button>
+          </p>
+        )}
       </header>
 
-      <PostToc articleRef={articleRef} contentKey={post.content} />
+      <PostToc
+        articleRef={articleRef}
+        contentKey={translation.status === "streaming" ? `${lang}:streaming` : content}
+      />
 
-      <article ref={articleRef} className="prose-minimal text-lg leading-relaxed text-foreground">
+      <article ref={articleRef} lang={contentLang} dir={dir} className="prose-minimal text-lg leading-relaxed text-foreground">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
@@ -242,7 +287,7 @@ const Post = () => {
             }
           }}
         >
-          {post.content}
+          {content}
         </ReactMarkdown>
       </article>
 
