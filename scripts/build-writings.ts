@@ -11,7 +11,7 @@
  *    - `public/writings.json`            the same list, for agents and feeds
  *    - `public/writings/<slug>.md`       raw markdown per post
  *    - `public/llms.txt`                 an index agents can start from
- * 3. Mirror (only when synced from Notion and a Blob token is set): copy every
+ * 3. Mirror (production builds synced from Notion, with a Blob token): copy every
  *    post, its committed translations and the manifest to Vercel Blob under
  *    `writings/`, deleting what is no longer published. Failures only warn.
  *
@@ -245,8 +245,11 @@ console.log(`[writings] emitted ${posts.length} posts`);
 // ---------------------------------------------------------------------------
 
 const mirrorStore = vercelBlobStore();
-if (offline || !getOptionalNotionToken()) {
-  // Only a build that just synced from Notion speaks for what is published.
+// Only a production build that just synced from Notion speaks for what is
+// published. Preview builds share the store and must not overwrite it.
+const vercelEnv = process.env.VERCEL_ENV;
+if (offline || !getOptionalNotionToken() || (vercelEnv && vercelEnv !== "production")) {
+  if (vercelEnv && vercelEnv !== "production") console.log(`[writings] ${vercelEnv} build: skipping the Blob mirror`);
 } else if (!mirrorStore) {
   console.log("[writings] no Blob token: skipping the mirror");
 } else {
