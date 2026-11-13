@@ -68,6 +68,26 @@ const ON_PALETTE: Record<Accent["id"], string> = {
   vermilion: "vermilion. the old warning colour. i'll stand ready.",
 };
 
+/** What Bit says when you reach the bottom of a page. */
+const AT_BOTTOM = [
+  "the bottom. nothing down here but foundations. i would know.",
+  "end of the scroll. in my day you rolled it back up by hand.",
+  "this is as deep as it goes. i went deeper once. four hundred years.",
+  "the floor. i live here. welcome.",
+  "the old scribes left a curse at the end of every scroll. i removed this one.",
+];
+
+const AT_BOTTOM_BY_SECTION: Record<string, string> = {
+  writings: "you read to the end. the scribes would weep. they wept often.",
+  cv: "the end of the ledger. no mention of me. noted.",
+  projects: "all the machines, counted. none of them as old as me.",
+};
+
+export function bottomQuip(path: string): string {
+  const own = AT_BOTTOM_BY_SECTION[section(path)];
+  return own && Math.random() < 0.5 ? own : pick(AT_BOTTOM);
+}
+
 export const paletteQuip = (id: Accent["id"]) => ON_PALETTE[id] ?? "new colours. the stone takes them in.";
 
 const section = (path: string) => path.split("/").filter(Boolean)[0] ?? "";
