@@ -12,7 +12,6 @@ test("serializeFrontmatter + parseFrontmatter round-trips fields", () => {
     slug: "on-the-ego",
     title: "On the Ego",
     excerpt: "A short note",
-    date: "2026-05-24",
     readTime: 3,
     published: true,
     notionPageId: "page-123",
@@ -21,7 +20,7 @@ test("serializeFrontmatter + parseFrontmatter round-trips fields", () => {
 
   assert.equal(data.slug, "on-the-ego");
   assert.equal(data.title, "On the Ego");
-  assert.equal(data.date, "2026-05-24");
+  assert.equal(data.date, undefined);
   assert.equal(data.readTime, 3);
   assert.equal(data.published, true);
   assert.equal(data.notionPageId, "page-123");
@@ -33,7 +32,6 @@ test("buildPostFromMarkdown derives a valid summary", () => {
     slug: "thaumazein",
     title: "Thaumazein",
     excerpt: "",
-    date: "2026-05-22",
     readTime: 0,
     published: true,
     notionPageId: "page-456",

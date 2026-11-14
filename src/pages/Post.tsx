@@ -62,7 +62,7 @@ const alertTypes: Record<AlertType, AlertType> = {
 const Post = () => {
   const { slug } = useParams();
   const { post, loading, error } = useMarkdownPost(slug);
-  const { posts } = useMarkdownPosts();
+  const { posts, clusters } = useMarkdownPosts();
   const articleRef = useRef<HTMLElement>(null);
   // ?lang=es keeps a translated view shareable and survives a reload.
   const [searchParams, setSearchParams] = useSearchParams();
@@ -105,15 +105,14 @@ const Post = () => {
       replace />;
   }
 
-  // The index lists newest first and numbers entries up from the oldest.
+  // The manifest runs cluster by cluster, each cluster a reading path, so
+  // previous/next walk the path and cross into the next cluster at its end.
   const at = posts.findIndex((p) => p.slug === post.slug);
-  const number = at >= 0 ? posts.length - at : 0;
-  const newer = at > 0 ? posts[at - 1] : null;
-  const older = at >= 0 && at < posts.length - 1 ? posts[at + 1] : null;
-  const parsed = new Date(post.date);
-  const date = Number.isFinite(parsed.getTime())
-    ? parsed.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })
-    : "";
+  const entry = at >= 0 ? posts[at] : null;
+  const previous = at > 0 ? posts[at - 1] : null;
+  const next = at >= 0 && at < posts.length - 1 ? posts[at + 1] : null;
+  const cluster = clusters.find((c) => c.id === entry?.cluster) ?? null;
+  const siblings = cluster ? cluster.slugs.flatMap((slug) => posts.find((p) => p.slug === slug) ?? []) : [];
 
   const translated = translation.status === "streaming" || translation.status === "done";
   const title = translated && translation.title ? translation.title : post.title;
@@ -133,12 +132,31 @@ const Post = () => {
         </div>
 
         <p className="post-head__eyebrow">
-          {number > 0 && <span>№{String(number).padStart(2, "0")}</span>}
-          {date && <time dateTime={post.date}>{date}</time>}
+          {entry?.mark && <span>{entry.mark}</span>}
+          {cluster && <Link to="/writings" className="post-head__cluster">{cluster.name}</Link>}
           <span>{post.readTime} min read</span>
         </p>
 
         <h1 className="post-head__title" lang={contentLang} dir={dir}>{title}</h1>
+
+        {siblings.length > 1 && (
+          <nav className="post-path" aria-label={`${cluster?.name ?? "Cluster"}: reading path`}>
+            <ol>
+              {siblings.map((sibling) => (
+                <li key={sibling.slug}>
+                  <Link
+                    to={`/writings/${sibling.slug}`}
+                    aria-current={sibling.slug === post.slug ? "page" : undefined}
+                    title={sibling.title}
+                  >
+                    <span className="post-path__mark">{sibling.mark}</span>
+                    <span className="post-path__title">{sibling.title}</span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )}
 
         {lang && translation.status !== "idle" && (
           <p className={`post-translate__status${translation.status === "error" ? " is-error" : ""}`} role="status">
@@ -291,24 +309,27 @@ const Post = () => {
         </ReactMarkdown>
       </article>
 
-      {(older || newer) && (
-        <nav className="post-next" aria-label="More writings">
-          {older ? (
-            <Link to={`/writings/${older.slug}`} className="post-next__link">
+      {(previous || next) && (
+        <nav className="post-next" aria-label="Reading path">
+          {previous ? (
+            <Link to={`/writings/${previous.slug}`} className="post-next__link">
               <span className="post-next__dir">
-                <ArrowLeft size={13} aria-hidden="true" /> Older
+                <ArrowLeft size={13} aria-hidden="true" /> {previous.cluster === entry?.cluster ? "Previous" : "Previous cluster"}
               </span>
-              <span className="post-next__title">{older.title}</span>
+              <span className="post-next__title">{previous.title}</span>
             </Link>
           ) : (
             <span />
           )}
-          {newer && (
-            <Link to={`/writings/${newer.slug}`} className="post-next__link post-next__link--newer">
+          {next && (
+            <Link to={`/writings/${next.slug}`} className="post-next__link post-next__link--newer">
               <span className="post-next__dir">
-                Newer <ArrowRight size={13} aria-hidden="true" />
+                {next.cluster === entry?.cluster
+                  ? "Next"
+                  : `Next cluster: ${clusters.find((c) => c.id === next.cluster)?.name ?? ""}`}{" "}
+                <ArrowRight size={13} aria-hidden="true" />
               </span>
-              <span className="post-next__title">{newer.title}</span>
+              <span className="post-next__title">{next.title}</span>
             </Link>
           )}
         </nav>

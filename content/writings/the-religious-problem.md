@@ -2,7 +2,6 @@
 slug: "the-religious-problem"
 title: "The Religious Problem"
 excerpt: "There is no metaphysical solution to the existential problem. Every religion offers one anyway. It names the problem (death, meaning, suffering), places the answer outside the world, and builds a system to keep people ho..."
-date: "2026-11-03"
 readTime: 10
 published: true
 notionPageId: "40d143f2-8260-81bd-bf04-cfd5e3a60e40"

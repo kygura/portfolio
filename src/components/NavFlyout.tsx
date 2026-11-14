@@ -33,14 +33,20 @@ function Row({ to, meta, onPick, children }: { to: string; meta?: string; onPick
 }
 
 function WritingsPanel() {
-  const { posts } = useMarkdownPosts();
-  const latest = [...posts].sort((a, b) => b.date.localeCompare(a.date)).slice(0, MAX_WRITINGS);
+  const { posts, clusters } = useMarkdownPosts();
+  // Each cluster's opening essay: one door into each line of thought.
+  const doors = clusters
+    .flatMap((cluster) => {
+      const first = posts.find((p) => p.slug === cluster.slugs[0]);
+      return first ? [{ cluster, first }] : [];
+    })
+    .slice(0, MAX_WRITINGS);
   return (
     <>
-      <p className="fly-head">Latest</p>
-      {latest.map((p) => (
-        <Row key={p.slug} to={`/writings/${p.slug}`} meta={`${p.readTime} min`}>
-          {p.title}
+      <p className="fly-head">Clusters</p>
+      {doors.map(({ cluster, first }) => (
+        <Row key={cluster.id} to={`/writings/${first.slug}`} meta={`${cluster.slugs.length}`}>
+          {cluster.numeral}. {cluster.name}
         </Row>
       ))}
       <Row to="/writings" meta={String(posts.length)}>All writings →</Row>

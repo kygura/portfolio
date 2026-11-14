@@ -67,16 +67,6 @@ function readCheckboxProperty(props: NotionProps, ...keys: string[]): boolean {
   return false;
 }
 
-function readDateProperty(props: NotionProps, ...keys: string[]): string {
-  for (const key of keys) {
-    const prop = props[key];
-    if (!prop || prop.type !== "date") continue;
-    const start = prop.date?.start;
-    if (typeof start === "string" && start.trim()) return start.trim();
-  }
-  return "";
-}
-
 // ---------------------------------------------------------------------------
 // Exported functions
 // ---------------------------------------------------------------------------
@@ -86,11 +76,6 @@ export function extractPostMetadata(page: NotionPage): NotionPostMetadata {
 
   // title
   const rawTitle = readTitleProperty(props, "Title", "Name", "title") || page.id;
-
-  // date
-  const rawDate =
-    readDateProperty(props, "Publication Date", "Date", "date") ||
-    (page.created_time ?? "");
 
   // published
   const published = readCheckboxProperty(props, "Published", "published");
@@ -119,7 +104,6 @@ export function extractPostMetadata(page: NotionPage): NotionPostMetadata {
     title: rawTitle,
     slug,
     excerpt,
-    date: rawDate,
     published,
     createdTime,
     lastEditedTime,

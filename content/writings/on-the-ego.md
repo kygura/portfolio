@@ -2,7 +2,6 @@
 slug: "on-the-ego"
 title: "On the Ego"
 excerpt: "We do not talk of freedom if there is no real choice to be made. And there is no real choice within a system that defines the available options. Freedom without the option to exit is a managed range. A pasture with an in..."
-date: "2026-05-24"
 readTime: 2
 published: true
 notionPageId: "369143f2-8260-812a-94de-e22db713154d"

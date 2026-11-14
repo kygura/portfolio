@@ -2,7 +2,6 @@
 slug: "the-soul-as-a-system-prompt"
 title: "The Soul as a System Prompt"
 excerpt: "The AI industry is running two frauds at once, and they reinforce each other. The first is architectural: middleware wrappers, OpenClaw and Clawdbot chief among them, repackage existing primitives as \"groundbreaking agen..."
-date: "2026-02-27T00:13:00.000Z"
 readTime: 5
 published: true
 notionPageId: "314143f2-8260-81e8-9bb0-cc785b38de5b"

@@ -2,7 +2,6 @@
 slug: "the-language-game"
 title: "The Language Game"
 excerpt: "There is a product called OpenClaw. It is, technically, a local daemon that routes your messages through an LLM with bash access, a glorified shell agent dressed up in multi channel clothing. WhatsApp in, shell command o..."
-date: "2026-04-19T11:22:00.000Z"
 readTime: 5
 published: true
 notionPageId: "347143f2-8260-81ce-a799-c72fffc08e35"

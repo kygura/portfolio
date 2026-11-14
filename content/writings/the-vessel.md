@@ -2,7 +2,6 @@
 slug: "the-vessel"
 title: "The Vessel"
 excerpt: "Whatever a person lives, they live from the inside. None of it reaches anyone else directly. What crosses over is a signal: words, gestures, a lossy encoding sent out of a room nobody else can enter. Meaning is whatever..."
-date: "2026-11-03"
 readTime: 5
 published: true
 notionPageId: "40d143f2-8260-8104-9715-dbf48035b0ea"

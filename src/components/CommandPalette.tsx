@@ -96,7 +96,7 @@ export default function CommandPalette({
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const accent = useAccent();
-  const { posts } = useMarkdownPosts();
+  const { posts, clusters } = useMarkdownPosts();
   const showcase = useShowcase();
   const [query, setQuery] = useState("");
   const [folder, setFolder] = useState<FolderId | null>(null);
@@ -134,13 +134,13 @@ export default function CommandPalette({
   };
 
   const children = useMemo(() => {
-    const writings: Entry[] = [...posts]
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .map((p) => ({
+    const clusterName = new Map(clusters.map((c) => [c.id, c.name]));
+    // Manifest order: cluster by cluster, each in reading order.
+    const writings: Entry[] = posts.map((p) => ({
         value: `writings/${p.slug}`,
         label: p.title,
-        keywords: [p.slug],
-        meta: `${p.readTime} min`,
+        keywords: [p.slug, clusterName.get(p.cluster) ?? ""],
+        meta: p.mark ? `${p.mark} · ${p.readTime} min` : `${p.readTime} min`,
         run: () => navigate(`/writings/${p.slug}`),
       }));
     const scenes: Entry[] = SHEETS.map((s) => ({
@@ -160,7 +160,7 @@ export default function CommandPalette({
       },
     }));
     return { writings, scenes, software } satisfies Record<FolderId, Entry[]>;
-  }, [posts, showcase.data, navigate]);
+  }, [posts, clusters, showcase.data, navigate]);
 
   const routes: Entry[] = Object.entries(CHORDS).map(([k, c]) => {
     const f = FOLDER_FOR_PATH[c.to];

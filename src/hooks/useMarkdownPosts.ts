@@ -15,10 +15,29 @@ const postLoaders = import.meta.glob<string>("../../content/writings/*.md", {
   import: "default",
 });
 
+const clusterModules = import.meta.glob<{ clusters: Cluster[] }>("../../content/writings/clusters.json", {
+  eager: true,
+  import: "default",
+});
+
+/** A thematic cluster of essays, re-formed by Haiku whenever the corpus changes. */
+export interface Cluster {
+  id: string;
+  numeral: string;
+  name: string;
+  thesis: string;
+  slugs: string[];
+}
+
+// The manifest is already in clustering order: cluster by cluster, each a reading path.
 const summaries: PostSummary[] = Object.values(manifestModules)[0] ?? [];
+const clusters: Cluster[] = (Object.values(clusterModules)[0]?.clusters ?? []).filter((cluster) =>
+  cluster.slugs.some((slug) => summaries.some((post) => post.slug === slug)),
+);
 
 interface UsePostsResult {
   posts: PostSummary[];
+  clusters: Cluster[];
   loading: boolean;
   error: string | null;
 }
@@ -31,6 +50,7 @@ interface UsePostResult {
 
 export const useMarkdownPosts = (): UsePostsResult => ({
   posts: summaries,
+  clusters,
   loading: false,
   error: null,
 });

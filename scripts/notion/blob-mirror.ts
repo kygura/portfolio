@@ -4,6 +4,7 @@
  * manifest, under one prefix. Runs at the end of each build.
  *
  *   writings/manifest.json
+ *   writings/clusters.json
  *   writings/posts/<slug>.md
  *   writings/translations/<lang>/<slug>.md
  *
@@ -62,13 +63,11 @@ const MARKDOWN = "text/markdown; charset=utf-8";
  */
 export async function collectMirrorFiles(contentDir: string, publishedSlugs: string[]): Promise<MirrorFile[]> {
   const writingsDir = path.join(contentDir, "writings");
-  const files: MirrorFile[] = [
-    {
-      path: "manifest.json",
-      body: await fs.readFile(path.join(writingsDir, "manifest.json"), "utf-8"),
-      contentType: "application/json",
-    },
-  ];
+  const files: MirrorFile[] = [];
+  for (const name of ["manifest.json", "clusters.json"]) {
+    const body = await fs.readFile(path.join(writingsDir, name), "utf-8").catch(() => null);
+    if (body !== null) files.push({ path: name, body, contentType: "application/json" });
+  }
   for (const name of (await fs.readdir(writingsDir)).filter((file) => file.endsWith(".md")).sort()) {
     files.push({ path: `posts/${name}`, body: await fs.readFile(path.join(writingsDir, name), "utf-8"), contentType: MARKDOWN });
   }

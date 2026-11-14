@@ -2,7 +2,6 @@
 slug: "the-price-of-progress"
 title: "The Price of Progress"
 excerpt: "The Core Premise Freedom is a currency. Citizens generate it, circulate it, and invest it in the collective project of civilization. Society, in exchange, offers comfort and stability: the conditions for a meaningful lif..."
-date: "2026-02-26T17:57:00.000Z"
 readTime: 4
 published: true
 notionPageId: "313143f2-8260-816d-abdc-f1acbfe36d81"

@@ -17,7 +17,6 @@ export interface PostFrontmatterFields {
   slug: string;
   title: string;
   excerpt: string;
-  date: string;
   readTime: number;
   published: boolean;
   notionPageId: string;
@@ -101,7 +100,6 @@ export function serializeFrontmatter(fields: PostFrontmatterFields): string {
     `slug: ${JSON.stringify(fields.slug)}`,
     `title: ${JSON.stringify(fields.title)}`,
     `excerpt: ${JSON.stringify(fields.excerpt)}`,
-    `date: ${JSON.stringify(fields.date)}`,
     `readTime: ${fields.readTime}`,
     `published: ${fields.published}`,
     `notionPageId: ${JSON.stringify(fields.notionPageId)}`,
@@ -130,7 +128,6 @@ export function buildPostFromMarkdown(
       return null;
     }
 
-    const date = String(data.date ?? "").trim();
     const body = content.trim();
     const excerpt = String(data.excerpt ?? "").trim() || createExcerpt(body);
     const readTimeRaw = Number(data.readTime);
@@ -140,7 +137,7 @@ export function buildPostFromMarkdown(
         : estimateReadTime(body);
 
     return {
-      summary: { slug, title, excerpt, date, readTime },
+      summary: { slug, title, excerpt, readTime, mark: "", cluster: "" },
       content: body,
     };
   } catch {
