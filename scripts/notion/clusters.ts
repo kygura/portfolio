@@ -18,7 +18,10 @@ import { z } from "zod";
 
 export const CLUSTER_MODEL = "claude-haiku-5-5";
 /** Bump when the prompt or the shape changes, so cached clusterings are redone. */
-export const CLUSTER_VERSION = "v1";
+export const CLUSTER_VERSION = "v2";
+/** Cluster titles: one to three words, never a sentence. */
+const MAX_NAME_WORDS = 3;
+const MAX_NAME_CHARS = 32;
 /** How much of each essay Haiku reads. Openings carry the thesis. */
 const OPENING_CHARS = 1500;
 
@@ -148,7 +151,13 @@ const answerSchema = z.object({
   clusters: z
     .array(
       z.object({
-        name: z.string().trim().min(1).max(60),
+        // Short titles are enforced, not just requested: a long one means a retry.
+        name: z
+          .string()
+          .trim()
+          .min(1)
+          .max(MAX_NAME_CHARS)
+          .refine((name) => name.split(/\s+/).length <= MAX_NAME_WORDS),
         thesis: z.string().trim().max(240),
         slugs: z.array(z.string()),
       }),
@@ -167,10 +176,14 @@ export function clusterPrompt(posts: CorpusPost[], previous: Cluster[] | null): 
     "Order the clusters so the corpus reads from its foundations outward. Within each cluster, order the essays as a reading path:",
     "the essay that states the idea first, then the ones that build on it, apply it or push against it.",
     "",
-    "Name each cluster in two to five plain words, in the author's register. Give each a thesis: one sentence on what its essays argue together.",
+    `Title each cluster in one to ${MAX_NAME_WORDS} words. A title is solemn, literary and descriptive: it names what the essays are about`,
+    "the way a chapter of an old book of philosophy would, a noun or a noun phrase with weight. Examples of the register:",
+    '"The Sovereign Self", "Of the State", "The Inner Exile", "Of Machines", "Faith Without Altars".',
+    "No colons, no subtitles, no questions, no clever wordplay, no slogans, no modern or marketing vocabulary.",
+    "Give each a thesis: one plain, grave sentence on what its essays argue together.",
     "Write no em dashes or en dashes anywhere. No hype, no clichés.",
     previous
-      ? "You are given the previous clustering. Keep what still holds: names and memberships that still fit. Reshape freely where the new or changed essays change the picture."
+      ? "You are given the previous clustering. Keep memberships that still hold and reshape freely where the new or changed essays change the picture. Keep a previous title only if it already meets the title rules above; otherwise retitle it."
       : "",
     "",
     'Reply with JSON only, no prose and no code fence: {"clusters":[{"name":"…","thesis":"…","slugs":["slug-a","slug-b"]}]}.',

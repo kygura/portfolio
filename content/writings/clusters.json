@@ -1,11 +1,11 @@
 {
-  "hash": "adb294de232a7d2c",
+  "hash": "75022335a4982d02",
   "source": "reconciled",
   "clusters": [
     {
-      "id": "freedom-and-the-self",
+      "id": "the-sovereign-self",
       "numeral": "I",
-      "name": "Freedom and the self",
+      "name": "The Sovereign Self",
       "thesis": "You can be free from anything except the thing doing the freeing.",
       "slugs": [
         "conditioned-by-freedom",
@@ -18,9 +18,9 @@
       ]
     },
     {
-      "id": "power-and-sovereignty",
+      "id": "of-the-state",
       "numeral": "II",
-      "name": "Power and sovereignty",
+      "name": "Of the State",
       "thesis": "The state keeps re-forming, and its contract is written by whoever holds the leverage.",
       "slugs": [
         "the-last-sovereign-act",
@@ -31,9 +31,9 @@
       ]
     },
     {
-      "id": "faith-and-the-inner-life",
+      "id": "faith-without-altars",
       "numeral": "III",
-      "name": "Faith and the inner life",
+      "name": "Faith Without Altars",
       "thesis": "Meaning cannot be handed to an institution and still be yours.",
       "slugs": [
         "the-religious-problem",
@@ -45,9 +45,9 @@
       ]
     },
     {
-      "id": "machines-and-the-culture-industry",
+      "id": "of-machines",
       "numeral": "IV",
-      "name": "Machines and the culture industry",
+      "name": "Of Machines",
       "thesis": "What is sold as intelligence or culture is often an average with the author removed.",
       "slugs": [
         "static-intelligence",

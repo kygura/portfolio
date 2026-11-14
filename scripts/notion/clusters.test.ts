@@ -39,7 +39,7 @@ function memoryCache() {
 
 const GOOD = JSON.stringify({
   clusters: [
-    { name: "Freedom and the self", thesis: "You cannot be free of the thing doing the freeing.", slugs: ["b", "a"] },
+    { name: "The Sovereign Self", thesis: "You cannot be free of the thing doing the freeing.", slugs: ["b", "a"] },
     { name: "Power", thesis: "The state re-forms.", slugs: ["c", "d"] },
   ],
 });
@@ -68,12 +68,19 @@ test("parseAnswer requires every essay exactly once and strips dashes", () => {
   assert.deepEqual(parsed, [{ name: "One, two", thesis: "a, b", slugs: ["a", "b", "c", "d"] }]);
 });
 
+test("parseAnswer rejects titles longer than three words", () => {
+  const long = JSON.stringify({ clusters: [{ name: "A long title for a cluster", thesis: "", slugs: ["a", "b", "c", "d"] }] });
+  assert.equal(parseAnswer(long, CORPUS), null);
+  const short = JSON.stringify({ clusters: [{ name: "Of the State", thesis: "", slugs: ["a", "b", "c", "d"] }] });
+  assert.equal(parseAnswer(short, CORPUS)?.[0].name, "Of the State");
+});
+
 test("clusters with Haiku, numbers the clusters and caches by corpus hash", async () => {
   const { store, cache } = memoryCache();
   const { client, calls } = fakeClient([GOOD]);
   const clustering = await clusterCorpus(CORPUS, { client, cache, previous: null });
   assert.equal(clustering.source, "model");
-  assert.deepEqual(clustering.clusters.map((c) => [c.numeral, c.id]), [["I", "freedom-and-the-self"], ["II", "power"]]);
+  assert.deepEqual(clustering.clusters.map((c) => [c.numeral, c.id]), [["I", "the-sovereign-self"], ["II", "power"]]);
   assert.deepEqual(orderedSlugs(clustering.clusters), ["b", "a", "c", "d"]);
   assert.equal(store.size, 1);
 
