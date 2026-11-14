@@ -2,7 +2,6 @@
 slug: "static-intelligence"
 title: "Static Intelligence"
 excerpt: "The model is an interface. It lacks the dynamic intelligence living things have. An organism moves, wants things, corrects itself when it runs into the world. A language model does none of that on its own. It's a linguis..."
-date: "2026-11-03"
 readTime: 9
 published: true
 notionPageId: "40d143f2-8260-81f1-97e5-cc2665e7bdd6"

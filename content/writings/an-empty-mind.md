@@ -2,7 +2,6 @@
 slug: "an-empty-mind"
 title: "An Empty Mind"
 excerpt: "The purpose of a thinking head is to clear itself of its thoughts. Its work runs opposite to filling, to concluding, to arriving at a system, a doctrine, a flag. This is a prior observation, older than Stoicism, Buddhism..."
-date: "2026-03-24T17:44:00.000Z"
 readTime: 5
 published: true
 notionPageId: "32d143f2-8260-811a-a77f-de990301f310"

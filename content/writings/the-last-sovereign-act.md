@@ -2,7 +2,6 @@
 slug: "the-last-sovereign-act"
 title: "The Last Sovereign Act"
 excerpt: "The state exists, and it will keep re emerging however often it's torn down. Nobody signed the contract that binds you to it, yet it collects on that contract every day. What follows reads the terms as they actually oper..."
-date: "2026-04-19T21:02:00.000Z"
 readTime: 19
 published: true
 notionPageId: "347143f2-8260-8189-aacc-dd98f811d198"

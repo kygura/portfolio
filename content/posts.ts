@@ -2,17 +2,11 @@ import { z } from "zod";
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-const optionalDateSchema = z.preprocess(
-  (value) => (value == null ? "" : value),
-  z.string().trim(),
-);
-
 export const notionPostMetadataSchema = z.object({
   pageId: z.string().trim().min(1),
   title: z.string().trim().min(1),
   slug: z.string().trim().min(1),
   excerpt: z.string().trim().default(""),
-  date: optionalDateSchema,
   published: z.boolean(),
   createdTime: z.string().trim().min(1),
   lastEditedTime: z.string().trim().min(1),
@@ -22,8 +16,11 @@ export const postSummarySchema = z.object({
   slug: z.string().regex(slugPattern),
   title: z.string().trim().min(1),
   excerpt: z.string().trim().default(""),
-  date: optionalDateSchema,
   readTime: z.number().int().positive(),
+  /** Position in the current clustering: "II.3" (cluster II, third essay). */
+  mark: z.string().default(""),
+  /** Id of the cluster the essay sits in. */
+  cluster: z.string().default(""),
 });
 
 export const postSchema = postSummarySchema.extend({
@@ -83,22 +80,3 @@ export function createExcerpt(markdown: string, maxLength = 220): string {
   return `${plainText.slice(0, maxLength).trimEnd()}...`;
 }
 
-function postTimestamp(post: { date?: string; createdTime?: string; lastEditedTime?: string }): number {
-  const timestamp = new Date(post.date || post.createdTime || post.lastEditedTime || "").getTime();
-
-  return Number.isFinite(timestamp) ? timestamp : 0;
-}
-
-export function sortPostsByDateDesc<T extends { date?: string; createdTime?: string; lastEditedTime?: string; title?: string }>(
-  posts: T[],
-): T[] {
-  return [...posts].sort((left, right) => {
-    const dateComparison = postTimestamp(right) - postTimestamp(left);
-
-    if (dateComparison !== 0) {
-      return dateComparison;
-    }
-
-    return String(left.title ?? "").localeCompare(String(right.title ?? ""));
-  });
-}

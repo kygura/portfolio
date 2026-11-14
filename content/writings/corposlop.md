@@ -2,7 +2,6 @@
 slug: "corposlop"
 title: "Corposlop"
 excerpt: "Corposlop: the output of any product, mostly games but not only, that has passed through an executive board whose job is to eliminate risk. No one on that board has taste. Taste implies a point of view, and a point of vi..."
-date: "2026-11-03"
 readTime: 9
 published: true
 notionPageId: "40d143f2-8260-81f9-86d3-fd19e3a05e0f"

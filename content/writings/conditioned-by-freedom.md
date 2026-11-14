@@ -2,7 +2,6 @@
 slug: "conditioned-by-freedom"
 title: "Conditioned by Freedom"
 excerpt: "Freedom is always relational. You can be free from something, a job, a country, a social contract, an institution. But you can never be free from the thing doing the freeing. The agent is the one variable it can't operat..."
-date: "2026-03-11T18:06:00.000Z"
 readTime: 5
 published: true
 notionPageId: "320143f2-8260-818c-a3e7-ec55edd36861"

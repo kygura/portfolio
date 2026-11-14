@@ -2124,7 +2124,7 @@
 
 /* ─────────────────────────────────────────────
    WRITINGS LEDGER — the index as a catalogue:
-   month rules, entry numbers, read time as ticks
+   cluster headers, marks, read time as ticks
    ───────────────────────────────────────────── */
 .ledger__stats {
   display: flex;
@@ -2137,26 +2137,6 @@
   color: var(--ink-3);
 }
 
-.ledger__group + .ledger__group { margin-top: 2.5rem; }
-
-.ledger__month {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  margin-bottom: 0.25rem;
-  font-family: var(--f-pixel);
-  font-size: 10.5px;
-  font-weight: 400;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.ledger__month::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--rule);
-}
 
 .ledger__row {
   border-bottom: 1px dashed var(--rule);
@@ -3868,4 +3848,78 @@ kbd {
   .familiar__bubble,
   .familiar__caret { animation: none; }
   .bay__runes span { animation-duration: 0s; }
+}
+
+/* ─────────────────────────────────────────────
+   CLUSTERS — the index has no dates. Haiku groups the essays into
+   thematic clusters, each a reading path; the corpus re-forms on publish.
+   ───────────────────────────────────────────── */
+.ledger__cluster {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.35rem 1.25rem;
+  padding-bottom: 0.9rem;
+  margin-bottom: 0.25rem;
+  border-bottom: 1px solid var(--rule);
+}
+.ledger__cluster-name {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  font-family: var(--f-pixel);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.ledger__cluster-numeral { color: var(--accent); min-width: 2.2em; }
+.ledger__cluster-facts {
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.ledger__cluster-thesis {
+  grid-column: 1 / -1;
+  max-width: 62ch;
+  padding-left: calc(2.2em * 11 / 16 + 0.9rem);
+  font-family: var(--f-body);
+  font-size: 0.98rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+.ledger__group + .ledger__group { margin-top: 3.25rem; }
+
+.post-head__cluster { color: inherit; text-decoration: none; transition: color 0.2s; }
+.post-head__cluster:hover, .post-head__cluster:focus-visible { color: var(--accent); }
+
+/* The cluster's reading path, under the title: a row of marks, the current one lit */
+.post-path { margin-top: 1.25rem; }
+.post-path ol {
+  display: flex; flex-wrap: wrap; gap: 0.35rem;
+  list-style: none; margin: 0; padding: 0;
+}
+.post-path a {
+  display: inline-flex; align-items: baseline; gap: 0.5rem;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--rule);
+  font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.1em;
+  color: var(--ink-3); text-decoration: none;
+  transition: color 0.2s, border-color 0.2s;
+}
+.post-path__title { display: none; text-transform: none; letter-spacing: 0.02em; }
+.post-path a:hover, .post-path a:focus-visible { color: var(--ink); border-color: var(--rule-2); }
+.post-path a:hover .post-path__title,
+.post-path a:focus-visible .post-path__title,
+.post-path a[aria-current="page"] .post-path__title { display: inline; }
+.post-path a[aria-current="page"] { color: var(--accent); border-color: var(--accent); }
+
+@media (max-width: 640px) {
+  .ledger__cluster { grid-template-columns: minmax(0, 1fr); }
+  .ledger__cluster-thesis { padding-left: 0; }
 }

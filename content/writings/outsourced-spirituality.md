@@ -2,7 +2,6 @@
 slug: "outsourced-spirituality"
 title: "Outsourced Spirituality"
 excerpt: "Thesis Humanity has handed off its most personal responsibility, the confrontation with existence, to institutions built on the corpse of original insight. Religion is spirituality's institutional residue, managed by oth..."
-date: "2026-03-07T19:34:00.000Z"
 readTime: 4
 published: true
 notionPageId: "31c143f2-8260-8158-b90e-d7e52a69fa8b"

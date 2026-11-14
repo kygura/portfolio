@@ -29,10 +29,6 @@ function makeFullPage() {
         type: "title",
         title: [{ plain_text: "On the Ego" }],
       },
-      "Publication Date": {
-        type: "date",
-        date: { start: "2026-05-24" },
-      },
       Published: {
         type: "checkbox",
         checkbox: true,
@@ -53,25 +49,17 @@ describe("extractPostMetadata", () => {
     assert.equal(meta.pageId, "abc-123");
     assert.equal(meta.title, "On the Ego");
     assert.equal(meta.slug, "on-the-ego");
-    assert.equal(meta.date, "2026-05-24");
+    assert.equal("date" in meta, false);
     assert.equal(meta.published, true);
     assert.equal(meta.excerpt, "");
     assert.equal(meta.createdTime, "2026-05-01T00:00:00.000Z");
     assert.equal(meta.lastEditedTime, "2026-05-24T12:00:00.000Z");
   });
 
-  it("falls back to created_time when Publication Date is null", () => {
+  it("ignores a Publication Date property: publications carry no dates", () => {
     const page = makeFullPage();
-    page.properties["Publication Date"].date = null;
-    const meta = extractPostMetadata(page);
-    assert.equal(meta.date, "2026-05-01T00:00:00.000Z");
-  });
-
-  it("falls back to created_time when Publication Date property is absent", () => {
-    const page = makeFullPage();
-    delete page.properties["Publication Date"];
-    const meta = extractPostMetadata(page);
-    assert.equal(meta.date, "2026-05-01T00:00:00.000Z");
+    page.properties["Publication Date"] = { type: "date", date: { start: "2026-05-24" } };
+    assert.equal("date" in extractPostMetadata(page), false);
   });
 
   it("uses optional Slug rich_text in preference to title-derived slug", () => {
@@ -114,7 +102,6 @@ describe("extractPostMetadata", () => {
       last_edited_time: "2026-05-20T00:00:00.000Z",
       properties: {
         Title: { type: "title", title: [{ plain_text: "No Create Time" }] },
-        "Publication Date": { type: "date", date: { start: "2026-05-20" } },
         Published: { type: "checkbox", checkbox: false },
       },
     };
@@ -158,7 +145,6 @@ describe("dedupeBySlug", () => {
       slug,
       title: slug,
       excerpt: "",
-      date: "2026-01-01",
       published: true,
       createdTime: lastEditedTime,
       lastEditedTime,

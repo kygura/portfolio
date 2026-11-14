@@ -2,7 +2,6 @@
 slug: "on-the-state-of-things"
 title: "On The State of Things"
 excerpt: "There's a kind of person who comes to understand, usually through some combination of luck and suffering, that the game being played on the surface conceals the actual game. That life as it is currently being presented i..."
-date: "2024-10-24"
 readTime: 5
 published: true
 notionPageId: "3f4143f2-8260-81fa-9bb4-c22f3fb47526"

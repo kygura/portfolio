@@ -2,7 +2,6 @@
 slug: "nothing-behind-the-words"
 title: "Nothing Behind the Words"
 excerpt: "I. Equality comes last Most people who invoke equality have it backwards. It has to be earned, and it only shows up where leverage is spread evenly and people actually feel trust, empathy and some understanding of each o..."
-date: "2026-11-03"
 readTime: 12
 published: true
 notionPageId: "40d143f2-8260-81b3-b1cc-e9df1fa67b7b"

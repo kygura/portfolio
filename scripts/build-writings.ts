@@ -11,6 +11,9 @@
  *    - `public/writings.json`            the same list, for agents and feeds
  *    - `public/writings/<slug>.md`       raw markdown per post
  *    - `public/llms.txt`                 an index agents can start from
+ * 3. Mirror (production builds synced from Notion, with a Blob token): copy every
+ *    post, its committed translations and the manifest to Vercel Blob under
+ *    `writings/`, deleting what is no longer published. Failures only warn.
  *
  * Without NOTION_SECRET (local dev, forks) the committed snapshot in
  * `content/writings/` is used as-is.
@@ -26,7 +29,6 @@ import { buildPostFromMarkdown, parseFrontmatter, serializeFrontmatter } from ".
 import {
   createExcerpt,
   estimateReadTime,
-  sortPostsByDateDesc,
   type PostSummary,
 } from "../content/posts.ts";
 import { getNotionClient, resolveDataSourceId } from "./notion/client.ts";
@@ -35,10 +37,23 @@ import { fetchAllBlocks } from "./notion/blocks.ts";
 import { renderBlocksToMarkdown } from "./notion/render.ts";
 import { dedupeBySlug, extractPostMetadata } from "./notion/metadata.ts";
 import { processPostImages, type ImageDeps } from "./notion/images.ts";
+import { collectMirrorFiles, mirrorToBlob, vercelBlobStore } from "./notion/blob-mirror.ts";
+import Anthropic from "@anthropic-ai/sdk";
+import {
+  blobClusterCache,
+  clusterCorpus,
+  markFor,
+  orderedSlugs,
+  type Cluster,
+  type Clustering,
+} from "./notion/clusters.ts";
+
+const offline = process.argv.includes("--offline");
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CONTENT_DIR = path.join(ROOT, "content", "writings");
 const MANIFEST_PATH = path.join(CONTENT_DIR, "manifest.json");
+const CLUSTERS_PATH = path.join(CONTENT_DIR, "clusters.json");
 const PUBLIC_DIR = path.join(ROOT, "public");
 const PUBLIC_POSTS_DIR = path.join(PUBLIC_DIR, "writings");
 const PUBLIC_MEDIA_DIR = path.join(PUBLIC_DIR, "media", "writings");
@@ -118,7 +133,6 @@ async function syncFromNotion(): Promise<void> {
       slug: meta.slug,
       title: meta.title,
       excerpt: meta.excerpt || createExcerpt(body),
-      date: meta.date,
       readTime: estimateReadTime(body),
       published: true,
       notionPageId: meta.pageId,
@@ -147,7 +161,8 @@ async function syncFromNotion(): Promise<void> {
 // Emit: content/writings/*.md → manifest + agent-facing static files
 // ---------------------------------------------------------------------------
 
-function renderLlmsTxt(posts: PostSummary[], origin: string): string {
+function renderLlmsTxt(posts: PostSummary[], clusters: Cluster[], origin: string): string {
+  const bySlug = new Map(posts.map((post) => [post.slug, post]));
   const lines = [
     `# ${SITE_TITLE}`,
     "",
@@ -162,13 +177,49 @@ function renderLlmsTxt(posts: PostSummary[], origin: string): string {
     "",
     "## Posts",
     "",
-    ...posts.map((post) => {
-      const summary = post.excerpt ? `: ${post.excerpt}` : "";
-      return `- [${post.title}](${origin}/writings/${post.slug}.md)${summary}`;
-    }),
+    "Posts are grouped into thematic clusters, each in reading order.",
     "",
+    ...clusters.flatMap((cluster) => [
+      `### ${cluster.numeral}. ${cluster.name}`,
+      "",
+      ...(cluster.thesis ? [cluster.thesis, ""] : []),
+      ...cluster.slugs.flatMap((slug) => {
+        const post = bySlug.get(slug);
+        if (!post) return [];
+        const summary = post.excerpt ? `: ${post.excerpt}` : "";
+        return [`- ${post.mark} [${post.title}](${origin}/writings/${post.slug}.md)${summary}`];
+      }),
+      "",
+    ]),
   ];
   return lines.join("\n");
+}
+
+async function readPreviousClusters(): Promise<Cluster[] | null> {
+  try {
+    const previous = JSON.parse(await fs.readFile(CLUSTERS_PATH, "utf-8")) as Clustering;
+    return Array.isArray(previous.clusters) ? previous.clusters : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Re-cluster the corpus with Haiku when it changed since the last clustering
+ * (a publication, an edit, an unpublish). Offline builds and builds without a
+ * key adapt the previous clustering instead.
+ */
+async function clusterPosts(corpus: { slug: string; title: string; body: string }[]): Promise<Clustering> {
+  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
+  const clustering = await clusterCorpus(corpus, {
+    client: !offline && apiKey ? new Anthropic({ apiKey }) : null,
+    cache: offline ? null : await blobClusterCache(),
+    previous: await readPreviousClusters(),
+    log: (message) => console.warn(`[writings]   ${message}`),
+  });
+  const shape = clustering.clusters.map((cluster) => `${cluster.numeral} ${cluster.name} (${cluster.slugs.length})`).join(", ");
+  console.log(`[writings] clusters (${clustering.source}): ${shape}`);
+  return clustering;
 }
 
 async function emit(): Promise<PostSummary[]> {
@@ -179,6 +230,7 @@ async function emit(): Promise<PostSummary[]> {
   await fs.mkdir(PUBLIC_POSTS_DIR, { recursive: true });
 
   const summaries: PostSummary[] = [];
+  const corpus: { slug: string; title: string; body: string }[] = [];
   for (const file of files) {
     const raw = await fs.readFile(path.join(CONTENT_DIR, file), "utf-8");
     const parsed = buildPostFromMarkdown(raw, file.slice(0, -3));
@@ -196,18 +248,29 @@ async function emit(): Promise<PostSummary[]> {
       console.warn(`[writings]   ${file}: ${dashes} em/en dash(es), fix them in Notion`);
     }
     summaries.push(parsed.summary);
+    corpus.push({ slug: parsed.summary.slug, title: parsed.summary.title, body: parsed.content });
     await fs.writeFile(path.join(PUBLIC_POSTS_DIR, file), raw, "utf-8");
   }
 
-  const sorted = sortPostsByDateDesc(summaries);
+  // No dates: the corpus orders itself into clusters, each a reading path.
+  const clustering = await clusterPosts(corpus);
+  const bySlug = new Map(summaries.map((post) => [post.slug, post]));
+  const clusterOf = new Map(clustering.clusters.flatMap((cluster) => cluster.slugs.map((slug) => [slug, cluster.id])));
+  const sorted = orderedSlugs(clustering.clusters).map((slug) => ({
+    ...bySlug.get(slug)!,
+    mark: markFor(clustering.clusters, slug),
+    cluster: clusterOf.get(slug) ?? "",
+  }));
   const origin = siteOrigin();
 
+  await fs.writeFile(CLUSTERS_PATH, `${JSON.stringify(clustering, null, 2)}\n`, "utf-8");
   await fs.writeFile(MANIFEST_PATH, `${JSON.stringify(sorted, null, 2)}\n`, "utf-8");
   await fs.writeFile(
     path.join(PUBLIC_DIR, "writings.json"),
     `${JSON.stringify(
       sorted.map((post) => ({
         ...post,
+        clusterName: clustering.clusters.find((cluster) => cluster.id === post.cluster)?.name ?? "",
         url: `${origin}/writings/${post.slug}`,
         markdownUrl: `${origin}/writings/${post.slug}.md`,
       })),
@@ -216,14 +279,12 @@ async function emit(): Promise<PostSummary[]> {
     )}\n`,
     "utf-8",
   );
-  await fs.writeFile(path.join(PUBLIC_DIR, "llms.txt"), renderLlmsTxt(sorted, origin), "utf-8");
+  await fs.writeFile(path.join(PUBLIC_DIR, "llms.txt"), renderLlmsTxt(sorted, clustering.clusters, origin), "utf-8");
 
   return sorted;
 }
 
 // ---------------------------------------------------------------------------
-
-const offline = process.argv.includes("--offline");
 
 if (offline) {
   console.log("[writings] --offline: using the committed snapshot");
@@ -235,3 +296,27 @@ if (offline) {
 
 const posts = await emit();
 console.log(`[writings] emitted ${posts.length} posts`);
+
+// ---------------------------------------------------------------------------
+// Mirror: content/writings + content/translations → Vercel Blob
+// ---------------------------------------------------------------------------
+
+const mirrorStore = vercelBlobStore();
+// Only a production build that just synced from Notion speaks for what is
+// published. Preview builds share the store and must not overwrite it.
+const vercelEnv = process.env.VERCEL_ENV;
+if (offline || !getOptionalNotionToken() || (vercelEnv && vercelEnv !== "production")) {
+  if (vercelEnv && vercelEnv !== "production") console.log(`[writings] ${vercelEnv} build: skipping the Blob mirror`);
+} else if (!mirrorStore) {
+  console.log("[writings] no Blob token: skipping the mirror");
+} else {
+  try {
+    const { uploaded, deleted } = await mirrorToBlob(
+      await collectMirrorFiles(path.join(ROOT, "content"), posts.map((post) => post.slug)),
+      mirrorStore,
+    );
+    console.log(`[writings] mirrored ${uploaded} files to Blob${deleted.length ? `, removed ${deleted.length}` : ""}`);
+  } catch (error) {
+    console.warn("[writings] Blob mirror failed; the build continues", error);
+  }
+}

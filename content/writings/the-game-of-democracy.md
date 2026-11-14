@@ -2,7 +2,6 @@
 slug: "the-game-of-democracy"
 title: "The Game of Democracy"
 excerpt: "Starting Point Every system built to liberate becomes the next cage. History moves in the rhythm of containment, pressure, rupture, new container. The design question: how do you build something that accounts for its own..."
-date: "2026-02-27T10:08:00.000Z"
 readTime: 4
 published: true
 notionPageId: "314143f2-8260-81e7-b6d0-f76413bcad63"

@@ -1,0 +1,60 @@
+{
+  "hash": "75022335a4982d02",
+  "source": "reconciled",
+  "clusters": [
+    {
+      "id": "the-sovereign-self",
+      "numeral": "I",
+      "name": "The Sovereign Self",
+      "thesis": "You can be free from anything except the thing doing the freeing.",
+      "slugs": [
+        "conditioned-by-freedom",
+        "the-perpetual-i",
+        "on-the-ego",
+        "always-against",
+        "the-price-of-progress",
+        "quantum-history",
+        "thaumazein"
+      ]
+    },
+    {
+      "id": "of-the-state",
+      "numeral": "II",
+      "name": "Of the State",
+      "thesis": "The state keeps re-forming, and its contract is written by whoever holds the leverage.",
+      "slugs": [
+        "the-last-sovereign-act",
+        "the-game-of-democracy",
+        "nothing-behind-the-words",
+        "on-the-state-of-things",
+        "on-the-movements-of-the-world"
+      ]
+    },
+    {
+      "id": "faith-without-altars",
+      "numeral": "III",
+      "name": "Faith Without Altars",
+      "thesis": "Meaning cannot be handed to an institution and still be yours.",
+      "slugs": [
+        "the-religious-problem",
+        "outsourced-spirituality",
+        "intellectual-opium",
+        "an-empty-mind",
+        "the-vessel",
+        "to-seek-higher-things"
+      ]
+    },
+    {
+      "id": "of-machines",
+      "numeral": "IV",
+      "name": "Of Machines",
+      "thesis": "What is sold as intelligence or culture is often an average with the author removed.",
+      "slugs": [
+        "static-intelligence",
+        "the-soul-as-a-system-prompt",
+        "the-language-game",
+        "corposlop"
+      ]
+    }
+  ]
+}

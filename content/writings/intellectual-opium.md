@@ -2,7 +2,6 @@
 slug: "intellectual-opium"
 title: "Intellectual Opium"
 excerpt: "Marx called religion the opium of the masses. The diagnosis was surgical, an observation about the function faith performs. It redirects suffering toward an elsewhere, a compensatory transcendence that makes present cond..."
-date: "2026-03-24T17:32:00.000Z"
 readTime: 3
 published: true
 notionPageId: "32d143f2-8260-8166-8a16-f15da22c62f7"

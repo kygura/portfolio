@@ -2,7 +2,6 @@
 slug: "to-seek-higher-things"
 title: "To Seek Higher Things"
 excerpt: "There is a version of ambition that deserves no respect. The hustle culture variant: productivity as identity, accumulation as purpose, status dressed up as drive. Insecurity with a business plan. The ambition worth havi..."
-date: "2026-05-22"
 readTime: 2
 published: true
 notionPageId: "368143f2-8260-811d-aae8-f8b8de79e9a4"
