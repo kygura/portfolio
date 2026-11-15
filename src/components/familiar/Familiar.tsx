@@ -3,14 +3,15 @@
  * bottom-left corner of the page. It reads whatever page you open and says
  * something about it (see quips.ts), mutters now and then while you read,
  * dozes when nothing moves for a while, hops when pressed, and has an
- * opinion on every colour palette you switch to. With reduced
+ * opinion on every colour palette you switch to and on reaching the bottom
+ * of a page. With reduced
  * motion it doesn't hover or hop, but it still talks.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Sprite, type FrameName } from "./sprite";
 import { addPet } from "./store";
-import { fallbackQuips, pageQuips, paletteQuip, pick } from "./quips";
+import { bottomQuip, fallbackQuips, pageQuips, paletteQuip, pick } from "./quips";
 import { ACCENTS, useAccent } from "@/theme/accent";
 import { Bubble } from "./Bubble";
 import { CHAR_MS, chirp, hush, nextVoiceMode, setVoiceMode, voice, voiceMode, type VoiceMode } from "./voice";
@@ -23,6 +24,11 @@ const READ_DELAY = 1400;
 const CHATTER_EVERY = 45_000;
 /** How long a line stays up once it has finished typing. */
 const LINGER_MS = 5000;
+/** Pixels from the end that count as "the bottom". */
+const BOTTOM_SLACK = 48;
+/** Pages shorter than this past the viewport don't really scroll; Bit ignores them. */
+const MIN_SCROLL = 400;
+
 /** Palette switches in quick succession (holding `t`) get one reaction, to the last. */
 const PALETTE_SETTLE = 450;
 
@@ -140,6 +146,36 @@ export default function Familiar() {
     }, TICK);
     return () => window.clearInterval(id);
   }, [say]);
+
+  // The bottom of the page: one remark per page, only on pages that scroll.
+  useEffect(() => {
+    let done = false;
+    let raf = 0;
+    const check = () => {
+      raf = 0;
+      const doc = document.documentElement;
+      const room = doc.scrollHeight - window.innerHeight;
+      if (done || room < MIN_SCROLL) return;
+      if (window.scrollY >= room - BOTTOM_SLACK) {
+        done = true;
+        lastActive.current = Date.now();
+        if (modeRef.current === "sleep") setMode("idle");
+        say(bottomQuip(pathname));
+        hopLeft.current = 4;
+        setMode("hop");
+        setFrame("happy");
+      }
+    };
+    const onScroll = () => {
+      lastActive.current = Date.now();
+      if (!raf) raf = requestAnimationFrame(check);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, [pathname, say]);
 
   // A new palette: wake, flicker the runes, hop, and say what Bit thinks of it.
   const accent = useAccent();
