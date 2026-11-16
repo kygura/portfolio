@@ -3855,6 +3855,8 @@ kbd {
    thematic clusters, each a reading path; the corpus re-forms on publish.
    ───────────────────────────────────────────── */
 .ledger__cluster {
+  /* Silkscreen sits on an 8px grid: 16/24 render crisp */
+  --cluster-size: 24px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: baseline;
@@ -3868,9 +3870,10 @@ kbd {
   align-items: baseline;
   gap: 0.9rem;
   font-family: var(--f-pixel);
-  font-size: 11px;
+  font-size: var(--cluster-size);
   font-weight: 400;
-  letter-spacing: 0.1em;
+  line-height: 1.1;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink);
 }
@@ -3886,7 +3889,7 @@ kbd {
 .ledger__cluster-thesis {
   grid-column: 1 / -1;
   max-width: 62ch;
-  padding-left: calc(2.2em * 11 / 16 + 0.9rem);
+  padding-left: calc(var(--cluster-size) * 2.2 + 0.9rem);
   font-family: var(--f-body);
   font-size: 0.98rem;
   font-style: italic;
@@ -3920,6 +3923,6 @@ kbd {
 .post-path a[aria-current="page"] { color: var(--accent); border-color: var(--accent); }
 
 @media (max-width: 640px) {
-  .ledger__cluster { grid-template-columns: minmax(0, 1fr); }
+  .ledger__cluster { grid-template-columns: minmax(0, 1fr); --cluster-size: 16px; }
   .ledger__cluster-thesis { padding-left: 0; }
 }
