@@ -4,9 +4,7 @@ import {
   blocksFraming,
   buildCodeMap,
   buildShowcase,
-  capWords,
   clip,
-  createDescriber,
   findSocialImage,
   isListed,
   isOptedIn,
@@ -303,85 +301,40 @@ test("README summary skips banners, badges and code to the opening prose", () =>
 test("README summary returns null when there is no prose, and clips long text", () => {
   assert.equal(readmeSummary("# repo\n\n- a list\n- only", "repo"), null);
   const long = readmeSummary(`${"Long sentence goes on here. ".repeat(40)}`, "repo");
-  assert.ok(long && long.length <= 600 && long.endsWith("."));
+  assert.ok(long && long.length <= 280 && long.endsWith("."));
 });
 
-test("model descriptions win over the README excerpt, and only kept repos are described", async () => {
-  const described: string[] = [];
+test("descriptions come from the README, else the About line, and only kept repos are read", async () => {
+  const readmes: string[] = [];
   const fetchImpl = (async (input: string | URL | Request) => {
     const url = String(input);
     if (url.startsWith("https://api.github.com/users/")) {
       return Response.json([
-        repo("lexis", { stargazers_count: 3, homepage: "https://lexis.dev" }),
-        repo("quiet", { stargazers_count: 2, homepage: "https://quiet.dev" }),
+        repo("lexis", { stargazers_count: 3, homepage: "https://lexis.dev", description: "About line." }),
+        repo("quiet", { stargazers_count: 2, homepage: "https://quiet.dev", description: "Quiet about line." }),
         repo("over-cap", { stargazers_count: 1, homepage: "https://over.dev" }),
       ]);
     }
     if (url.endsWith("/readme")) {
-      return readmeResponse("# x\n\nA long enough opening paragraph that serves as the fallback excerpt.");
+      readmes.push(url);
+      return url.includes("/lexis/")
+        ? readmeResponse("# lexis\n\nAn editorial companion for long-form writers, straight from the README.")
+        : readmeResponse("# quiet\n\n- only\n- a list");
     }
     return new Response("<html></html>");
   }) as typeof fetch;
 
-  const showcase = await buildShowcase({
-    user: "kygura",
-    now: NOW,
-    limit: 2,
-    fetchImpl,
-    describe: async (r) => {
-      described.push(r.name);
-      return r.name === "lexis" ? "An editorial companion for long-form writers." : null;
-    },
-  });
-  assert.deepEqual(described.sort(), ["lexis", "quiet"]);
-  assert.equal(showcase.repos[0].description, "An editorial companion for long-form writers.");
-  assert.equal(showcase.repos[1].description, "A long enough opening paragraph that serves as the fallback excerpt.");
+  const showcase = await buildShowcase({ user: "kygura", now: NOW, limit: 2, fetchImpl });
+  assert.equal(readmes.length, 2);
+  assert.equal(showcase.repos[0].description, "An editorial companion for long-form writers, straight from the README.");
+  assert.equal(showcase.repos[1].description, "Quiet about line.");
 });
 
-function fakeClient(reply: { text: string; stop_reason?: string }, calls: unknown[]) {
-  return {
-    messages: {
-      create: async (params: unknown) => {
-        calls.push(params);
-        return { stop_reason: reply.stop_reason ?? "end_turn", content: [{ type: "text", text: reply.text }] };
-      },
-    },
-  } as never;
-}
-
-test("describer calls Haiku once per README version and rejects SKIP or refusals", async () => {
-  const calls: unknown[] = [];
-  const describe = createDescriber({ apiKey: "k", client: fakeClient({ text: " A terse tool. " }, calls) });
-  const readme = { sha: "abc", text: "# lexis\n\nSomething." };
-  assert.equal(await describe(repo("lexis"), readme), "A terse tool.");
-  assert.equal(await describe(repo("lexis"), readme), "A terse tool.");
-  assert.equal(calls.length, 1); // memoised by README SHA
-  assert.equal((calls[0] as { model: string }).model, "claude-haiku-5-5");
-  await describe(repo("lexis"), { ...readme, sha: "def" });
-  assert.equal(calls.length, 2); // a changed README is described afresh
-
-  const skip = createDescriber({ apiKey: "k", client: fakeClient({ text: "SKIP" }, []) });
-  assert.equal(await skip(repo("thin"), readme), null);
-  const refused = createDescriber({ apiKey: "k", client: fakeClient({ text: "x", stop_reason: "refusal" }, []) });
-  assert.equal(await refused(repo("r"), readme), null);
-});
-
-test("a failed description is retried on the next request", async () => {
-  let attempts = 0;
-  const client = {
-    messages: {
-      create: async () => {
-        attempts += 1;
-        if (attempts === 1) throw new Error("overloaded");
-        return { stop_reason: "end_turn", content: [{ type: "text", text: "Back up." }] };
-      },
-    },
-  } as never;
-  const describe = createDescriber({ apiKey: "k", client });
-  const readme = { sha: "s", text: "t" };
-  assert.equal(await describe(repo("a"), readme), null);
-  await new Promise((resolve) => setTimeout(resolve, 0));
-  assert.equal(await describe(repo("a"), readme), "Back up.");
+test("README summary takes a blockquote tagline but skips callouts", () => {
+  assert.equal(
+    readmeSummary("# x\n\n> [!WARNING]\n> Work in progress, expect breakage.\n\n> A tiny engine for drawing maps of source trees.", "x"),
+    "A tiny engine for drawing maps of source trees.",
+  );
 });
 
 test("a token switches to the owner's own listing, which includes private repos", async () => {
@@ -399,9 +352,6 @@ test("descriptions are cut at whole sentences, never with an ellipsis", () => {
   assert.equal(clip("A single sentence that runs well past the limit. Then more.", 10), "A single sentence that runs well past the limit.");
   assert.equal(clip("no stops at all in this one", 5), "no stops at all in this one");
   assert.equal(clip("Version 1.5 ships. Next.", 19), "Version 1.5 ships."); // decimals are not sentence ends
-  assert.equal(capWords("Short and done.", 40), "Short and done.");
-  const wordy = `First sentence stands alone. ${"more words ".repeat(30)}end.`;
-  assert.equal(capWords(wordy, 40), "First sentence stands alone.");
 });
 
 test("surfaces a GitHub failure instead of an empty index", async () => {

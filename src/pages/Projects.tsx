@@ -86,7 +86,7 @@ const Projects = () => {
         no="02"
         label="Software"
         title="Software"
-        lede="My projects, pulled from GitHub. Deployed ones link to the live site; the rest open onto their source, which you can browse and ask questions about."
+        lede="Things I've built, live from GitHub."
       >
         {data && (
           <p className="page-head__facts">

@@ -1,6 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk";
-import { get as getBlob, put as putBlob } from "@vercel/blob";
-
 /**
  * GET /api/github/repos — the software index, built from the GitHub API: the
  * owner's repositories ranked by stars and recent pushes. Repos with a working
@@ -107,7 +104,7 @@ export type RepoPreview =
 export interface ShowcaseRepo {
   name: string;
   fullName: string;
-  /** Haiku's short take on the README, else its opening prose, else the "About" line. */
+  /** The README's opening prose, else the repo's "About" line. */
   description: string | null;
   url: string;
   /** Null for a code-only repo: no deployment, or one that is gone. */
@@ -133,18 +130,7 @@ export interface Showcase {
 
 type Fetch = typeof fetch;
 
-/** A README as GitHub serves it: the blob SHA changes whenever the text does. */
-export interface Readme {
-  sha: string;
-  text: string;
-}
-
-/** Turns a README into a short description, or null to fall back to the excerpt. */
-export type Describe = (repo: GithubRepo, readme: Readme) => Promise<string | null>;
-
 interface ShowcaseOptions {
-  /** Optional model-written descriptions; without it cards use the README excerpt. */
-  describe?: Describe | null;
   user: string;
   /** The repo this site deploys from, left out so the page never frames itself. */
   selfRepo?: string | null;
@@ -434,8 +420,10 @@ async function codeMapFor(
   }
 }
 
-const SUMMARY_TARGET = 280;
-const SUMMARY_MAX = 600;
+/** A short first paragraph pulls in the next one; past this it stands alone. */
+const SUMMARY_TARGET = 100;
+/** A card shows a line or two, not the README's whole pitch. */
+const SUMMARY_MAX = 280;
 
 /** Inline markdown down to plain text: images gone, links to their label. */
 function plainInline(text: string): string {
@@ -466,17 +454,11 @@ export function clip(text: string, max: number): string {
   return ends.length ? text.slice(0, ends[0]) : text;
 }
 
-/** Model output past the word cap keeps its opening sentence, which stands alone. */
-export function capWords(text: string, maxWords: number): string {
-  if (text.split(/\s+/).length <= maxWords) return text;
-  const first = text.match(/^.*?[.!?](?=\s|$)/s)?.[0];
-  return first ?? text;
-}
-
 /**
- * The README's opening prose: paragraphs after the title, skipping badges,
- * images, HTML banners, code, tables, quotes and lists, until there is
- * enough to read as a description.
+ * The README's opening prose, as written: the first paragraph after the
+ * title (a short one pulls in the next), skipping badges, images, HTML
+ * banners, code, tables, lists and callouts. A blockquote tagline counts.
+ * Clipped to whole sentences.
  */
 export function readmeSummary(markdown: string, repoName: string): string | null {
   const blocks = markdown
@@ -487,8 +469,13 @@ export function readmeSummary(markdown: string, repoName: string): string | null
 
   const paragraphs: string[] = [];
   for (const raw of blocks) {
-    const block = raw.trim();
-    if (!block || /^(#|>|\||[-*+] |\d+[.)] |---|===|\[!\[|!\[|<)/.test(block)) continue;
+    let block = raw.trim();
+    // "> A tagline." reads as prose; "> [!NOTE]" callouts do not.
+    if (block.startsWith(">")) {
+      if (/^>\s*\[!/.test(block)) continue;
+      block = block.replace(/^>\s?/gm, "").trim();
+    }
+    if (!block || /^(#|\||[-*+] |\d+[.)] |---|===|\[!\[|!\[|<)/.test(block)) continue;
     const text = plainInline(block);
     if (text.length < 40) continue; // badge rows, taglines that only repeat the name
     if (text.toLowerCase() === repoName.toLowerCase()) continue;
@@ -502,137 +489,19 @@ async function readmeFor(
   repo: GithubRepo,
   headers: Record<string, string>,
   fetchImpl: Fetch,
-): Promise<Readme | null> {
+): Promise<string | null> {
   try {
     const response = await fetchImpl(`${GITHUB_API}/repos/${repo.full_name}/readme`, {
       headers,
       signal: AbortSignal.timeout(5000),
     });
     if (!response.ok) return null;
-    const body = (await response.json()) as { sha?: string; content?: string; encoding?: string };
-    if (!body.sha || typeof body.content !== "string" || body.encoding !== "base64") return null;
-    return { sha: body.sha, text: Buffer.from(body.content, "base64").toString("utf8") };
+    const body = (await response.json()) as { content?: string; encoding?: string };
+    if (typeof body.content !== "string" || body.encoding !== "base64") return null;
+    return Buffer.from(body.content, "base64").toString("utf8");
   } catch {
     return null;
   }
-}
-
-// ---- Model-written descriptions ------------------------------------------------
-
-const DESCRIBE_MODEL = "claude-haiku-5-5";
-
-/** Long READMEs are cut here to bound cost; the opening is what describes a project. */
-const README_CHAR_LIMIT = 40_000;
-
-const DESCRIBE_SYSTEM = [
-  "You write the description line for a software project on a developer's portfolio page.",
-  "The project's name is already shown as the card title, so never mention it; open with what the thing is,",
-  "for example 'A personal market terminal that…' or 'An engine that…'.",
-  "Reply with one or two plain sentences, 35 words at most, saying what the project is and what makes it interesting.",
-  "Write for a curious visitor, not a contributor: no install steps, ports, commands, file paths or badges.",
-  "No markdown, no quotes, no lead-in such as 'This project'.",
-  "If the README says too little to describe the project, reply with exactly: SKIP",
-].join(" ");
-
-/** Bump when the prompt changes, so cached descriptions are written afresh. */
-const DESCRIBE_VERSION = "v2";
-
-interface DescriberOptions {
-  apiKey: string;
-  /** Vercel Blob read-write token; summaries persist there across deploys. */
-  blobToken?: string | null;
-  blobAccess?: "public" | "private";
-  client?: Pick<Anthropic, "messages">;
-}
-
-/**
- * Haiku descriptions cached by README SHA: in memory for the warm instance,
- * and in Vercel Blob (when configured) so a redeploy or cold start reuses
- * them. Keys are immutable, so an entry is written once and only a changed
- * README triggers a new call. Any failure yields null and the card falls
- * back to the README excerpt.
- */
-export function createDescriber({
-  apiKey,
-  blobToken,
-  blobAccess = "public",
-  client = new Anthropic({ apiKey }),
-}: DescriberOptions): Describe {
-  const memo = new Map<string, Promise<string | null>>();
-
-  const fromBlob = async (key: string): Promise<string | null> => {
-    if (!blobToken) return null;
-    try {
-      const hit = await getBlob(key, { access: blobAccess, token: blobToken });
-      return hit ? (await new Response(hit.stream).text()).trim() || null : null;
-    } catch {
-      return null;
-    }
-  };
-
-  const toBlob = async (key: string, text: string) => {
-    if (!blobToken) return;
-    try {
-      await putBlob(key, text, {
-        access: blobAccess,
-        token: blobToken,
-        contentType: "text/plain; charset=utf-8",
-        addRandomSuffix: false,
-        allowOverwrite: true,
-      });
-    } catch (error) {
-      console.warn("Could not cache a project description", error);
-    }
-  };
-
-  const generate = async (repo: GithubRepo, readme: Readme): Promise<string | null> => {
-    try {
-      const response = await client.messages.create({
-        model: DESCRIBE_MODEL,
-        max_tokens: 400,
-        thinking: { type: "disabled" },
-        output_config: { effort: "low" },
-        system: DESCRIBE_SYSTEM,
-        messages: [
-          {
-            role: "user",
-            content: `Project: ${repo.name}\n\n<readme>\n${readme.text.slice(0, README_CHAR_LIMIT)}\n</readme>`,
-          },
-        ],
-      });
-      if (response.stop_reason !== "end_turn") return null;
-      const text = response.content
-        .flatMap((block) => (block.type === "text" ? [block.text] : []))
-        .join("")
-        .trim();
-      return text && text !== "SKIP" ? capWords(text, 40) : null;
-    } catch (error) {
-      if (error instanceof Anthropic.APIError) {
-        console.warn(`Haiku description failed for ${repo.full_name}: ${error.status}`, error.message);
-      } else {
-        console.warn(`Haiku description failed for ${repo.full_name}`, error);
-      }
-      return null;
-    }
-  };
-
-  return (repo, readme) => {
-    const key = `showcase/descriptions/${DESCRIBE_VERSION}/${repo.full_name}/${readme.sha}.txt`;
-    let pending = memo.get(key);
-    if (!pending) {
-      pending = (async () => {
-        const cached = await fromBlob(key);
-        if (cached) return capWords(cached, 40);
-        const fresh = await generate(repo, readme);
-        if (fresh) await toBlob(key, fresh);
-        return fresh;
-      })();
-      memo.set(key, pending);
-      // A failed attempt is retried on the next request rather than pinned.
-      pending.then((value) => value ?? memo.delete(key));
-    }
-    return pending;
-  };
 }
 
 /**
@@ -662,7 +531,6 @@ export async function buildShowcase({
   user,
   selfRepo,
   filter,
-  describe,
   token,
   limit = 9,
   now = new Date(),
@@ -725,15 +593,14 @@ export async function buildShowcase({
     kept.push(...resolved.filter((entry) => entry !== null));
   }
 
-  // READMEs (and any model calls) only for the repos that make the page.
+  // READMEs only for the repos that make the page.
   const repos = await Promise.all(
     kept.map(async ({ repo, liveUrl, card, preview }): Promise<ShowcaseRepo> => {
       const readme = await readmeFor(repo, headers, fetchImpl);
-      const described = readme && describe ? await describe(repo, readme) : null;
       return {
         name: repo.name,
         fullName: repo.full_name,
-        description: described ?? (readme && readmeSummary(readme.text, repo.name)) ?? repo.description,
+        description: (readme && readmeSummary(readme, repo.name)) ?? repo.description,
         url: repo.html_url,
         liveUrl,
         stars: repo.stargazers_count,
@@ -763,20 +630,6 @@ const GITHUB_USER = process.env.GITHUB_USER?.trim() || "kygura";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN?.trim() || null;
 
 /**
- * Haiku descriptions need ANTHROPIC_API_KEY. They persist in Vercel Blob when
- * a read-write token is set (BLOB_READ_WRITE_TOKEN, or the store the Notion
- * pipeline used); BLOB_ACCESS must match the store's access mode.
- */
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY?.trim() || null;
-const describe = ANTHROPIC_API_KEY
-  ? createDescriber({
-      apiKey: ANTHROPIC_API_KEY,
-      blobToken: process.env.BLOB_READ_WRITE_TOKEN?.trim() || process.env.NOTION_SYNC_READ_WRITE_TOKEN?.trim() || null,
-      blobAccess: process.env.BLOB_ACCESS === "private" ? "private" : "public",
-    })
-  : null;
-
-/**
  * Public repos appear by default.
  * SHOWCASE_INCLUDE: private repos to show even without a live site.
  * SHOWCASE_EXCLUDE: these repos never appear, whatever else says so.
@@ -804,7 +657,6 @@ export async function GET(): Promise<Response> {
     const showcase = await buildShowcase({
       user: GITHUB_USER,
       token: GITHUB_TOKEN,
-      describe,
       // Vercel's system env names the repo each deployment builds from.
       selfRepo: process.env.VERCEL_GIT_REPO_SLUG,
       filter: FILTER,
