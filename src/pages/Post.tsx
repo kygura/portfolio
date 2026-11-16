@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { useParams, useSearchParams, Link, Navigate } from "react-router-dom";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useMarkdownPost, useMarkdownPosts } from "../hooks/useMarkdownPosts";
@@ -105,14 +105,8 @@ const Post = () => {
       replace />;
   }
 
-  // The manifest runs cluster by cluster, each cluster a reading path, so
-  // previous/next walk the path and cross into the next cluster at its end.
-  const at = posts.findIndex((p) => p.slug === post.slug);
-  const entry = at >= 0 ? posts[at] : null;
-  const previous = at > 0 ? posts[at - 1] : null;
-  const next = at >= 0 && at < posts.length - 1 ? posts[at + 1] : null;
+  const entry = posts.find((p) => p.slug === post.slug) ?? null;
   const cluster = clusters.find((c) => c.id === entry?.cluster) ?? null;
-  const siblings = cluster ? cluster.slugs.flatMap((slug) => posts.find((p) => p.slug === slug) ?? []) : [];
 
   const translated = translation.status === "streaming" || translation.status === "done";
   const title = translated && translation.title ? translation.title : post.title;
@@ -132,31 +126,11 @@ const Post = () => {
         </div>
 
         <p className="post-head__eyebrow">
-          {entry?.mark && <span>{entry.mark}</span>}
           {cluster && <Link to="/writings" className="post-head__cluster">{cluster.name}</Link>}
           <span>{post.readTime} min read</span>
         </p>
 
         <h1 className="post-head__title" lang={contentLang} dir={dir}>{title}</h1>
-
-        {siblings.length > 1 && (
-          <nav className="post-path" aria-label={`${cluster?.name ?? "Cluster"}: reading path`}>
-            <ol>
-              {siblings.map((sibling) => (
-                <li key={sibling.slug}>
-                  <Link
-                    to={`/writings/${sibling.slug}`}
-                    aria-current={sibling.slug === post.slug ? "page" : undefined}
-                    title={sibling.title}
-                  >
-                    <span className="post-path__mark">{sibling.mark}</span>
-                    <span className="post-path__title">{sibling.title}</span>
-                  </Link>
-                </li>
-              ))}
-            </ol>
-          </nav>
-        )}
 
         {lang && translation.status !== "idle" && (
           <p className={`post-translate__status${translation.status === "error" ? " is-error" : ""}`} role="status">
@@ -309,31 +283,6 @@ const Post = () => {
         </ReactMarkdown>
       </article>
 
-      {(previous || next) && (
-        <nav className="post-next" aria-label="Reading path">
-          {previous ? (
-            <Link to={`/writings/${previous.slug}`} className="post-next__link">
-              <span className="post-next__dir">
-                <ArrowLeft size={13} aria-hidden="true" /> {previous.cluster === entry?.cluster ? "Previous" : "Previous cluster"}
-              </span>
-              <span className="post-next__title">{previous.title}</span>
-            </Link>
-          ) : (
-            <span />
-          )}
-          {next && (
-            <Link to={`/writings/${next.slug}`} className="post-next__link post-next__link--newer">
-              <span className="post-next__dir">
-                {next.cluster === entry?.cluster
-                  ? "Next"
-                  : `Next cluster: ${clusters.find((c) => c.id === next.cluster)?.name ?? ""}`}{" "}
-                <ArrowRight size={13} aria-hidden="true" />
-              </span>
-              <span className="post-next__title">{next.title}</span>
-            </Link>
-          )}
-        </nav>
-      )}
     </div>
   );
 };

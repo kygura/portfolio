@@ -61,8 +61,6 @@ const Writings = () => {
                 return (
                   <article key={post.slug} className="ledger__row" style={{ animationDelay: `${row++ * 60}ms` }}>
                     <Link to={`/writings/${post.slug}`} className="ledger__link">
-                      <span className="ledger__num">{post.mark}</span>
-
                       <div className="ledger__body">
                         <h3 className="ledger__title">{post.title}</h3>
                         {post.excerpt && <p className="ledger__excerpt">{post.excerpt}</p>}

@@ -140,7 +140,7 @@ export default function CommandPalette({
         value: `writings/${p.slug}`,
         label: p.title,
         keywords: [p.slug, clusterName.get(p.cluster) ?? ""],
-        meta: p.mark ? `${p.mark} · ${p.readTime} min` : `${p.readTime} min`,
+        meta: `${p.readTime} min`,
         run: () => navigate(`/writings/${p.slug}`),
       }));
     const scenes: Entry[] = SHEETS.map((s) => ({
