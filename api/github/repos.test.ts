@@ -6,11 +6,8 @@ import {
   buildShowcase,
   clip,
   findSocialImage,
-  isListed,
-  isOptedIn,
   languageOf,
   liveUrlFor,
-  parseRepoList,
   rankRepos,
   readmeSummary,
   type GithubRepo,
@@ -45,76 +42,19 @@ function repo(name: string, overrides: Partial<GithubRepo> = {}): GithubRepo {
   };
 }
 
-test("ranks by stars with a fading bonus for recent pushes", () => {
-  const ranked = rankRepos(
-    [
-      repo("old-starred", { stargazers_count: 12, pushed_at: "2025-01-01T00:00:00Z" }),
-      repo("fresh", { stargazers_count: 1, pushed_at: "2026-10-20T00:00:00Z" }),
-      repo("stale", { stargazers_count: 1, pushed_at: "2025-06-01T00:00:00Z" }),
-    ],
-    "kygura",
-    NOW,
-    10,
-  );
-  assert.deepEqual(ranked.map((r) => r.name), ["old-starred", "fresh", "stale"]);
-});
-
-test("flagship is an optional boost: tagged repos lead, untagged ones still show", () => {
+test("only listed repos appear, in the list's order", () => {
   const ranked = rankRepos(
     [
       repo("popular", { stargazers_count: 40 }),
-      repo("swarm", { topics: ["flagship"] }),
-      repo("polytech", { topics: ["flagship"], private: true, pushed_at: "2026-10-20T00:00:00Z" }),
-      repo("quiet"),
-    ],
-    "kygura",
-    NOW,
-    10,
-  );
-  assert.deepEqual(ranked.map((r) => r.name), ["polytech", "swarm", "popular", "quiet"]);
-});
-
-test("leaves out the site's own repo", () => {
-  const ranked = rankRepos([repo("kygra-portfolio"), repo("lexis")], "kygura", NOW, 10, "kygra-portfolio");
-  assert.deepEqual(ranked.map((r) => r.name), ["lexis"]);
-});
-
-test("drops forks, archived repos, hidden repos and the profile repo", () => {
-  const ranked = rankRepos(
-    [
-      repo("keep"),
-      repo("forked", { fork: true }),
-      repo("archived", { archived: true }),
+      repo("Lexis"),
+      repo("polytech", { private: true }),
+      repo("meridian", { fork: true, archived: true }),
       repo("hidden", { topics: ["portfolio-hide"] }),
-      repo("Kygura"),
     ],
-    "kygura",
-    NOW,
-    10,
+    ["polytech", "lexis", "meridian", "missing"],
   );
-  assert.deepEqual(ranked.map((r) => r.name), ["keep"]);
-});
-
-test("repo lists ignore case, owner prefixes and separators", () => {
-  assert.deepEqual([...parseRepoList(" Lexis, kygura/Tally\n  atlas  ")], ["lexis", "tally", "atlas"]);
-  assert.equal(parseRepoList(undefined).size, 0);
-  assert.equal(parseRepoList(" , ").size, 0);
-});
-
-test("public repos are in by default; exclude and the hide topic keep one off", () => {
-  const all = [repo("lexis"), repo("tally"), repo("secret"), repo("draft", { topics: ["portfolio-hide"] })];
-  const names = (include: string, exclude: string) =>
-    rankRepos(all, "kygura", NOW, 10, null, { include: parseRepoList(include), exclude: parseRepoList(exclude) })
-      .map((r) => r.name)
-      .sort();
-  assert.deepEqual(names("", ""), ["lexis", "secret", "tally"]);
-  assert.deepEqual(names("", "secret"), ["lexis", "tally"]);
-  assert.deepEqual(names("lexis", ""), ["lexis", "secret", "tally"]); // include no longer narrows the list
-  assert.deepEqual(names("tally", "tally"), ["lexis", "secret"]);
-  assert.deepEqual(names("draft", ""), ["lexis", "secret", "tally"]); // the hide topic still wins
-  assert.equal(isListed("LEXIS", { include: new Set(), exclude: parseRepoList("lexis") }), false);
-  assert.equal(isOptedIn("Vessel", { include: parseRepoList("vessel"), exclude: new Set() }), true);
-  assert.equal(isOptedIn("vessel", { include: parseRepoList("vessel"), exclude: parseRepoList("vessel") }), false);
+  assert.deepEqual(ranked.map((r) => r.name), ["polytech", "Lexis", "meridian"]);
+  assert.deepEqual(rankRepos([repo("lexis")], []), []);
 });
 
 test("live URL prefers the homepage, then GitHub Pages", () => {
@@ -183,12 +123,17 @@ test("deployments keep their preview; code-only and dead sites map their source,
     throw new TypeError("fetch failed"); // gone.dev: DNS failure
   }) as typeof fetch;
 
-  const showcase = await buildShowcase({ user: "kygura", now: NOW, fetchImpl });
+  const showcase = await buildShowcase({
+    user: "kygura",
+    showcase: ["framed", "blocked", "plain", "slow", "gone", "parked", "private-app", "code-only", "private-code"],
+    now: NOW,
+    fetchImpl,
+  });
   const byName = Object.fromEntries(showcase.repos.map((r) => [r.name, r]));
   const previews = Object.fromEntries(showcase.repos.map((r) => [r.name, r.preview])) as Record<string, { kind: string; src?: string }>;
 
   // gone.dev's tree fetch fails, so it has nothing to show and drops out.
-  assert.deepEqual(Object.keys(byName).sort(), ["blocked", "code-only", "framed", "parked", "plain", "private-app", "slow"]);
+  assert.deepEqual(Object.keys(byName).sort(), ["blocked", "code-only", "framed", "parked", "plain", "private-app", "private-code", "slow"]);
   assert.equal(byName["code-only"].liveUrl, null);
   assert.equal(byName.parked.liveUrl, null); // its site answers 404: the source stands in
   assert.equal(previews["code-only"].kind, "map");
@@ -200,20 +145,14 @@ test("deployments keep their preview; code-only and dead sites map their source,
   assert.deepEqual(previews.slow, { kind: "frame", src: "https://slow.dev/" }); // a slow site is still framed
   assert.deepEqual(previews["private-app"], { kind: "none" }); // GitHub has no public card for it
 
-  // Opted in by name, a private repo with no site shows as a code map.
-  const optedIn = await buildShowcase({
-    user: "kygura",
-    now: NOW,
-    fetchImpl,
-    filter: { include: parseRepoList("private-code"), exclude: new Set() },
-  });
-  const privateCode = optedIn.repos.find((r) => r.name === "private-code");
+  // Listed, a private repo with no site shows as a code map.
+  const privateCode = byName["private-code"];
   assert.equal(privateCode?.preview.kind, "map");
   assert.equal(privateCode?.private, true);
   assert.equal(privateCode?.card, null);
 });
 
-test("the cap fills in rank order, and a repo with nothing to map gives up its place", async () => {
+test("the cap fills in list order, and a repo with nothing to map gives up its place", async () => {
   const trees: string[] = [];
   const fetchImpl = (async (input: string | URL | Request) => {
     const url = String(input);
@@ -234,7 +173,13 @@ test("the cap fills in rank order, and a repo with nothing to map gives up its p
     }
     return new Response("<html></html>");
   }) as typeof fetch;
-  const showcase = await buildShowcase({ user: "kygura", now: NOW, limit: 2, fetchImpl });
+  const showcase = await buildShowcase({
+    user: "kygura",
+    showcase: ["binary-only", "empty", "code-a", "site-a", "code-b"],
+    now: NOW,
+    limit: 2,
+    fetchImpl,
+  });
   assert.deepEqual(showcase.repos.map((r) => r.name), ["code-a", "site-a"]);
   assert.deepEqual(trees.sort(), ["binary-only", "code-a"]); // never fetched past the cap; empty repos skip the call
 });
@@ -324,7 +269,7 @@ test("descriptions come from the README, else the About line, and only kept repo
     return new Response("<html></html>");
   }) as typeof fetch;
 
-  const showcase = await buildShowcase({ user: "kygura", now: NOW, limit: 2, fetchImpl });
+  const showcase = await buildShowcase({ user: "kygura", showcase: ["lexis", "quiet", "over-cap"], now: NOW, limit: 2, fetchImpl });
   assert.equal(readmes.length, 2);
   assert.equal(showcase.repos[0].description, "An editorial companion for long-form writers, straight from the README.");
   assert.equal(showcase.repos[1].description, "Quiet about line.");

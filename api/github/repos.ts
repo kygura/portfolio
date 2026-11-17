@@ -1,56 +1,27 @@
 /**
- * GET /api/github/repos — the software index, built from the GitHub API: the
- * owner's repositories ranked by stars and recent pushes. Repos with a working
- * live site (private ones too, given a token that can read them) get the best
- * preview it allows (an embedded frame, its og:image, or GitHub's generated
- * social card); public repos without one get a map of their source tree.
+ * GET /api/github/repos: the software index. Only the repos named in SHOWCASE
+ * appear, in that order, with their details read from the GitHub API. Repos
+ * with a working live site (private ones too, given a token that can read
+ * them) get the best preview it allows (an embedded frame, its og:image, or
+ * GitHub's generated social card); repos without one get a map of their
+ * source tree.
  */
 
 const GITHUB_API = "https://api.github.com";
 
-/** Repos tagged with this topic never appear in the index. */
-export const HIDE_TOPIC = "portfolio-hide";
-
-/** Optional: repos tagged with this topic rank ahead of the rest. */
-export const FLAGSHIP_TOPIC = "flagship";
-
-/** Bookkeeping topics that steer the index but say nothing to a visitor. */
-const INTERNAL_TOPICS = new Set([HIDE_TOPIC, FLAGSHIP_TOPIC]);
-
 /**
- * Which repos may appear, set in the environment so the names stay out of
- * this public repo. Public repos appear by default; `exclude` (and the hide
- * topic) keeps one off the page. `include` opts private repos in: listed,
- * they appear even without a live site, as a code map with no source link.
- * Exclude always wins.
+ * The software page, curated by hand: only these repos appear, in this order.
+ * A repo that is not listed never shows, however public or starred it is. A
+ * listed private repo shows too: with its live site if it has one, else as a
+ * code map with no source link. Names match GitHub's case-insensitively.
+ *
+ * To add a project, add its repo name here. codebase.ts keeps a copy (Vercel
+ * functions cannot import siblings); a test keeps the two in step.
  */
-export interface RepoFilter {
-  include: Set<string>;
-  exclude: Set<string>;
-}
+export const SHOWCASE: readonly string[] = ["hypertrade", "meridian", "polytech", "lexis", "vessel"];
 
-/** "a, b c\nowner/d" → {"a", "b", "c", "d"}: commas or whitespace, owner prefix and case ignored. */
-export function parseRepoList(value: string | null | undefined): Set<string> {
-  return new Set(
-    (value ?? "")
-      .split(/[\s,]+/)
-      .map((entry) => entry.trim().toLowerCase().split("/").pop() ?? "")
-      .filter(Boolean),
-  );
-}
-
-/** True when the filter lets this repo name onto the page (exclude only: public repos are in by default). */
-export function isListed(name: string, filter: RepoFilter): boolean {
-  return !filter.exclude.has(name.toLowerCase());
-}
-
-/** True when a private repo was opted in by name, so it may show without a live site. */
-export function isOptedIn(name: string, filter: RepoFilter): boolean {
-  const key = name.toLowerCase();
-  return filter.include.has(key) && !filter.exclude.has(key);
-}
-
-const NO_FILTER: RepoFilter = { include: new Set(), exclude: new Set() };
+/** Old bookkeeping topics some repos still carry; they say nothing to a visitor. */
+const INTERNAL_TOPICS = new Set(["portfolio-hide", "flagship"]);
 
 export interface GithubRepo {
   name: string;
@@ -132,58 +103,27 @@ type Fetch = typeof fetch;
 
 interface ShowcaseOptions {
   user: string;
-  /** The repo this site deploys from, left out so the page never frames itself. */
-  selfRepo?: string | null;
-  filter?: RepoFilter;
+  /** The approved repos, in page order; defaults to SHOWCASE. */
+  showcase?: readonly string[];
   token?: string | null;
   limit?: number;
   now?: Date;
   fetchImpl?: Fetch;
 }
 
-const DAY_MS = 86_400_000;
-
 /**
- * Stars count in full; a push in the last few weeks is worth a handful of
- * stars and fades over about two months, so a busy new repo can sit beside
- * an older starred one.
- */
-export function scoreRepo(repo: GithubRepo, now: Date): number {
-  const days = Math.max(0, (now.getTime() - Date.parse(repo.pushed_at)) / DAY_MS);
-  return repo.stargazers_count + 6 * Math.exp(-days / 60);
-}
-
-const hasTopic = (repo: GithubRepo, topic: string) => (repo.topics ?? []).includes(topic);
-
-/**
- * Every repo of the owner's own, minus forks, archived repos, hidden repos,
- * repos the filter leaves out, the profile README repo and this site's own repo. Flagship
- * repos lead; stars and recency order the rest.
+ * The owner's repos that appear in the showcase list, in the list's order.
+ * Everything else is left out.
  */
 export function rankRepos(
   repos: GithubRepo[],
-  user: string,
-  now: Date,
-  limit: number,
-  selfRepo?: string | null,
-  filter: RepoFilter = NO_FILTER,
+  showcase: readonly string[] = SHOWCASE,
+  limit = Infinity,
 ): GithubRepo[] {
-  const skip = new Set([user.toLowerCase(), selfRepo?.toLowerCase()]);
+  const position = new Map(showcase.map((name, index) => [name.toLowerCase(), index]));
   return repos
-    .filter(
-      (repo) =>
-        !repo.fork &&
-        !repo.archived &&
-        !hasTopic(repo, HIDE_TOPIC) &&
-        !skip.has(repo.name.toLowerCase()) &&
-        isListed(repo.name, filter),
-    )
-    .sort(
-      (a, b) =>
-        Number(hasTopic(b, FLAGSHIP_TOPIC)) - Number(hasTopic(a, FLAGSHIP_TOPIC)) ||
-        scoreRepo(b, now) - scoreRepo(a, now) ||
-        b.pushed_at.localeCompare(a.pushed_at),
-    )
+    .filter((repo) => position.has(repo.name.toLowerCase()))
+    .sort((a, b) => position.get(a.name.toLowerCase())! - position.get(b.name.toLowerCase())!)
     .slice(0, limit);
 }
 
@@ -529,10 +469,9 @@ async function previewFor(liveUrl: string, fallback: RepoPreview, fetchImpl: Fet
 
 export async function buildShowcase({
   user,
-  selfRepo,
-  filter,
+  showcase = SHOWCASE,
   token,
-  limit = 9,
+  limit = showcase.length,
   now = new Date(),
   fetchImpl = fetch,
 }: ShowcaseOptions): Promise<Showcase> {
@@ -554,26 +493,22 @@ export async function buildShowcase({
 
   // Every deployment is checked first. A repo whose site answers keeps that
   // preview; a public one with no site, or a site that is gone, becomes a
-  // code-only card whose map is fetched below. Private repos need a site
-  // (visitors could open nothing else) unless SHOWCASE_INCLUDE opts them in.
+  // code-only card whose map is fetched below. Listed private repos without a
+  // site become code-only cards as well, with no source link.
   type Candidate = { repo: GithubRepo; liveUrl: string | null; card: string | null; preview: RepoPreview | null };
-  const ranked = rankRepos((await response.json()) as GithubRepo[], user, now, Infinity, selfRepo, filter);
-  const candidates = (
-    await Promise.all(
-      ranked.map(async (repo): Promise<Candidate | null> => {
-        const card = repo.private ? null : githubCard(repo.full_name, repo.pushed_at);
-        const liveUrl = liveUrlFor(repo, user);
-        if (liveUrl) {
-          const fallback: RepoPreview = card ? { kind: "image", src: card } : { kind: "none" };
-          const preview = await previewFor(liveUrl, fallback, fetchImpl);
-          if (preview) return { repo, liveUrl, card, preview };
-        }
-        return repo.private && !isOptedIn(repo.name, filter ?? NO_FILTER)
-          ? null
-          : { repo, liveUrl: null, card, preview: null };
-      }),
-    )
-  ).filter((candidate): candidate is Candidate => candidate !== null);
+  const ranked = rankRepos((await response.json()) as GithubRepo[], showcase);
+  const candidates = await Promise.all(
+    ranked.map(async (repo): Promise<Candidate> => {
+      const card = repo.private ? null : githubCard(repo.full_name, repo.pushed_at);
+      const liveUrl = liveUrlFor(repo, user);
+      if (liveUrl) {
+        const fallback: RepoPreview = card ? { kind: "image", src: card } : { kind: "none" };
+        const preview = await previewFor(liveUrl, fallback, fetchImpl);
+        if (preview) return { repo, liveUrl, card, preview };
+      }
+      return { repo, liveUrl: null, card, preview: null };
+    }),
+  );
 
   // Maps only for the repos that can still make the page: fill the cap in
   // rank order, and when a repo has nothing to map (empty, binary-only),
@@ -629,17 +564,6 @@ const GITHUB_USER = process.env.GITHUB_USER?.trim() || "kygura";
  */
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN?.trim() || null;
 
-/**
- * Public repos appear by default.
- * SHOWCASE_INCLUDE: private repos to show even without a live site.
- * SHOWCASE_EXCLUDE: these repos never appear, whatever else says so.
- * Both take names separated by commas or whitespace.
- */
-const FILTER: RepoFilter = {
-  include: parseRepoList(process.env.SHOWCASE_INCLUDE),
-  exclude: parseRepoList(process.env.SHOWCASE_EXCLUDE),
-};
-
 // ---- Handler -------------------------------------------------------------------
 // This file imports no sibling modules (packages are fine): Vercel compiles
 // each function to .js but keeps `.ts` import specifiers, so a relative
@@ -657,9 +581,6 @@ export async function GET(): Promise<Response> {
     const showcase = await buildShowcase({
       user: GITHUB_USER,
       token: GITHUB_TOKEN,
-      // Vercel's system env names the repo each deployment builds from.
-      selfRepo: process.env.VERCEL_GIT_REPO_SLUG,
-      filter: FILTER,
     });
     return Response.json(showcase, {
       headers: { "cache-control": "public, s-maxage=3600, stale-while-revalidate=86400" },

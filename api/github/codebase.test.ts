@@ -6,12 +6,13 @@ import {
   isVisible,
   locateCodebase,
   numberedSlice,
-  parseRepoList,
   runChat,
+  SHOWCASE as CODEBASE_SHOWCASE,
   sanitizeHistory,
   type ChatEvent,
   type Codebase,
 } from "./codebase.ts";
+import { SHOWCASE as INDEX_SHOWCASE } from "./repos.ts";
 
 const META = {
   name: "engine",
@@ -58,7 +59,11 @@ function fakeGithub(meta: Record<string, unknown> = META): typeof fetch {
   }) as typeof fetch;
 }
 
-const NO_FILTER = { include: new Set<string>(), exclude: new Set<string>() };
+const SHOWCASE = ["engine"];
+
+test("the codebase endpoint allows exactly the repos the index shows", () => {
+  assert.deepEqual(CODEBASE_SHOWCASE, INDEX_SHOWCASE);
+});
 
 test("isVisible drops build trees and dot-directories but keeps .github", () => {
   assert.equal(isVisible("src/main.ts"), true);
@@ -68,7 +73,7 @@ test("isVisible drops build trees and dot-directories but keeps .github", () => 
 });
 
 test("locateCodebase pins the tree to the branch's commit", async () => {
-  const codebase = await locateCodebase("kygura", "engine", null, fakeGithub());
+  const codebase = await locateCodebase("kygura", "engine", null, fakeGithub(), SHOWCASE);
   assert.equal(codebase.commit, "abc123");
   assert.deepEqual(
     codebase.entries.map((entry) => entry.path),
@@ -77,20 +82,18 @@ test("locateCodebase pins the tree to the branch's commit", async () => {
   assert.equal(codebase.truncated, false);
 });
 
-test("locateCodebase refuses private, forked, hidden and filtered repos", async () => {
+test("locateCodebase refuses private, foreign and unlisted repos", async () => {
   for (const meta of [
     { ...META, private: true },
-    { ...META, fork: true },
-    { ...META, topics: ["portfolio-hide"] },
     { ...META, owner: { login: "someone" } },
   ]) {
-    await assert.rejects(locateCodebase("kygura", "engine", null, fakeGithub(meta)), /No repository/);
+    await assert.rejects(locateCodebase("kygura", "engine", null, fakeGithub(meta), SHOWCASE), /No repository/);
   }
   await assert.rejects(
-    locateCodebase("kygura", "engine", null, fakeGithub(), { include: new Set(), exclude: parseRepoList("engine") }),
+    locateCodebase("kygura", "engine", null, fakeGithub(), ["lexis"]),
     /No repository/,
   );
-  await assert.rejects(locateCodebase("kygura", "../etc", null, fakeGithub()), /No repository/);
+  await assert.rejects(locateCodebase("kygura", "../etc", null, fakeGithub(), ["../etc"]), /No repository/);
 });
 
 test("numberedSlice numbers lines and caps the page", () => {
@@ -143,7 +146,7 @@ function fakeClient(rounds: { text: string; message: Partial<Anthropic.Beta.Beta
 }
 
 test("runChat reads the files Claude asks for and streams the answer", async () => {
-  const codebase = await locateCodebase("kygura", "engine", null, fakeGithub());
+  const codebase = await locateCodebase("kygura", "engine", null, fakeGithub(), SHOWCASE);
   const { client, calls } = fakeClient([
     {
       text: "",
@@ -176,7 +179,7 @@ test("runChat reads the files Claude asks for and streams the answer", async () 
 });
 
 test("handleCodebase lists the tree and validates chat requests", async () => {
-  const options = { user: "kygura", token: null, filter: NO_FILTER, fetchImpl: fakeGithub(), client: null };
+  const options = { user: "kygura", token: null, showcase: SHOWCASE, fetchImpl: fakeGithub(), client: null };
   const listed = await handleCodebase(new Request("https://nca.ink/api/github/codebase?repo=engine"), options);
   assert.equal(listed.status, 200);
   const body = (await listed.json()) as Codebase;
