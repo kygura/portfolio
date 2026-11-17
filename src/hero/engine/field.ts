@@ -11,7 +11,7 @@
  *    height tints and a graticule.
  *  - A press sends a ring out across the relief that maps everything it
  *    crosses; a drag maps a broad strip behind the pointer.
- *  - Mapped ground fades back to dark over a minute, so the map is always
+ *  - Mapped ground fades back to dark over three minutes, so the map is always
  *    being redrawn by whoever is looking at it.
  *  - Colours come from the shared accent uniforms, so a palette switch
  *    recolours the map live; the dark ground is the clear colour, so the sheet
@@ -38,7 +38,7 @@ const ELEV = 1.2, DIST = 50, MIN_ELEV = 0.32;
 /** Coverage map: RES² texels over a square of half-size COV_R world units about the origin. */
 const RES = 256, COV_R = 120;
 /** Seconds for fully mapped ground to fade back to dark. */
-const HOLD = 60;
+const HOLD = 180;
 
 const v2 = (p: [number, number]) => `vec2(${p[0].toFixed(1)}, ${p[1].toFixed(1)})`;
 const f1 = (n: number) => n.toFixed(2);
