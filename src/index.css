@@ -2033,11 +2033,24 @@
 .post-translate__item:hover, .post-translate__item:focus-visible { background: var(--rule); color: var(--accent); outline: none; }
 .post-translate__item svg { margin-inline-start: auto; color: var(--accent); }
 .post-translate__hint { color: var(--ink-3); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
-.post-translate__form input {
-  width: 100%; padding: 0.5rem 0.6rem; background: transparent; color: var(--ink);
-  border: 1px dashed var(--rule-2); font: inherit; outline: none;
+.post-translate__form { position: relative; }
+.post-translate__form::before {
+  content: "+"; position: absolute; inset-block: 0; inset-inline-start: 0.7rem;
+  display: flex; align-items: center; color: var(--ink-3); pointer-events: none; transition: color 0.2s;
 }
-.post-translate__form input:focus { border-color: var(--accent); }
+.post-translate__form:focus-within::before { color: var(--accent); }
+.post-translate__form input {
+  width: 100%; padding: 0.55rem 0.6rem 0.55rem 1.75rem; background: transparent; color: var(--ink);
+  border: 1px dashed var(--rule-2); border-radius: 2px; font: inherit; outline: none;
+  letter-spacing: 0.04em; caret-color: var(--accent);
+  transition: border-color 0.2s, background-color 0.2s;
+}
+.post-translate__form input::placeholder { color: var(--ink-3); letter-spacing: 0.04em; }
+.post-translate__form input:hover { border-color: var(--ink-3); }
+.post-translate__form input:focus {
+  border-style: solid; border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
 .post-translate__status {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.4rem 1rem; margin-top: 1.1rem;
   font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3);
