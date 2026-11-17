@@ -113,7 +113,8 @@ void main(){
   vec3 tc = touch(vP);
   float h = relief(vP) + tc.x;
   float f = h / ${STEP.toFixed(2)};
-  float df = max(fwidth(f), 1e-5);
+  // Level change per pixel, measured along the gradient (fwidth overstates it on diagonals).
+  float df = max(length(vec2(dFdx(f), dFdy(f))), 1e-5);
   float lid = floor(f + 0.5);
   float dist = abs(f - lid);
   float idx = 1.0 - step(0.5, mod(lid, 5.0));
@@ -123,8 +124,13 @@ void main(){
   // Half-width in device pixels: hairline intermediates under heavy index lines.
   float w = uPx * (mix(0.3, 0.95, idx) + 0.16 * breath + 0.2 * hn + 0.35 * tc.y);
   float line = clamp(w + 0.5 - dist / df, 0.0, 1.0);
-  line *= 1.0 - smoothstep(0.2, 0.34, dist);        // no blobs on flat ground
-  line *= 1.0 - smoothstep(0.22, 0.5, df);          // no moire where lines crowd
+  // No blobs on flat ground, but never clip a line narrower than its own drawn width.
+  float hw = (w + 0.5) * df;
+  line *= 1.0 - smoothstep(max(0.2, hw), max(0.34, hw + 0.14), dist);
+  // Where lines crowd (steep slopes seen edge-on, behind the summit), each one eases into its
+  // average coverage instead of breaking into dashes, so the band stays continuous without moire.
+  float avg = min(1.0, 2.0 * hw) * 0.55;
+  line = mix(line, avg, smoothstep(0.22, 0.55, df));
   float a = mix(0.4, 0.95, idx) * (0.64 + 0.36 * breath) * mix(0.62, 1.0, hn);
   a = min(1.0, a + 0.45 * tc.y);
 
