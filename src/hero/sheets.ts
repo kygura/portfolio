@@ -62,8 +62,8 @@ const ALL_SHEETS: SheetMeta[] = [
   {
     id: "field",
     name: "Field",
-    aria: "Interactive abstract contour map seen from above: nothing but contour lines on one completely flat ground colour, heavy index lines over hairline contours ringing a single summit, both in the colours of the current palette, each line gently brightening and fading on its own rhythm. A click or tap drops a ripple into the terrain that travels outward, bunching and bending the contour lines before they settle, and dragging lays a wake of ripples that the lines flow around behind the pointer. The camera can be orbited from straight overhead down to a low oblique view, panned and zoomed.",
-    hint: "DRAG OR CLICK TO RIPPLE \u00b7 SHIFT/RIGHT-DRAG TO ORBIT \u00b7 MIDDLE-DRAG TO PAN \u00b7 WHEEL TO ZOOM",
+    aria: "Interactive sonar survey of the deep seabed, seen from above: a dark abyss where a survey vessel runs lawnmower lines, its multibeam swath mapping a band of bathymetry either side of the track while a sector scan sweeps round it with grainy, glowing backscatter. Mapped ground shows depth contours, heavy index lines over hairlines, stepped depth tints and a graticule around a seamount, a trench and a chain of knolls, all in the colours of the current palette, and slowly fades back to dark. A click or tap sends a sonar ping whose ring runs out across the bottom and maps what it passes, and dragging tows a sidescan that maps a strip behind the pointer. The camera can be orbited from straight overhead down to a low oblique view, panned and zoomed.",
+    hint: "CLICK TO PING \u00b7 DRAG TO SCAN \u00b7 SHIFT/RIGHT-DRAG TO ORBIT \u00b7 MIDDLE-DRAG TO PAN \u00b7 WHEEL TO ZOOM",
   },
   {
     id: "matrix",
