@@ -171,8 +171,8 @@ void main(){
   float vib = shape * sin(uTime * pitch + seed * 11.0) + 0.35 * shape2 * sin(uTime * pitch * 2.03 + seed * 5.0);
   vec2 hv2 = vP - uHover.xy;
   float pluck = 1.0 + 4.0 * tc.y + 3.0 * abs(uHover.z) * exp(-dot(hv2, hv2) * 0.02);
-  float swing = 0.07 * pluck * vib;                          // world units across the line
-  float off = clamp(swing * slope / ${STEP.toFixed(2)}, -0.3, 0.3);
+  float swing = 0.18 * pluck * vib;                          // world units across the line
+  float off = clamp(swing * slope / ${STEP.toFixed(2)}, -0.4, 0.4);
   float dist = abs(f + off - lid);
   float idx = 1.0 - step(0.5, mod(lid, 5.0));
   // Each level breathes on its own phase.
