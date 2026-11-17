@@ -1,7 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 
 /**
- * The "talk to the codebase" endpoint for one of the owner's public repos.
+ * The "talk to the codebase" endpoint for one of the owner's public showcase repos.
  *
  *   GET  /api/github/codebase?repo=<name>  the repo's file tree, pinned to a commit
  *   POST /api/github/codebase              { repo, messages } → an NDJSON stream of
@@ -15,25 +15,14 @@ import Anthropic from "@anthropic-ai/sdk";
 const GITHUB_API = "https://api.github.com";
 const RAW_GITHUB = "https://raw.githubusercontent.com";
 
-/** Mirrors the index's hide topic: a hidden repo cannot be browsed either. */
-const HIDE_TOPIC = "portfolio-hide";
+/**
+ * Copy of SHOWCASE in repos.ts (Vercel functions cannot import siblings; a
+ * test keeps the two equal). Only these repos can be browsed or chatted with.
+ */
+export const SHOWCASE: readonly string[] = ["hypertrade", "meridian", "polytech", "lexis"];
 
-/** Mirrors the index's SHOWCASE_INCLUDE / SHOWCASE_EXCLUDE lists (see repos.ts); only the blocklist applies here. */
-export interface RepoFilter {
-  include: Set<string>;
-  exclude: Set<string>;
-}
-
-export function parseRepoList(value: string | null | undefined): Set<string> {
-  return new Set(
-    (value ?? "")
-      .split(/[\s,]+/)
-      .map((entry) => entry.trim().toLowerCase().split("/").pop() ?? "")
-      .filter(Boolean),
-  );
-}
-
-const NO_FILTER: RepoFilter = { include: new Set(), exclude: new Set() };
+const isShowcased = (name: string, showcase: readonly string[]) =>
+  showcase.some((entry) => entry.toLowerCase() === name.toLowerCase());
 
 type Fetch = typeof fetch;
 
@@ -90,7 +79,7 @@ export function isVisible(path: string): boolean {
     .some((dir) => (dir.startsWith(".") && dir !== ".github") || IGNORED_DIRS.has(dir));
 }
 
-/** Thrown for a repo the endpoint will not open: unknown, private, forked or hidden. */
+/** Thrown for a repo the endpoint will not open: unknown, private or not in the showcase. */
 export class NotBrowsable extends Error {}
 
 const REPO_NAME = /^[A-Za-z0-9._-]{1,100}$/;
@@ -109,14 +98,11 @@ export async function locateCodebase(
   name: string,
   token: string | null,
   fetchImpl: Fetch = fetch,
-  filter: RepoFilter = NO_FILTER,
+  showcase: readonly string[] = SHOWCASE,
 ): Promise<Omit<Codebase, "chat">> {
-  // Checked before any request, so a left-out repo's name gets the same
+  // Checked before any request, so an unlisted repo's name gets the same
   // answer as one that does not exist.
-  const key = name.toLowerCase();
-  if (!REPO_NAME.test(name) || name.startsWith(".")) throw new NotBrowsable(`No repository named ${name}`);
-  // SHOWCASE_INCLUDE only opts private repos into the index, and private repos are refused below.
-  if (filter.exclude.has(key)) {
+  if (!REPO_NAME.test(name) || name.startsWith(".") || !isShowcased(name, showcase)) {
     throw new NotBrowsable(`No repository named ${name}`);
   }
   const headers = githubHeaders(token);
@@ -129,8 +115,6 @@ export async function locateCodebase(
     full_name?: string;
     owner?: { login?: string };
     private?: boolean;
-    fork?: boolean;
-    topics?: string[];
     default_branch?: string;
     description?: string | null;
     html_url?: string;
@@ -139,8 +123,6 @@ export async function locateCodebase(
   if (
     repo.owner?.login?.toLowerCase() !== user.toLowerCase() ||
     repo.private ||
-    repo.fork ||
-    repo.topics?.includes(HIDE_TOPIC) ||
     !repo.default_branch
   ) {
     throw new NotBrowsable(`No repository named ${name}`);
@@ -187,11 +169,11 @@ const LOCATE_TTL = 10 * 60_000;
 
 function createLocator(locate: typeof locateCodebase) {
   const memo = new Map<string, { at: number; pending: Promise<Omit<Codebase, "chat">> }>();
-  return (user: string, name: string, token: string | null, fetchImpl: Fetch, filter: RepoFilter) => {
+  return (user: string, name: string, token: string | null, fetchImpl: Fetch, showcase: readonly string[]) => {
     const key = name.toLowerCase();
     const hit = memo.get(key);
     if (hit && Date.now() - hit.at < LOCATE_TTL) return hit.pending;
-    const pending = locate(user, name, token, fetchImpl, filter);
+    const pending = locate(user, name, token, fetchImpl, showcase);
     memo.set(key, { at: Date.now(), pending });
     pending.catch(() => memo.delete(key));
     return pending;
@@ -456,10 +438,6 @@ export function allowRequest(key: string, now = Date.now()): boolean {
 
 const GITHUB_USER = process.env.GITHUB_USER?.trim() || "kygura";
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN?.trim() || null;
-const FILTER: RepoFilter = {
-  include: parseRepoList(process.env.SHOWCASE_INCLUDE),
-  exclude: parseRepoList(process.env.SHOWCASE_EXCLUDE),
-};
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY?.trim() || null;
 
 export const runtime = "nodejs";
@@ -467,7 +445,7 @@ export const runtime = "nodejs";
 export interface HandlerOptions {
   user?: string;
   token?: string | null;
-  filter?: RepoFilter;
+  showcase?: readonly string[];
   fetchImpl?: Fetch;
   client?: Anthropic | null;
   locate?: ReturnType<typeof createLocator>;
@@ -486,7 +464,7 @@ export async function handleCodebase(
   {
     user = GITHUB_USER,
     token = GITHUB_TOKEN,
-    filter = FILTER,
+    showcase = SHOWCASE,
     fetchImpl = fetch,
     client = ANTHROPIC_API_KEY ? new Anthropic({ apiKey: ANTHROPIC_API_KEY }) : null,
     locate = defaultLocate,
@@ -495,7 +473,7 @@ export async function handleCodebase(
   if (request.method === "GET") {
     const name = new URL(request.url).searchParams.get("repo") ?? "";
     try {
-      const codebase = await locate(user, name, token, fetchImpl, filter);
+      const codebase = await locate(user, name, token, fetchImpl, showcase);
       const body: Codebase = { ...codebase, chat: client !== null };
       return Response.json(body, {
         headers: { "cache-control": "public, s-maxage=600, stale-while-revalidate=86400" },
@@ -525,7 +503,7 @@ export async function handleCodebase(
 
   let codebase: Omit<Codebase, "chat">;
   try {
-    codebase = await locate(user, name, token, fetchImpl, filter);
+    codebase = await locate(user, name, token, fetchImpl, showcase);
   } catch (error) {
     const missing = notFound(error);
     if (missing) return missing;

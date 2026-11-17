@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import { componentTagger } from "lovable-tagger";
 import path from "path";
 import { Readable } from "node:stream";
-import { buildShowcase, parseRepoList, type Showcase } from "./api/github/repos";
+import { buildShowcase, type Showcase } from "./api/github/repos";
 import { handleCodebase } from "./api/github/codebase";
 import { handleQuip } from "./api/familiar/quip";
 import { handleTranslate } from "./api/writings/translate";
@@ -17,10 +17,6 @@ import { handleTranslate } from "./api/writings/translate";
  */
 function devGithubApi(): Plugin {
   let cached: { at: number; body: Showcase } | null = null;
-  const filter = {
-    include: parseRepoList(process.env.SHOWCASE_INCLUDE),
-    exclude: parseRepoList(process.env.SHOWCASE_EXCLUDE),
-  };
   return {
     name: "dev-github-api",
     apply: "serve",
@@ -58,7 +54,6 @@ function devGithubApi(): Plugin {
             const body = await buildShowcase({
               user: process.env.GITHUB_USER || "kygura",
               token: process.env.GITHUB_TOKEN,
-              filter,
             });
             cached = { at: Date.now(), body };
           }
@@ -79,7 +74,6 @@ function devGithubApi(): Plugin {
         const response = await handleCodebase(request, {
           user: process.env.GITHUB_USER || "kygura",
           token: process.env.GITHUB_TOKEN || null,
-          filter,
         });
         res.statusCode = response.status;
         response.headers.forEach((value, key) => res.setHeader(key, value));
