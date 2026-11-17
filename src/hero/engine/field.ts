@@ -10,7 +10,9 @@
  *  - Heavy index lines over hairline intermediates, around one summit. Until it
  *    is touched the map is only a faint hint of itself.
  *  - Alive: the relief drifts slowly and every contour level breathes on its
- *    own phase (brightness and weight).
+ *    own phase (brightness and weight). Each line also vibrates like a string:
+ *    a standing wave along its length at its own pitch, plucked harder where a
+ *    ripple front passes or the cursor hovers.
  *  - The hover raises a soft swell under the cursor that bends the lines
  *    around it.
  *  - A press drops a ripple into the height field itself, and a drag lays a
@@ -116,7 +118,29 @@ void main(){
   // Level change per pixel, measured along the gradient (fwidth overstates it on diagonals).
   float df = max(length(vec2(dFdx(f), dFdy(f))), 1e-5);
   float lid = floor(f + 0.5);
-  float dist = abs(f - lid);
+
+  /* Every contour is a string. Each level carries a standing wave along its length with its own
+     pitch and phase, a fundamental plus a faint overtone. The swing is set in world units and turned
+     into level units through the local slope, so a line shivers by the same distance on gentle and
+     steep ground. A passing wave front or the cursor plucks the strings near it. */
+  vec2 ge = vec2(0.2, 0.0);
+  vec2 gH = vec2(relief(vP + ge.xy) - relief(vP - ge.xy), relief(vP + ge.yx) - relief(vP - ge.yx)) / 0.4;
+  float slope = max(length(gH), 1e-3);
+  // The wave shape is a smooth field of crossed standing waves, turned per level, so it reads as
+  // nodes and antinodes along any line without kinks where the line curls.
+  float seed = fract(lid * 0.6180339);
+  float pitch = 2.6 + 3.2 * seed;
+  float k = 0.9 + 0.5 * fract(seed * 7.13);
+  float ang = seed * 6.283;
+  vec2 q = mat2(cos(ang), sin(ang), -sin(ang), cos(ang)) * vP * k;
+  float shape = sin(q.x) * cos(q.y * 0.7 + seed * 4.0);
+  float shape2 = sin(2.0 * q.x + 1.3) * cos(1.4 * q.y);
+  float vib = shape * sin(uTime * pitch + seed * 11.0) + 0.35 * shape2 * sin(uTime * pitch * 2.03 + seed * 5.0);
+  vec2 hv2 = vP - uHover.xy;
+  float pluck = 1.0 + 4.0 * tc.y + 3.0 * abs(uHover.z) * exp(-dot(hv2, hv2) * 0.02);
+  float swing = 0.07 * pluck * vib;                          // world units across the line
+  float off = clamp(swing * slope / ${STEP.toFixed(2)}, -0.3, 0.3);
+  float dist = abs(f + off - lid);
   float idx = 1.0 - step(0.5, mod(lid, 5.0));
   // Each level breathes on its own phase.
   float breath = 0.5 + 0.5 * sin(uTime * 0.55 + lid * 0.83);
