@@ -1996,12 +1996,19 @@
 
 /* Translate: the picker in the post head and the status line under the title */
 .post-translate__trigger {
-  display: inline-flex; align-items: center; gap: 0.5rem;
+  display: inline-flex; align-items: center; gap: 0.55rem;
   font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
-  color: var(--ink-3); background: none; border: 0; padding: 0; cursor: pointer; transition: color 0.2s;
+  color: var(--ink-2, var(--ink)); background: transparent;
+  border: 1px solid var(--rule-2); border-radius: 2px; padding: 0.4rem 0.7rem; cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background-color 0.2s;
 }
+.post-translate__trigger svg { color: var(--accent); flex: none; }
 .post-translate__trigger:hover, .post-translate__trigger:focus-visible,
-.post-translate__trigger[data-state="open"] { color: var(--accent); }
+.post-translate__trigger[data-state="open"] {
+  color: var(--accent); border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent); outline: none;
+}
+.post-translate__trigger:focus-visible { box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent); }
 .post-translate__menu.post-translate__menu {
   width: 16rem; padding: 0.35rem;
   background: var(--bg); color: var(--ink); border: 1px solid var(--rule-2); border-radius: 2px;
