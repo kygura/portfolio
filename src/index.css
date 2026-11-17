@@ -2010,7 +2010,15 @@
 .post-translate__list {
   max-height: min(18rem, 50vh); overflow-y: auto; overscroll-behavior: contain;
   border-block: 1px solid var(--rule); margin-block: 0.25rem; padding-block: 0.25rem;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule-2) transparent;
 }
+.post-translate__list:hover { scrollbar-color: var(--ink-3) transparent; }
+.post-translate__list::-webkit-scrollbar { width: 4px; }
+.post-translate__list::-webkit-scrollbar-button { display: none; }
+.post-translate__list::-webkit-scrollbar-track { background: transparent; }
+.post-translate__list::-webkit-scrollbar-thumb { background: var(--rule-2); border-radius: 0; }
+.post-translate__list:hover::-webkit-scrollbar-thumb { background: var(--ink-3); }
 .post-translate__item {
   display: flex; align-items: center; gap: 0.6rem; width: 100%;
   padding: 0.45rem 0.6rem; background: none; border: 0; text-align: start; color: var(--ink); cursor: pointer;
