@@ -19,7 +19,7 @@ const RAW_GITHUB = "https://raw.githubusercontent.com";
  * Copy of SHOWCASE in repos.ts (Vercel functions cannot import siblings; a
  * test keeps the two equal). Only these repos can be browsed or chatted with.
  */
-export const SHOWCASE: readonly string[] = ["hypertrade", "meridian", "polytech", "lexis", "vessel", "tally"];
+export const SHOWCASE: readonly string[] = ["hypertrade", "meridian", "polytech", "lexis", "vessel"];
 
 const isShowcased = (name: string, showcase: readonly string[]) =>
   showcase.some((entry) => entry.toLowerCase() === name.toLowerCase());

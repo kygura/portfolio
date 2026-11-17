@@ -18,7 +18,7 @@ const GITHUB_API = "https://api.github.com";
  * To add a project, add its repo name here. codebase.ts keeps a copy (Vercel
  * functions cannot import siblings); a test keeps the two in step.
  */
-export const SHOWCASE: readonly string[] = ["hypertrade", "meridian", "polytech", "lexis", "vessel", "tally"];
+export const SHOWCASE: readonly string[] = ["hypertrade", "meridian", "polytech", "lexis", "vessel"];
 
 /** Old bookkeeping topics some repos still carry; they say nothing to a visitor. */
 const INTERNAL_TOPICS = new Set(["portfolio-hide", "flagship"]);
