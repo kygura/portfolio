@@ -33,7 +33,9 @@ const STEP = 0.5;
 /** Summit and basin, on the ground plane (x, z). */
 const SUMMIT: [number, number] = [8, -3], BASIN: [number, number] = [-15, 8];
 /** Camera at rest: elevation above the ground (rad) and distance from its target. */
-const ELEV = 1.2, DIST = 50, MIN_ELEV = 0.32;
+const ELEV = 0.62, DIST = 50, MIN_ELEV = 0.32;
+/** Vertical exaggeration of the raised sheet, so the default oblique view reads as terrain. */
+const LIFT = 1.8;
 /** Coverage map: RES² texels over a square of half-size COV_R world units about the origin. */
 const RES = 256, COV_R = 120;
 /** Seconds for fully revealed ground to fade back to the hint, and how strong the hint is. */
@@ -62,7 +64,7 @@ varying vec2 vP; varying float vDist;
 void main(){
   vP = position.xz;
   // The sheet is really raised, so a tilted camera sees the relief in parallax.
-  vec4 mv = modelViewMatrix * vec4(position.x, relief(vP), position.z, 1.0);
+  vec4 mv = modelViewMatrix * vec4(position.x, relief(vP) * ${LIFT.toFixed(2)}, position.z, 1.0);
   vDist = length(mv.xyz);
   gl_Position = projectionMatrix * mv;
 }`;
@@ -268,7 +270,7 @@ export function buildField(k: PsxKit): SceneDef {
     for (let i = 0; i < 3; i++) {
       plane.constant = -y;
       if (!ray.intersectPlane(plane, hit)) return false;
-      y = relief(hit.x, hit.z, sceneT);
+      y = relief(hit.x, hit.z, sceneT) * LIFT;
     }
     return Math.abs(hit.x) < 300 && Math.abs(hit.z) < 300;
   };
@@ -382,7 +384,7 @@ export function buildField(k: PsxKit): SceneDef {
       fadeAcc += reduced ? 0 : dt;
       if (fadeAcc > 0.5) { fadeCov(fadeAcc); fadeAcc = 0; }
       pushCov();
-      summit.y = relief(summit.x, summit.z, t);
+      summit.y = relief(summit.x, summit.z, t) * LIFT;
     },
     readout() {
       const e = relief(aimed ? px : pivot.x, aimed ? pz : pivot.z, sceneT);
