@@ -37,7 +37,7 @@ const STEP = 0.5;
 const SUMMIT: [number, number] = [8, -3], BASIN: [number, number] = [-15, 8];
 /** Peaks (+) and hollows (−) on the ground plane: x, z, height, falloff. The summit and basin lead. */
 const FEATURES: [number, number, number, number][] = [
-  [SUMMIT[0], SUMMIT[1], 6.6, 0.0065],
+  [SUMMIT[0], SUMMIT[1], 6.6, 0.0042],
   [BASIN[0], BASIN[1], -4.2, 0.011],
   [-30, -20, 4.0, 0.014],   // western peak
   [32, 18, 3.4, 0.018],     // eastern peak
@@ -57,7 +57,7 @@ const RANGES: [number, number, number, number, number, number, number][] = [
   [10, 40, 46, 46, 4.5, 0.018, 3.0],      // southern ridge
 ];
 /** Camera at rest: elevation above the ground (rad) and distance from its target. */
-const ELEV = 0.62, DIST = 64, MIN_ELEV = 0.32;
+const ELEV = 0.7, DIST = 64, MIN_ELEV = 0.32;
 /** Vertical exaggeration of the raised sheet, so the default oblique view reads as terrain. */
 const LIFT = 1.8;
 /** Coverage map: RES² texels over a square of half-size COV_R world units about the origin. */
