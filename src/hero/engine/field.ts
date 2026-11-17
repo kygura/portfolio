@@ -7,8 +7,9 @@
  *  no fade, no marks. Ground and ink both come from the shared accent
  *  uniforms, so a palette switch recolours both live.
  *
- *  - Heavy index lines over hairline intermediates, around one summit. Until it
- *    is touched the map is only a faint hint of itself.
+ *  - Heavy index lines over hairline intermediates, around a summit, a basin,
+ *    a scatter of peaks and hollows, and mountain ranges that ring the sheet. Until it is touched the map
+ *    is only a faint hint of itself.
  *  - Alive: the relief drifts slowly and every contour level breathes on its
  *    own phase (brightness and weight). Each line also vibrates like a string:
  *    a standing wave along its length at its own pitch, plucked harder where a
@@ -34,8 +35,29 @@ const MAXP = 12;
 const STEP = 0.5;
 /** Summit and basin, on the ground plane (x, z). */
 const SUMMIT: [number, number] = [8, -3], BASIN: [number, number] = [-15, 8];
+/** Peaks (+) and hollows (−) on the ground plane: x, z, height, falloff. The summit and basin lead. */
+const FEATURES: [number, number, number, number][] = [
+  [SUMMIT[0], SUMMIT[1], 6.6, 0.0042],
+  [BASIN[0], BASIN[1], -4.2, 0.011],
+  [-30, -20, 4.0, 0.014],   // western peak
+  [32, 18, 3.4, 0.018],     // eastern peak
+  [24, -24, -2.8, 0.022],   // pit below the summit's shoulder
+  [-6, 26, 2.4, 0.03],      // southern knoll
+  [-42, 14, -2.2, 0.016],   // far western hollow
+  [44, -6, 2.6, 0.012],     // far eastern rise
+];
+/** Mountain ranges: a crest from (x1, z1) to (x2, z2), its height, cross falloff, and how many
+ *  peaks break the crest. Heights taper toward both ends so a range rises out of the ground. */
+const RANGES: [number, number, number, number, number, number, number][] = [
+  [-62, -44, 34, -54, 8.5, 0.010, 5.0],   // the great range across the north, behind the summit
+  [52, -40, 60, 34, 7.0, 0.013, 4.0],     // eastern range
+  [-64, 30, -14, 52, 6.0, 0.014, 3.5],    // south-western range
+  [-58, -8, -40, 22, 4.5, 0.020, 2.5],    // western foothills
+  [14, -10, 38, -40, 4.0, 0.030, 2.0],    // spur from the summit to the northern range
+  [10, 40, 46, 46, 4.5, 0.018, 3.0],      // southern ridge
+];
 /** Camera at rest: elevation above the ground (rad) and distance from its target. */
-const ELEV = 0.62, DIST = 50, MIN_ELEV = 0.32;
+const ELEV = 0.7, DIST = 64, MIN_ELEV = 0.32;
 /** Vertical exaggeration of the raised sheet, so the default oblique view reads as terrain. */
 const LIFT = 1.8;
 /** Coverage map: RES² texels over a square of half-size COV_R world units about the origin. */
@@ -49,14 +71,25 @@ const v2 = (p: [number, number]) => `vec2(${p[0].toFixed(1)}, ${p[1].toFixed(1)}
    copy places the pointer, the spot heights and the readout). */
 const RELIEF_GLSL = `
 uniform float uTime;
+/* A range: crest height falls off across the crest line, tapers at the ends, and rises and dips along it into peaks. */
+float range(vec2 p, vec2 a, vec2 b, float hgt, float k, float peaks){
+  vec2 ab = b - a;
+  float u = clamp(dot(p - a, ab) / dot(ab, ab), 0.0, 1.0);
+  vec2 d = p - a - ab * u;
+  float crest = 0.55 + 0.45 * sin(u * peaks * 6.2832 + hgt);
+  return hgt * exp(-dot(d, d) * k) * (0.3 + 0.7 * sin(3.14159 * u)) * crest;
+}
 float relief(vec2 p){
   vec2 q = p * 0.085;
   q += 0.55 * vec2(sin(q.y * 1.3 + uTime * 0.05 + 1.7), cos(q.x * 1.1 - uTime * 0.04));
-  float h = 1.5 * sin(q.x + 0.3) * cos(q.y * 0.9)
-          + 1.0 * sin((q.x + q.y) * 0.7 + 1.3 + uTime * 0.03)
-          + 0.4 * sin(q.x * 2.3 - q.y * 1.9 + uTime * 0.06);
-  vec2 a = p - ${v2(SUMMIT)}, b = p - ${v2(BASIN)};
-  h += 4.4 * exp(-dot(a, a) * 0.0075) - 2.4 * exp(-dot(b, b) * 0.012);
+  float h = 2.0 * sin(q.x + 0.3) * cos(q.y * 0.9)
+          + 1.3 * sin((q.x + q.y) * 0.7 + 1.3 + uTime * 0.03)
+          + 0.5 * sin(q.x * 2.3 - q.y * 1.9 + uTime * 0.06)
+          // Sharp-crested ridges running across the sheet.
+          + 1.1 * (1.0 - abs(sin(q.x * 0.9 + q.y * 0.45 + 0.5))) - 0.7;
+  vec2 d;
+${FEATURES.map(([x, z, a, k]) => `  d = p - ${v2([x, z])}; h += ${a.toFixed(2)} * exp(-dot(d, d) * ${k.toFixed(4)});`).join("\n")}
+${RANGES.map(([x1, z1, x2, z2, a, k, n]) => `  h += range(p, ${v2([x1, z1])}, ${v2([x2, z2])}, ${a.toFixed(2)}, ${k.toFixed(4)}, ${n.toFixed(2)});`).join("\n")}
   return h;
 }`;
 
@@ -144,7 +177,7 @@ void main(){
   float idx = 1.0 - step(0.5, mod(lid, 5.0));
   // Each level breathes on its own phase.
   float breath = 0.5 + 0.5 * sin(uTime * 0.55 + lid * 0.83);
-  float hn = clamp(h / 10.0 + 0.45, 0.0, 1.0);
+  float hn = clamp(h / 18.0 + 0.35, 0.0, 1.0);
   // Half-width in device pixels: hairline intermediates under heavy index lines.
   float w = uPx * (mix(0.3, 0.95, idx) + 0.16 * breath + 0.2 * hn + 0.35 * tc.y);
   float line = clamp(w + 0.5 - dist / df, 0.0, 1.0);
@@ -193,10 +226,21 @@ export function buildField(k: PsxKit): SceneDef {
     let qx = x * 0.085, qz = z * 0.085;
     const wx = 0.55 * Math.sin(qz * 1.3 + t * 0.05 + 1.7), wz = 0.55 * Math.cos(qx * 1.1 - t * 0.04);
     qx += wx; qz += wz;
-    const ax = x - SUMMIT[0], az = z - SUMMIT[1], bx = x - BASIN[0], bz = z - BASIN[1];
-    return 1.5 * Math.sin(qx + 0.3) * Math.cos(qz * 0.9) + 1.0 * Math.sin((qx + qz) * 0.7 + 1.3 + t * 0.03) +
-      0.4 * Math.sin(qx * 2.3 - qz * 1.9 + t * 0.06) +
-      4.4 * Math.exp(-(ax * ax + az * az) * 0.0075) - 2.4 * Math.exp(-(bx * bx + bz * bz) * 0.012);
+    let h = 2.0 * Math.sin(qx + 0.3) * Math.cos(qz * 0.9) + 1.3 * Math.sin((qx + qz) * 0.7 + 1.3 + t * 0.03) +
+      0.5 * Math.sin(qx * 2.3 - qz * 1.9 + t * 0.06) +
+      1.1 * (1 - Math.abs(Math.sin(qx * 0.9 + qz * 0.45 + 0.5))) - 0.7;
+    for (const [fx, fz, a, k] of FEATURES) {
+      const dx = x - fx, dz = z - fz;
+      h += a * Math.exp(-(dx * dx + dz * dz) * k);
+    }
+    for (const [x1, z1, x2, z2, a, k, n] of RANGES) {
+      const abx = x2 - x1, abz = z2 - z1;
+      const u = Math.max(0, Math.min(1, ((x - x1) * abx + (z - z1) * abz) / (abx * abx + abz * abz)));
+      const dx = x - x1 - abx * u, dz = z - z1 - abz * u;
+      const crest = 0.55 + 0.45 * Math.sin(u * n * 6.2832 + a);
+      h += a * Math.exp(-(dx * dx + dz * dz) * k) * (0.3 + 0.7 * Math.sin(Math.PI * u)) * crest;
+    }
+    return h;
   };
   /* ---- coverage map: what the ripples have revealed, fading over HOLD seconds ---- */
   const covF = new Float32Array(RES * RES);
