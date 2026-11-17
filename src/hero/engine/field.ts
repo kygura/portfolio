@@ -17,7 +17,7 @@
  *    continuous wake of smaller ones: the isolines bunch, part and flow
  *    behind the pointer, then settle. Every ripple reveals the ground it
  *    crosses: full-strength lines and stepped height tints, held in a
- *    coverage map that fades back to the faint hint over a minute.
+ *    coverage map that fades back to the faint hint over three minutes.
  *  - Free camera (`freeCam`): the plain drag paints, so the engine moves the
  *    camera to Shift/Alt/right-drag (orbit, from straight down to a low
  *    oblique), middle-drag (pan), wheel and two fingers.
@@ -37,7 +37,7 @@ const ELEV = 1.2, DIST = 50, MIN_ELEV = 0.32;
 /** Coverage map: RES² texels over a square of half-size COV_R world units about the origin. */
 const RES = 256, COV_R = 120;
 /** Seconds for fully revealed ground to fade back to the hint, and how strong the hint is. */
-const HOLD = 60, HINT = 0.09;
+const HOLD = 180, HINT = 0.09;
 
 const v2 = (p: [number, number]) => `vec2(${p[0].toFixed(1)}, ${p[1].toFixed(1)})`;
 
