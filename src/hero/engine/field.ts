@@ -1,8 +1,9 @@
 /** Sheet 05 · Field: a contour map that a touch distorts and reveals.
  *
  *  One smooth height field is drawn as anti-aliased isolines in a fragment
- *  shader (no PS1 treatment: the scene is `clean`, so the engine draws it at
- *  full resolution without the low-res dither pass). The ground is a single
+ *  shader. The scene is `clean` with a `soft` PS1 pass: with the filter on, the
+ *  engine draws it at half resolution through a light quantize and dither;
+ *  with it off, straight to the canvas. The ground is a single
  *  palette colour, the same in every pixel at every camera angle: no shading,
  *  no fade, no marks. Ground and ink both come from the shared accent
  *  uniforms, so a palette switch recolours both live.
@@ -146,7 +147,8 @@ vec3 touch(vec2 p){
 }
 void main(){
   vec3 tc = touch(vP);
-  float h = relief(vP) + tc.x;
+  float r = relief(vP);
+  float h = r + tc.x;
   float f = h / ${STEP.toFixed(2)};
   // Level change per pixel, measured along the gradient (fwidth overstates it on diagonals).
   float df = max(length(vec2(dFdx(f), dFdy(f))), 1e-5);
@@ -156,8 +158,13 @@ void main(){
      pitch and phase, a fundamental plus a faint overtone. The swing is set in world units and turned
      into level units through the local slope, so a line shivers by the same distance on gentle and
      steep ground. A passing wave front or the cursor plucks the strings near it. */
-  vec2 ge = vec2(0.2, 0.0);
-  vec2 gH = vec2(relief(vP + ge.xy) - relief(vP - ge.xy), relief(vP + ge.yx) - relief(vP - ge.yx)) / 0.4;
+  // The world-space gradient comes from the screen-space derivatives of the relief and the ground
+  // position (a 2x2 solve), so the relief is evaluated once per pixel instead of five times.
+  vec2 jx = dFdx(vP), jy = dFdy(vP);
+  float rx = dFdx(r), ry = dFdy(r);
+  float det = jx.x * jy.y - jx.y * jy.x;
+  det = abs(det) < 1e-8 ? 1e-8 : det;
+  vec2 gH = vec2(rx * jy.y - ry * jx.y, ry * jx.x - rx * jy.x) / det;
   float slope = max(length(gH), 1e-3);
   // The wave shape is a smooth field of crossed standing waves, turned per level, so it reads as
   // nodes and antinodes along any line without kinks where the line curls.
@@ -244,6 +251,7 @@ export function buildField(k: PsxKit): SceneDef {
   };
   /* ---- coverage map: what the ripples have revealed, fading over HOLD seconds ---- */
   const covF = new Float32Array(RES * RES);
+  // Bytes are written as the float map changes, so nothing walks the whole map per frame. The shader reads red.
   const covB = new Uint8Array(RES * RES * 4);
   const covTex = new THREE.DataTexture(covB, RES, RES, THREE.RGBAFormat, THREE.UnsignedByteType);
   covTex.magFilter = THREE.LinearFilter;
@@ -255,16 +263,23 @@ export function buildField(k: PsxKit): SceneDef {
   /** Reveal a disc, strongest at the centre, soft at the rim. Texels inside `inner` are skipped. */
   const reveal = (x: number, z: number, r: number, val: number, inner = 0) => {
     const cx = toTex(x), cz = toTex(z), rt = (r / (2 * COV_R)) * RES, it = (inner / (2 * COV_R)) * RES;
-    const i0 = Math.max(1, Math.floor(cx - rt)), i1 = Math.min(RES - 2, Math.ceil(cx + rt));
     const j0 = Math.max(1, Math.floor(cz - rt)), j1 = Math.min(RES - 2, Math.ceil(cz + rt));
+    const rt2 = rt * rt, in2 = it > 1 ? (it - 1) * (it - 1) : -1;
     for (let j = j0; j <= j1; j++) {
+      const dz2 = (j - cz) * (j - cz);
+      if (dz2 > rt2) continue;
+      // Only the texels of this row that lie in the ring: the outer span minus the inner one.
+      const span = Math.sqrt(rt2 - dz2), hole = dz2 < in2 ? Math.sqrt(in2 - dz2) : -1;
+      const i0 = Math.max(1, Math.floor(cx - span)), i1 = Math.min(RES - 2, Math.ceil(cx + span));
       for (let i = i0; i <= i1; i++) {
-        const d = Math.hypot(i - cx, j - cz);
-        if (d > rt || d < it - 1) continue;
-        const u = d / rt;
+        const dx = i - cx;
+        if (hole > 0 && Math.abs(dx) < hole) { i = Math.max(i, Math.floor(cx + hole)); continue; }
+        const d2 = dx * dx + dz2;
+        if (d2 > rt2) continue;
+        const u = Math.sqrt(d2) / rt;
         const v = val * (1 - 0.45 * u * u) * Math.min(1, (1 - u) * 6);
         const o = j * RES + i;
-        if (v > covF[o]) { covF[o] = v; covDirty = true; }
+        if (v > covF[o]) { covF[o] = v; covB[o * 4] = Math.round(v * 255); covDirty = true; }
       }
     }
   };
@@ -277,6 +292,7 @@ export function buildField(k: PsxKit): SceneDef {
       for (let i = 0; i < RES; i++) {
         const o = j * RES + i;
         const v = covF[o] = Math.max(0, covF[o] - by);
+        covB[o * 4] = Math.round(v * 255);
         if (i >= b0 && i <= b1 && j >= c0 && j <= c1) { sum += v > 0.25 ? 1 : 0; n++; }
       }
     }
@@ -285,10 +301,6 @@ export function buildField(k: PsxKit): SceneDef {
   };
   const pushCov = () => {
     if (!covDirty) return;
-    for (let o = 0; o < RES * RES; o++) {
-      const b = Math.round(covF[o] * 255);
-      covB[o * 4] = b; covB[o * 4 + 1] = b; covB[o * 4 + 2] = b; covB[o * 4 + 3] = 255;
-    }
     covTex.needsUpdate = true;
     covDirty = false;
   };
@@ -314,7 +326,10 @@ export function buildField(k: PsxKit): SceneDef {
   sheet.frustumCulled = false;
   scene.add(sheet);
   // Lines stay hairlines on dense screens: weight grows slower than the drawing buffer's pixel ratio.
-  sheet.onBeforeRender = (renderer) => { pxU.value = 1 + (renderer.getPixelRatio() - 1) * 0.6; };
+  // Into the half-res PS1 target, a target pixel is already coarse, so the weight stays at 1.
+  sheet.onBeforeRender = (renderer) => {
+    pxU.value = renderer.getRenderTarget() ? 1 : 1 + (renderer.getPixelRatio() - 1) * 0.6;
+  };
   /* ---- ripples: presses and drag stamps share one pool ---- */
   interface Pulse { x: number; z: number; age: number; amp: number; life: number; speed: number; reach: number }
   const pool: Pulse[] = Array.from({ length: MAXP }, () => ({ x: 0, z: 0, age: 0, amp: 0, life: 1, speed: 1, reach: 0 }));
@@ -356,7 +371,7 @@ export function buildField(k: PsxKit): SceneDef {
   const summit = new THREE.Vector3(SUMMIT[0], 0, SUMMIT[1]);
 
   return {
-    scene, cam, clean: true, idleFps: 30, freeCam: { pan: 60 }, fog: [75, 160], fov: [50, 66],
+    scene, cam, clean: true, soft: 0.5, idleFps: 30, freeCam: { pan: 60 }, fog: [75, 160], fov: [50, 66],
     // From straight overhead down to a low oblique, and from a wide sheet to a close study.
     limits: { pitch: [MIN_ELEV - ELEV, Math.PI / 2 - ELEV], zoom: [0.4, 3.2] },
     labels: [],

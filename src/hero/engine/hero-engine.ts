@@ -2,7 +2,8 @@
  * Hero engine: builds every sheet once, renders only the active one
  * (plus the outgoing one during a dither dissolve) into a quarter-resolution
  * target, then blits through a 15-bit quantize + Bayer dither pass. A scene
- * marked `clean` (Field) skips all of that and is drawn straight to the canvas.
+ * marked `clean` (Field) skips all of that and is drawn straight to the canvas,
+ * or, if it is also `soft`, through a half-res target and a lighter version of the same pass.
  *
  * Loaded with a dynamic import from useHeroStage (home hero, /scenes), so three.js stays out of every
  * other route's bundle. The render loop only runs while there is something
@@ -30,7 +31,8 @@ import { buildOrb } from "./orb";
 
 const POST_V = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
 const POST_F = `
-uniform sampler2D tA; uniform sampler2D tB; uniform float uMix; uniform vec2 uLow; uniform float uLevels; varying vec2 vUv;
+uniform sampler2D tA; uniform sampler2D tB; uniform float uMix; uniform vec2 uLow; uniform float uLevels;
+uniform float uDither; uniform float uVig; varying vec2 vUv;
 float b2(vec2 a){ a = floor(a); return fract(dot(a, vec2(0.5, a.y * 0.75))); }
 float b4(vec2 a){ return b2(0.5 * a) * 0.25 + b2(a); }
 void main(){
@@ -43,8 +45,8 @@ void main(){
     float th = mix(b4(blk), n, 0.55);
     c = mix(texture2D(tB, uv).rgb, c, step(th, uMix * 1.02 - 0.01));
   }
-  vec2 q = vUv - 0.5; c *= 1.0 - dot(q, q) * 0.55;
-  c = floor(c * uLevels + b4(px)) / uLevels;
+  vec2 q = vUv - 0.5; c *= 1.0 - dot(q, q) * uVig;
+  c = floor(c * uLevels + 0.5 + (b4(px) - 0.5) * uDither) / uLevels;
   gl_FragColor = vec4(c, 1.0);
 }`;
 
@@ -147,7 +149,19 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     depthWrite: false,
     uniforms: {
       tA: { value: rtA.texture }, tB: { value: rtB.texture }, uMix: { value: 1 },
-      uLow: { value: new THREE.Vector2(320, 180) }, uLevels: { value: 31.0 },
+      uLow: { value: new THREE.Vector2(320, 180) }, uLevels: { value: 31.0 }, uDither: { value: 1 }, uVig: { value: 0.55 },
+    },
+    vertexShader: POST_V,
+    fragmentShader: POST_F,
+  });
+  /* A soft scene's pass: half-res target, twice the colour levels, half the dither, a faint vignette. */
+  const rtS = new THREE.WebGLRenderTarget(2, 2, rtOpt);
+  const softMat = new THREE.ShaderMaterial({
+    depthTest: false,
+    depthWrite: false,
+    uniforms: {
+      tA: { value: rtS.texture }, tB: { value: rtS.texture }, uMix: { value: 1 },
+      uLow: { value: new THREE.Vector2(2, 2) }, uLevels: { value: 63.0 }, uDither: { value: 0.5 }, uVig: { value: 0.2 },
     },
     vertexShader: POST_V,
     fragmentShader: POST_F,
@@ -297,9 +311,18 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
      lower than the 2x the low-res scenes blit at, and drops a step while frames run long. */
   const CLEAN_RATIO = [1.5, 1.25, 1];
   let ratioStep = 0, slow = 0, lastLoop = 0, lastDraw = 0;
+  const softOn = (sc: SceneDef) => psxOn && Boolean(sc.clean && sc.soft);
   const wantRatio = () => {
-    const dpr = window.devicePixelRatio || 1;
-    return scene(cur).clean ? Math.min(dpr, CLEAN_RATIO[ratioStep]) : Math.min(dpr, 2);
+    const dpr = window.devicePixelRatio || 1, sc = scene(cur);
+    // The soft frame is already coarse: blit it at 1x and let the pixelated canvas scale it up.
+    if (softOn(sc)) return 1;
+    return sc.clean ? Math.min(dpr, CLEAN_RATIO[ratioStep]) : Math.min(dpr, 2);
+  };
+  const sizeSoft = () => {
+    const f = scene(cur).soft ?? 0.5;
+    const w = Math.max(1, Math.round(cssW * f)), h = Math.max(1, Math.round(cssH * f));
+    rtS.setSize(w, h);
+    softMat.uniforms.uLow.value.set(w, h);
   };
   const resize = () => {
     cssW = Math.max(1, host.clientWidth);
@@ -312,6 +335,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     rtA.setSize(lw, lh);
     rtB.setSize(lw, lh);
     postMat.uniforms.uLow.value.set(lw, lh);
+    sizeSoft();
     setSnap();
     dirty = true;
     kick();
@@ -335,6 +359,14 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       renderer.setRenderTarget(rtA);
       renderer.render(sc.scene, sc.cam);
       postMat.uniforms.uMix.value = mixT;
+      quad.material = postMat;
+      renderer.setRenderTarget(null);
+      renderer.render(postScene, postCam);
+    } else if (softOn(sc)) {
+      apply(sc);
+      renderer.setRenderTarget(rtS);
+      renderer.render(sc.scene, sc.cam);
+      quad.material = softMat;
       renderer.setRenderTarget(null);
       renderer.render(postScene, postCam);
     } else {
@@ -355,7 +387,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     }
     lastDraw = now;
     // Frames arriving under ~40 a second for a while: a clean scene gives up some resolution.
-    if (sc0.clean && ratioStep < CLEAN_RATIO.length - 1 && gap < 250) {
+    if (sc0.clean && !softOn(sc0) && ratioStep < CLEAN_RATIO.length - 1 && gap < 250) {
       slow = gap > 25 ? slow + 1 : Math.max(0, slow - 1);
       if (slow > 30 && wantRatio() > CLEAN_RATIO[ratioStep + 1]) {
         ratioStep++;
@@ -630,7 +662,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   // The stylesheet upscales the canvas with nearest-neighbour; a clean scene wants it smooth.
   function setCrisp() {
-    canvas.style.imageRendering = scene(cur).clean ? "auto" : "";
+    canvas.style.imageRendering = scene(cur).clean && !softOn(scene(cur)) ? "auto" : "";
     // A free-camera scene draws with the plain drag, so the grab hand would mislead.
     host.style.cursor = scene(cur).freeCam ? "crosshair" : "";
   }
@@ -664,6 +696,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       mixT = psxOn && !o.reducedMotion && !scene(prev).clean && !scene(cur).clean ? 0 : 1;
       setCrisp();
       ratioStep = slow = 0;
+      sizeSoft();
       if (renderer.getPixelRatio() !== wantRatio()) resize();
       buildLabels(scene(cur));
       dirty = true;
@@ -672,6 +705,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     setPsx(on) {
       psxOn = on;
       setSnap();
+      setCrisp();
+      if (renderer.getPixelRatio() !== wantRatio()) resize();
       dirty = true;
       kick();
     },
@@ -732,6 +767,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       Object.values(kit.tex).forEach((tx) => tx.dispose());
       rtA.dispose();
       rtB.dispose();
+      rtS.dispose();
+      softMat.dispose();
       renderer.dispose();
       o.labelLayer?.replaceChildren();
     },
