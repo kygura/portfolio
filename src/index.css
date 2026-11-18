@@ -2850,10 +2850,28 @@ kbd {
   font-size: 10px; letter-spacing: 0.06em; color: var(--ink-3);
 }
 .theme-panel__foot span { display: inline-flex; align-items: center; gap: 4px; }
-@media (max-width: 479px) {
-  .theme-fam { grid-template-columns: 1fr; gap: 9px; padding: 11px 12px; }
-  .theme-fam__label { grid-template-columns: auto auto 1fr; }
-  .theme-fam__label small { grid-column: auto; }
+/* Phones: the panel shrinks to a 4-row swatch grid. Each family is one row,
+   name on the left, palettes as small squares (ground with an accent mark)
+   on the right. Names, moods and key hints drop out; the head still names
+   the current palette. */
+@media (max-width: 639px) {
+  .theme-panel { width: auto; min-width: 0; }
+  .theme-panel__head { padding: 8px 10px; font-size: 10px; }
+  .theme-panel__head > span:first-child { display: none; }
+  .theme-panel__now { width: 100%; text-align: left; }
+  .theme-fam { grid-template-columns: 58px auto; gap: 10px; padding: 7px 10px; }
+  .theme-fam:last-of-type { border-bottom: 0; }
+  .theme-fam__label { display: block; }
+  .theme-fam__label kbd, .theme-fam__label small { display: none; }
+  .theme-fam__label span { font-size: 10px; letter-spacing: 0.12em; color: var(--ink-3); }
+  .theme-fam__chips { display: flex; gap: 6px; }
+  .theme-chip { gap: 0; }
+  .theme-chip__card { width: 28px; height: 28px; border-left: 0; }
+  .theme-chip__card i:nth-child(1), .theme-chip__card i:nth-child(2) { display: none; }
+  .theme-chip__card i:nth-child(3) { right: 50%; bottom: 50%; width: 10px; height: 10px; transform: translate(50%, 50%); }
+  .theme-chip__name { display: none; }
+  .theme-chip:hover .theme-chip__card, .theme-chip:focus-visible .theme-chip__card { transform: none; }
+  .theme-panel__foot { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .theme-chip__card { transition: none; }
