@@ -51,6 +51,9 @@ export interface SceneDef {
   /** Drawn straight to the canvas at full resolution: no low-res target, dither or dissolve.
    *  Its drawing buffer is capped at 1.5x and steps down while frames run long. */
   clean?: boolean;
+  /** For a clean scene: with the PS1 filter on, draw it at this fraction of CSS resolution and blit
+   *  it through a lighter quantize and dither than the low-res scenes get. Omit to stay clean. */
+  soft?: number;
   /** Frame rate while nothing but the scene's own ambient motion is happening. Input, ripples and
    *  camera moves always draw at the display's rate. */
   idleFps?: number;
