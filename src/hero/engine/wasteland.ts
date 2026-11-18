@@ -23,31 +23,7 @@ export function createWaste(kit: PsxKit, mats: WasteMats) {
 
   /* ---- batching. With a floor, everything under it is pressed up onto it: a mirror
      sea needs that, or the flipped copy below would poke back up through the surface. ---- */
-  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), eu = new THREE.Euler(), pv = new THREE.Vector3(), sv = new THREE.Vector3();
-  const batch = (floor: number | null = null) => {
-    const lists = new Map<THREE.Material, THREE.BufferGeometry[]>();
-    return {
-      add(geo: THREE.BufferGeometry, mat: THREE.Material, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, s = 1) {
-        const g = geo.clone().applyMatrix4(m4.compose(pv.set(x, y, z), q.setFromEuler(eu.set(rx, ry, rz)), sv.set(s, s, s)));
-        if (floor !== null) {
-          const p = g.attributes.position;
-          for (let i = 0; i < p.count; i++) if (p.getY(i) < floor) p.setY(i, floor);
-        }
-        const l = lists.get(mat) ?? [];
-        l.push(g);
-        lists.set(mat, l);
-      },
-      flush(parent: THREE.Object3D) {
-        const out: THREE.Mesh[] = [];
-        for (const [mat, l] of lists) {
-          const g = mergeGeometries(l);
-          if (g) out.push(kit.mesh(g, mat, parent));
-        }
-        lists.clear();
-        return out;
-      },
-    };
-  };
+  const batch = (floor: number | null = null) => kit.batcher(floor);
   type Batch = ReturnType<typeof batch>;
 
   /* ---- shapes: towers stand on their local y = 0 ---- */

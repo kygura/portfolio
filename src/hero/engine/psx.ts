@@ -158,6 +158,12 @@ void main(){
 
 export function createKit(accent: Accent) {
   let seed = 1337;
+  /** Restart the random stream, so a scene comes out the same whatever was built before it. */
+  const reseed = (key: string) => {
+    let h = 2166136261;
+    for (let i = 0; i < key.length; i++) h = Math.imul(h ^ key.charCodeAt(i), 16777619);
+    seed = h | 0;
+  };
   const rnd = () => {
     seed = (seed + 0x6d2b79f5) | 0;
     let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
@@ -343,23 +349,76 @@ export function createKit(accent: Accent) {
     return m;
   };
   // Static parts collected per material, then merged into one mesh each per parent.
-  const batcher = () => {
-    const batches = new Map<THREE.Material, THREE.BufferGeometry[]>();
-    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), eu = new THREE.Euler();
-    const pv = new THREE.Vector3(), sv = new THREE.Vector3();
+  /* Merges many placed copies of a few shapes into one mesh per material. Each copy is
+     recorded as (shape, matrix) and written straight into the merged buffers at flush:
+     cloning and transforming every copy first (Rift places ~20k) took most of a build.
+     With a floor, every vertex below it is pressed up onto it. */
+  const batcher = (floor: number | null = null) => {
+    type Placed = { geo: THREE.BufferGeometry; m: THREE.Matrix4 };
+    const batches = new Map<THREE.Material, Placed[]>();
+    const q = new THREE.Quaternion(), eu = new THREE.Euler();
+    const pv = new THREE.Vector3(), sv = new THREE.Vector3(), nm = new THREE.Matrix3();
+    const plain = (list: Placed[]) => {
+      const names = Object.keys(list[0].geo.attributes).sort().join();
+      return list.every(({ geo }) =>
+        !geo.index && !Object.keys(geo.morphAttributes).length && Object.keys(geo.attributes).sort().join() === names &&
+        Object.values(geo.attributes).every((a) => !(a as THREE.InterleavedBufferAttribute).isInterleavedBufferAttribute));
+    };
+    const clamp = (g: THREE.BufferGeometry) => {
+      if (floor === null) return g;
+      const p = g.attributes.position;
+      for (let i = 0; i < p.count; i++) if (p.getY(i) < floor) p.setY(i, floor);
+      return g;
+    };
+    const bake = (list: Placed[]) => {
+      const out = new THREE.BufferGeometry();
+      const verts = list.reduce((n, { geo }) => n + geo.attributes.position.count, 0);
+      for (const name of Object.keys(list[0].geo.attributes)) {
+        const first = list[0].geo.attributes[name] as THREE.BufferAttribute, size = first.itemSize;
+        const arr = new (first.array.constructor as Float32ArrayConstructor)(verts * size);
+        let at = 0;
+        for (const { geo, m } of list) {
+          const src = (geo.attributes[name] as THREE.BufferAttribute).array as Float32Array;
+          if (name === "position" && size === 3) {
+            const e = m.elements;
+            for (let i = 0; i < src.length; i += 3) {
+              const x = src[i], y = src[i + 1], z = src[i + 2];
+              const wy = e[1] * x + e[5] * y + e[9] * z + e[13];
+              arr[at + i] = e[0] * x + e[4] * y + e[8] * z + e[12];
+              arr[at + i + 1] = floor !== null && wy < floor ? floor : wy;
+              arr[at + i + 2] = e[2] * x + e[6] * y + e[10] * z + e[14];
+            }
+          } else if (name === "normal" && size === 3) {
+            const e = nm.getNormalMatrix(m).elements;
+            for (let i = 0; i < src.length; i += 3) {
+              const x = src[i], y = src[i + 1], z = src[i + 2];
+              const nx = e[0] * x + e[3] * y + e[6] * z, ny = e[1] * x + e[4] * y + e[7] * z, nz = e[2] * x + e[5] * y + e[8] * z;
+              const l = Math.hypot(nx, ny, nz) || 1;
+              arr[at + i] = nx / l;
+              arr[at + i + 1] = ny / l;
+              arr[at + i + 2] = nz / l;
+            }
+          } else arr.set(src, at);
+          at += src.length;
+        }
+        out.setAttribute(name, new THREE.BufferAttribute(arr, size, first.normalized));
+      }
+      return out;
+    };
     return {
       add(geo: THREE.BufferGeometry, m: THREE.Material, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, s = 1) {
-        m4.compose(pv.set(x, y, z), q.setFromEuler(eu.set(rx, ry, rz)), sv.set(s, s, s));
         const list = batches.get(m) ?? [];
-        list.push(geo.clone().applyMatrix4(m4));
+        list.push({ geo, m: new THREE.Matrix4().compose(pv.set(x, y, z), q.setFromEuler(eu.set(rx, ry, rz)), sv.set(s, s, s)) });
         batches.set(m, list);
       },
       flush(parent: THREE.Object3D) {
+        const out: THREE.Mesh[] = [];
         for (const [m, list] of batches) {
-          const merged = mergeGeometries(list);
-          if (merged) mesh(merged, m, parent);
+          const merged = plain(list) ? bake(list) : mergeGeometries(list.map(({ geo, m }) => clamp(geo.clone().applyMatrix4(m))));
+          if (merged) out.push(mesh(merged, m, parent));
         }
         batches.clear();
+        return out;
       },
     };
   };
@@ -488,7 +547,7 @@ export function createKit(accent: Accent) {
     pad(Math.max(1, Math.min(9, Math.floor((z + span) / (span / 4)) + 1)));
 
   return {
-    U, rnd,
+    U, rnd, reseed,
     tex: { tStone, tMoss, tBark, tLeaf, tGround, tPlain, tWater, tSand, tGlass },
     psx, lineMat, facet, wallUV, mesh, batcher, segs, circle, skyDome, sunDisc, flare, M,
     view,

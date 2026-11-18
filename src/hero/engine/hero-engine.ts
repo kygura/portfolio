@@ -1,33 +1,22 @@
 /**
- * Hero engine: builds every sheet once, renders only the active one
+ * Hero engine: builds each sheet the first time it is shown, renders only the active one
  * (plus the outgoing one during a dither dissolve) into a quarter-resolution
  * target, then blits through a 15-bit quantize + Bayer dither pass. A scene
  * marked `clean` (Field) skips all of that and is drawn straight to the canvas,
  * or, if it is also `soft`, through a half-res target and a lighter version of the same pass.
  *
  * Loaded with a dynamic import from useHeroStage (home hero, /scenes), so three.js stays out of every
- * other route's bundle. The render loop only runs while there is something
+ * other route's bundle. Each scene's builder is its own chunk (registry.ts). A switch to a scene
+ * that is not built yet keeps drawing the current one while the next is fetched, built and its
+ * shaders compiled, then dissolves across. The render loop only runs while there is something
  * to draw: it stops when the hero is offscreen, the tab is hidden, or motion
  * is paused and nothing is dirty.
  */
 import * as THREE from "three";
 import type { Accent } from "@/theme/accent";
-import { createKit, type SceneDef, type PsxKit } from "./psx";
-import { SHEETS, type SheetMeta } from "../sheets";
-import { buildOcean } from "./ocean";
-import { buildAstral } from "./astral";
-import { buildRuins } from "./ruins";
-import { buildDrift } from "./drift";
-import { buildDunes } from "./dunes";
-import { buildRift } from "./rift";
-import { buildFrost } from "./frost";
-import { buildSea } from "./sea";
-import { buildField } from "./field";
-import { buildMatrix } from "./matrix";
-import { buildVoid } from "./void";
-import { buildBeach } from "./beach";
-import { buildCliff } from "./cliff";
-import { buildOrb } from "./orb";
+import { createKit, type SceneDef } from "./psx";
+import { EGG_TOTAL, SHEETS } from "../sheets";
+import type { SceneBuilder } from "./registry";
 
 const POST_V = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }`;
 const POST_F = `
@@ -60,6 +49,12 @@ export interface HeroEngineOptions {
   compass: SVGGElement | null;
   accent: Accent;
   sheet: number;
+  /** Builder for `sheet`, already loaded, so the first frame needs no wait. */
+  initial: SceneBuilder;
+  /** Fetches the builder of any other sheet. */
+  load: (id: (typeof SHEETS)[number]["id"]) => Promise<SceneBuilder>;
+  /** A sheet's first frame has been drawn (after a switch, or on start). */
+  onShown?: (sheet: number) => void;
   motion: boolean;
   psx: boolean;
   reducedMotion: boolean;
@@ -88,56 +83,55 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
 
   const kit = createKit(o.accent);
   const { U } = kit;
-  /* Only scenes enabled in sheets.ts are built, in tab order. */
-  const BUILD: Record<SheetMeta["id"], (k: PsxKit) => SceneDef> = {
-    cipher: () => buildVoid(), ocean: buildOcean, sea: buildSea, astral: buildAstral, ruins: buildRuins, drift: buildDrift, dunes: buildDunes, rift: buildRift, frost: buildFrost,
-    field: buildField, matrix: buildMatrix, beach: buildBeach, cliff: buildCliff, orb: buildOrb,
-  };
-  /* Scenes are built on first use, not all up front: building all thirteen in
-     one go blocked the main thread for over a second on load. The rest are
-     built one per idle slot after the first frame, so switching stays instant. */
+  /* A scene is built the first time it is shown and kept. Nothing is built in the
+     background: the heavy builders (Rift, Beach) hold the main thread for a few
+     hundred ms, which read as a freeze when it landed mid-view. */
   const built: (SceneDef | undefined)[] = new Array(SHEETS.length);
   let accentHex = o.accent.hex;
+  let dead = false;
   const fitCam = (s: SceneDef) => {
     s.cam.aspect = cssW / cssH;
     s.cam.fov = s.cam.aspect < 1 ? s.fov[1] : s.fov[0];
     s.cam.updateProjectionMatrix();
   };
-  const scene = (i: number): SceneDef => {
-    let s = built[i];
-    if (!s) {
-      s = BUILD[SHEETS[i].id](kit);
-      s.moteMat?.color.set(accentHex);
-      built[i] = s;
-      fitCam(s);
-    }
+  const make = (i: number, build: SceneBuilder) => {
+    kit.reseed(SHEETS[i].id);
+    const s = build(kit);
+    s.moteMat?.color.set(accentHex);
+    built[i] = s;
+    fitCam(s);
+    if (import.meta.env.DEV && (s.eggs?.length ?? 0) !== (SHEETS[i].eggs ?? 0))
+      console.warn(`sheets.ts lists ${SHEETS[i].eggs ?? 0} eggs for ${SHEETS[i].id}; the scene has ${s.eggs?.length ?? 0}`);
     return s;
   };
+  /** Only ever called for a built sheet: `cur` and `prev` are always built. */
+  const scene = (i: number): SceneDef => built[i]!;
   const builtScenes = () => built.filter((s): s is SceneDef => Boolean(s));
-  /** Eggs are counted across every scene, so an egg find builds whatever is still missing. */
-  const eggTotal = () => {
-    for (let i = 0; i < SHEETS.length; i++) scene(i);
-    return builtScenes().reduce((n, s) => n + (s.eggs?.length ?? 0), 0);
-  };
-  let idle = 0;
-  const idleBuild = () => {
-    idle = 0;
-    const i = SHEETS.findIndex((_, k) => !built[k]);
-    if (i < 0) return;
-    scene(i);
-    queueIdle();
-  };
-  const ric = (window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
-  const cic = (window as Window & { cancelIdleCallback?: (h: number) => void }).cancelIdleCallback;
-  function queueIdle() {
-    if (idle) return;
-    idle = ric ? ric(idleBuild, { timeout: 4000 }) : window.setTimeout(idleBuild, 400);
-  }
-  const cancelIdle = () => {
-    if (!idle) return;
-    if (ric && cic) cic(idle);
-    else window.clearTimeout(idle);
-    idle = 0;
+  /* Fetch, build, then compile the shaders off the draw path (parallel where the
+     driver allows), so the first frame of the new scene does not stall. The wait
+     before the build lets the page paint whatever it shows meanwhile. */
+  const preparing = new Map<number, Promise<void>>();
+  const afterPaint = () => new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 0)));
+  const prepare = (i: number): Promise<void> => {
+    if (built[i]) return Promise.resolve();
+    let p = preparing.get(i);
+    if (!p) {
+      p = (async () => {
+        const build = await o.load(SHEETS[i].id);
+        if (dead || built[i]) return;
+        await afterPaint();
+        if (dead || built[i]) return;
+        const s = make(i, build);
+        try {
+          await renderer.compileAsync(s.scene, s.cam);
+        } catch {
+          /* compiled on first draw instead */
+        }
+      })();
+      p.finally(() => preparing.delete(i)).catch(() => {});
+      preparing.set(i, p);
+    }
+    return p;
   };
 
   /* ---- post: two low-res targets, dissolve + dither/quantize blit ---- */
@@ -177,6 +171,10 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   let psxOn = o.psx;
   let cur = Math.max(0, Math.min(SHEETS.length - 1, o.sheet));
   let prev = cur;
+  /** Sheet asked for most recently; differs from `cur` while it is being prepared. */
+  let want = cur;
+  /** Sheet whose first frame is still to be reported. */
+  let announce = cur;
   let mixT = 1;
   let t = 18;
   let last = performance.now();
@@ -258,7 +256,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     }
     if (!best) return false;
     best.fire(t);
-    o.onEgg?.({ id: best.id, total: eggTotal() });
+    o.onEgg?.({ id: best.id, total: EGG_TOTAL });
     dirty = true;
     kick();
     return true;
@@ -422,6 +420,10 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     scene(cur).update(t);
     if (mixT < 1) scene(prev).update(t);
     render();
+    if (announce === cur) {
+      announce = -1;
+      o.onShown?.(cur);
+    }
     placeLabels(scene(cur));
     if (frameN++ % 6 === 0 || dirty) readouts(scene(cur));
     dirty = false;
@@ -661,6 +663,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   ro.observe(host);
 
   // The stylesheet upscales the canvas with nearest-neighbour; a clean scene wants it smooth.
+  make(cur, o.initial);
+
   function setCrisp() {
     canvas.style.imageRendering = scene(cur).clean && !softOn(scene(cur)) ? "auto" : "";
     // A free-camera scene draws with the plain drag, so the grab hand would mislead.
@@ -669,7 +673,6 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   setCrisp();
   buildLabels(scene(cur));
   resize();
-  queueIdle();
 
   const api: HeroEngine = {
     setAccent(a) {
@@ -684,7 +687,15 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     },
     setSheet(i) {
       i = ((i % SHEETS.length) + SHEETS.length) % SHEETS.length;
+      want = i;
       if (i === cur) return;
+      if (!built[i]) {
+        prepare(i).then(
+          () => { if (!dead && want === i && built[i]) api.setSheet(i); },
+          () => { if (!dead && want === i) o.onContextLost(); },
+        );
+        return;
+      }
       scene(cur).pointer?.release(false);
       prev = cur;
       cur = i;
@@ -699,6 +710,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       sizeSoft();
       if (renderer.getPixelRatio() !== wantRatio()) resize();
       buildLabels(scene(cur));
+      announce = cur;
       dirty = true;
       kick();
     },
@@ -730,9 +742,9 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       kick();
     },
     dispose() {
+      dead = true;
       if (raf) cancelAnimationFrame(raf);
       raf = 0;
-      cancelIdle();
       io.disconnect();
       ro.disconnect();
       host.removeEventListener("pointermove", onPointer);

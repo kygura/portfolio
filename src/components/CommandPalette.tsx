@@ -219,7 +219,7 @@ export default function CommandPalette({
       run: () => window.scrollTo({ top: document.documentElement.scrollHeight }),
       keys: ["G"],
     },
-    ...(pathname.startsWith("/scenes")
+    ...(pathname.startsWith("/scenes/")
       ? [{ value: "page next scene", label: "Next scene", keywords: ["hero"], run: () => pressKey("]"), keys: ["]"] }]
       : []),
   ];
