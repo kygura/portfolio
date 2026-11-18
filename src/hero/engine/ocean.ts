@@ -2,7 +2,7 @@
  *  Out past the islands the wasteland rings the horizon: mossed shard towers and blades, wreckage in the swell,
  *  stone hanging around the spire and islands floating upside down. */
 import * as THREE from "three";
-import { pulse, type PsxKit, type SceneDef, type V3 } from "./psx";
+import { pulse, rippleSheet, type PsxKit, type SceneDef, type V3 } from "./psx";
 import { createWaste } from "./wasteland";
 
 // Sail cloth with the Wind Waker crest (a hooked S curling into a spiral) near the luff.
@@ -78,13 +78,9 @@ export function buildOcean(k: PsxKit): SceneDef {
   const wp0 = wg.attributes.position;
   for (let i = 0; i < wp0.count; i++) wp0.setXYZ(i, WCX + warp(wp0.getX(i)), 0, WCZ + warp(wp0.getZ(i)));
   const water = facet(wg);
+  const ripple = rippleSheet(wg, water);
   const wpos = water.attributes.position, wuv = water.attributes.uv;
-  const wx = new Float32Array(wpos.count), wz = new Float32Array(wpos.count);
-  for (let i = 0; i < wpos.count; i++) {
-    wx[i] = wpos.getX(i);
-    wz[i] = wpos.getZ(i);
-    wuv.setXY(i, wx[i] / 6, wz[i] / 6);
-  }
+  for (let i = 0; i < wpos.count; i++) wuv.setXY(i, wpos.getX(i) / 6, wpos.getZ(i) / 6);
   mesh(water, mat.water, scene).frustumCulled = false;
 
   /* ---- palms ---- */
@@ -351,9 +347,7 @@ export function buildOcean(k: PsxKit): SceneDef {
     ],
     update(t) {
       hang(t);
-      for (let i = 0; i < wpos.count; i++) wpos.setY(i, wave(wx[i], wz[i], t));
-      wpos.needsUpdate = true;
-      water.computeVertexNormals();
+      ripple((x, z) => wave(x, z, t));
       for (const f of foams) f.m.position.y = wave(f.x, f.z, t) + 0.08;
 
       ship.position.y = wave(SX, SZ, t) * 0.7 + 0.05;

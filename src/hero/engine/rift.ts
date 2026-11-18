@@ -144,6 +144,9 @@ export function buildRift(kit: PsxKit): SceneDef {
   /* ---- the forest: conifers on the floor and up the walls, thinning out to a treeline,
      dead snags among them, a clearing down the middle for the river ---- */
   const riverX = (z: number) => 6 * Math.sin(z * 0.02);
+  // Ground distance from where the camera hovers (it drifts a few units around x 0, z 64).
+  const far = (x: number, z: number, r: number) => Math.hypot(x, z - 64) > r;
+  const TREE_LOD = 180, BUSH_LOD = 120;
   {
     const fb = W.batch();
     const trunk = facet(new THREE.CylinderGeometry(0.22, 0.4, 4, 5, 1, true).translate(0, 2, 0));
@@ -174,6 +177,13 @@ export function buildRift(kit: PsxKit): SceneDef {
       ])!,
       0.5,
     );
+    /* Far down the valley a tree is a few pixels of the low-res frame: a pine is one cone down to
+       the ground (its trunk would be under a pixel wide), a broadleaf one ball on a three-sided
+       trunk. These shapes are not roughened: roughening draws from rnd(), and the placements
+       below must draw the same numbers as before. */
+    const crownFar = facet(new THREE.ConeGeometry(2.6, 11, 6, 1, true).translate(0, 6.3, 0));
+    const bTrunkFar = facet(new THREE.CylinderGeometry(0.2, 0.42, 5.5, 3, 1, true).translate(0, 2.75, 0));
+    const bCrownFar = facet(new THREE.IcosahedronGeometry(3.2, 0).translate(0.1, 6.8, 0));
     // Fine grid over the floor and lower walls, a coarser one further up the mountainsides.
     const STEP = 5;
     const cols: [number, number][] = [];
@@ -193,14 +203,15 @@ export function buildRift(kit: PsxKit): SceneDef {
         const s = between(0.8, 1.7) * (y > 130 ? 0.8 : 1), ry = rnd() * 6.28, kind = rnd();
         // Broadleaf trees crowd the warm valley bottom and thin out up the walls, where the pines take over.
         const broad = onFloor ? 0.4 : 0.4 * THREE.MathUtils.smoothstep(70 - y, 0, 50);
+        const lo = far(x, zz, TREE_LOD);
         if (kind < 0.035) {
           fb.add(snag, mSnag, x, y - 0.4, zz, (rnd() - 0.5) * 0.12, ry, (rnd() - 0.5) * 0.12, s * 1.3);
         } else if (kind < 0.035 + broad) {
-          fb.add(bTrunk, mBark, x, y - 0.3, zz, 0, ry, 0, s);
-          fb.add(bCrown, mLeaf[Math.floor(rnd() * 3)], x, y - 0.3, zz, 0, ry, 0, s * between(0.85, 1.15));
+          fb.add(lo ? bTrunkFar : bTrunk, mBark, x, y - 0.3, zz, 0, ry, 0, s);
+          fb.add(lo ? bCrownFar : bCrown, mLeaf[Math.floor(rnd() * 3)], x, y - 0.3, zz, 0, ry, 0, s * between(0.85, 1.15));
         } else {
-          fb.add(trunk, mBark, x, y - 0.3, zz, 0, ry, 0, s);
-          fb.add(crown, mPine[Math.floor(rnd() * 3)], x, y - 0.3, zz, 0, ry, 0, s);
+          if (!lo) fb.add(trunk, mBark, x, y - 0.3, zz, 0, ry, 0, s);
+          fb.add(lo ? crownFar : crown, mPine[Math.floor(rnd() * 3)], x, y - 0.3, zz, 0, ry, 0, s);
         }
       }
     }
@@ -231,13 +242,15 @@ export function buildRift(kit: PsxKit): SceneDef {
       )!,
     );
     const bloom = facet(new THREE.TetrahedronGeometry(0.22, 0));
+    // A far bush is one low lump, unroughened for the same reason as the far trees.
+    const bushFar = facet(new THREE.OctahedronGeometry(1.2, 0).scale(1.4, 0.8, 1.3).translate(0.3, 0, 0.1));
     for (let i = 0; i < 6500; i++) {
       // Most on the floor, the rest scattered up the lower mountainsides.
       const z = between(-560, 50), x = (rnd() - 0.5) * (i % 3 ? 2.2 * Wv(z) : 360), y = groundH(x, z);
       if (y > 150) continue;
       const clear = Math.abs(x - riverX(z)) - (5 + -z * 0.006);
       if (clear < 0.5) continue;
-      if (rnd() < 0.6) ub.add(bush, mBush[i % 2], x, y - 0.3, z, 0, rnd() * 6.28, 0, between(0.7, 1.9));
+      if (rnd() < 0.6) ub.add(far(x, z, BUSH_LOD) ? bushFar : bush, mBush[i % 2], x, y - 0.3, z, 0, rnd() * 6.28, 0, between(0.7, 1.9));
       else ub.add(fern, mBush[(i + 1) % 2], x, y - 0.2, z, 0, rnd() * 6.28, 0, between(0.9, 1.6));
     }
     // The meadow fills the clearing and spills under the first trees; nearer the eye it is denser.
