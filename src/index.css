@@ -3082,126 +3082,190 @@ kbd {
 }
 
 /* ─────────────────────────────────────────────
-   SCENES — a stage over a console. The console is a solid bar, not an
-   overlay, so its type reads the same over a pink beach or a black void.
+   SCENES VIEWER: the stage fills the window under the nav. The overlay is
+   three solid pieces (way back, name plate, controls) on the code ground,
+   so their type reads the same over a pink beach or a black void.
    ───────────────────────────────────────────── */
 .scenes {
-  display: flex; flex-direction: column;
   height: calc(100vh - var(--nav-h));
   height: calc(100svh - var(--nav-h));
   min-height: 420px;
-  background: var(--bg);
+  background: var(--code);
 }
 .scenes__stage.hero__stage {
-  flex: 1; min-height: 0; height: auto;
+  height: 100%;
   /* Nothing to scroll in here: every gesture belongs to the scene. */
   touch-action: none;
-}
-.hero--no-gl .scenes__stage {
-  background:
-    repeating-radial-gradient(circle at 62% 78%, transparent 0 22px, var(--rule) 22px 23px),
-    var(--bg);
-}
-.scenes__egg.hero__egg { left: var(--page-gutter); bottom: 16px; }
-
-.scenes__console {
-  flex: none;
   background: var(--code);
-  border-top: 1px solid var(--rule-2);
-  font-family: var(--f-mono);
 }
-.scenes__plate {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 8px 28px;
-  padding: 14px var(--page-gutter);
-}
-.scenes__step { display: flex; align-items: center; gap: 4px; }
-.scenes__step a {
-  display: grid; place-items: center; width: 30px; height: 30px;
-  color: var(--ink-2); border: 1px solid var(--rule-2);
-  transition: color 0.2s, border-color 0.2s;
-}
-.scenes__step a:hover, .scenes__step a:focus-visible { color: var(--accent); border-color: var(--accent); outline: none; }
-.scenes__count {
-  min-width: 5.2em; text-align: center;
-  font-family: var(--f-pixel); font-size: 10.5px; letter-spacing: 0.08em; color: var(--ink-3);
-}
-.scenes__count b { font-weight: 400; color: var(--accent); }
+.hero--no-gl .scenes__stage { background: var(--code); }
 
-.scenes__caption {
-  display: flex; align-items: baseline; gap: 6px 18px; flex-wrap: wrap; min-width: 0;
-  animation: scenesCaption 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+/* The still the hall's window showed, held until the live scene's first frame. */
+.scenes__still {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; image-rendering: pixelated;
+  pointer-events: none;
+  transition: opacity 0.5s steps(6);
 }
-@keyframes scenesCaption { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
-.scenes__title {
-  margin: 0;
-  font-family: var(--f-body); font-weight: 400; font-style: italic;
-  font-size: clamp(1.4rem, 2.4vw, 1.9rem); line-height: 1; letter-spacing: -0.01em;
-  color: var(--ink);
-}
-.scenes__hint {
-  margin: 0;
-  font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); white-space: nowrap;
-}
-.scenes__tools { display: flex; gap: 6px; }
-.scenes__tools button, .scenes__restore {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 6px 10px 6px 6px;
+.scenes__still.is-gone { opacity: 0; }
+
+.scenes__egg.hero__egg { left: var(--page-gutter); bottom: auto; top: 64px; }
+
+.scenes__back, .scenes__btn, .scenes__restore {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  height: 32px; padding: 0 12px;
   font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
-  color: var(--ink-2); border: 1px solid var(--rule-2); background: var(--code);
+  color: var(--ink-2); background: var(--code); border: 1px solid var(--rule-2);
+  text-decoration: none;
   transition: color 0.2s, border-color 0.2s;
 }
-.scenes__tools button:hover, .scenes__tools button:focus-visible,
+.scenes__back:hover, .scenes__back:focus-visible,
+.scenes__btn:hover, .scenes__btn:focus-visible,
 .scenes__restore:hover, .scenes__restore:focus-visible { color: var(--accent); border-color: var(--accent); outline: none; }
-.scenes__tools kbd, .scenes__restore kbd {
+.scenes__btn kbd, .scenes__restore kbd {
   display: grid; place-items: center; min-width: 16px; height: 16px; padding: 0 3px;
   font-family: var(--f-mono); font-size: 9.5px; letter-spacing: 0;
   color: var(--ink-3); background: var(--sheet);
 }
-/* Console folded: one quiet handle, dimmed until the pointer comes near. */
-.scenes__restore { position: absolute; left: var(--page-gutter); bottom: 16px; opacity: 0.55; }
+.scenes__btn--wide { width: auto; padding: 0 12px 0 7px; }
+
+.scenes__back { position: absolute; top: 16px; left: var(--page-gutter); }
+
+.scenes__plate {
+  position: absolute; left: var(--page-gutter); bottom: 20px;
+  max-width: min(30rem, calc(100% - 2 * var(--page-gutter)));
+  padding: 14px 18px 15px;
+  background: var(--code); border: 1px solid var(--rule-2);
+  border-left: 2px solid var(--accent);
+  animation: scenesPlate 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  pointer-events: none;
+}
+@keyframes scenesPlate { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.scenes__count {
+  display: flex; align-items: baseline; gap: 12px; margin: 0 0 8px;
+  font-family: var(--f-pixel); font-size: 10px; letter-spacing: 0.08em; color: var(--ink-3);
+}
+.scenes__count b { font-weight: 400; color: var(--accent); }
+.scenes__loading { color: var(--ink-2); animation: scenesBlink 1s steps(2) infinite; }
+@keyframes scenesBlink { 50% { opacity: 0.3; } }
+.scenes__title {
+  margin: 0;
+  font-family: var(--f-body); font-weight: 400; font-style: italic;
+  font-size: clamp(1.7rem, 3.2vw, 2.6rem); line-height: 1; letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.scenes__hint {
+  margin: 10px 0 0;
+  font-family: var(--f-mono); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink-3); text-wrap: balance;
+}
+
+/* Bottom right, clear of the lofi player's cassette. */
+.scenes__tools {
+  position: absolute; bottom: 20px;
+  right: calc(var(--hero-gutter) + 54px + 16px);
+  display: flex; gap: 6px;
+}
+
+/* Overlay folded: one quiet handle, dimmed until the pointer comes near. */
+.scenes__restore { position: absolute; left: var(--page-gutter); bottom: 20px; padding-left: 7px; opacity: 0.55; }
 .scenes__restore:hover, .scenes__restore:focus-visible { opacity: 1; }
 
-.scenes__rail {
-  display: flex; align-items: stretch;
-  padding: 0 calc(var(--hero-gutter) + 54px + 12px) 0 var(--page-gutter); /* clear the player */
-  overflow-x: auto; scrollbar-width: none;
-  border-top: 1px solid var(--rule);
-  font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
-}
-.scenes__rail::-webkit-scrollbar { display: none; }
-.scenes__name {
-  position: relative; flex: none;
-  display: inline-flex; align-items: baseline; gap: 7px;
-  padding: 14px 16px 15px 0; margin-right: 12px;
-  color: var(--ink-2); text-decoration: none;
-  transition: color 0.2s;
-}
-.scenes__name i { font-style: normal; font-size: 9px; letter-spacing: 0.04em; color: var(--ink-3); transition: color 0.2s; }
-/* The active scene is marked on the rail's top hairline, like a tab. */
-.scenes__name::before {
-  content: ""; position: absolute; left: 0; right: 16px; top: -1px; height: 2px;
-  background: var(--accent); transform: scaleX(0); transform-origin: left;
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-}
-.scenes__name:hover { color: var(--ink); }
-.scenes__name[aria-current="page"], .scenes__name[aria-current="page"] i { color: var(--accent); }
-.scenes__name[aria-current="page"]::before { transform: scaleX(1); }
-.scenes__name:focus-visible { outline: 1px solid var(--accent); outline-offset: -3px; }
-
-@media (max-width: 1199px) {
-  .scenes__hint { display: none; }
-  .scenes__plate { grid-template-columns: auto minmax(0, 1fr) auto; }
-}
 @media (max-width: 719px) {
-  .scenes__plate { grid-template-columns: minmax(0, 1fr) auto; gap: 10px 16px; padding-block: 12px; }
-  .scenes__caption { order: -1; grid-column: 1 / -1; }
-  .scenes__tools button:first-child:not(:only-child) { display: none; }
-  .scenes__step a { width: 36px; height: 36px; }
-  /* A rail that runs off the edge says so: its right end fades out. */
-  .scenes__rail { mask-image: linear-gradient(90deg, #000 calc(100% - 110px), transparent calc(100% - 62px)); }
+  .scenes__plate {
+    left: 12px; right: 12px; bottom: 66px; max-width: none;
+    padding: 11px 14px 12px;
+  }
+  .scenes__hint { display: none; }
+  .scenes__tools { left: 12px; right: auto; bottom: 14px; }
+  .scenes__btn--wide { height: 40px; }
+  .scenes__back { top: 12px; left: 12px; }
+  .scenes__egg.hero__egg { left: 12px; top: 56px; }
+}
+@media (pointer: coarse) {
+  .scenes__btn kbd, .scenes__restore kbd { display: none; }
+  .scenes__btn--wide, .scenes__restore { padding-left: 12px; }
+}
+
+/* ─────────────────────────────────────────────
+   SCENES HALL: a wall of windows, one per scene. Each is an arched opening
+   onto a still of the scene; pointing at one draws it a step closer.
+   ───────────────────────────────────────────── */
+.hall__grid {
+  list-style: none; margin: 0; padding: 0 0 clamp(3rem, 8vw, 6rem);
+  display: grid; gap: clamp(28px, 4vw, 48px) clamp(18px, 2.4vw, 32px);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr));
+}
+.hall__item { animation: hallIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes hallIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+.window { display: block; color: inherit; text-decoration: none; outline: none; }
+.window__frame {
+  position: relative; display: block;
+  aspect-ratio: 3 / 4;
+  padding: 7px;
+  border: 1px solid var(--rule-2);
+  border-radius: 999px 999px 0 0;
+  background: var(--code);
+  transition: border-color 0.3s;
+}
+.window__view {
+  display: block; width: 100%; height: 100%;
+  object-fit: cover; image-rendering: pixelated;
+  border-radius: 999px 999px 0 0;
+  background: var(--sheet);
+  /* Inside the opening the view leans toward you on hover; the frame stays put. */
+  clip-path: inset(0 round 999px 999px 0 0);
+  transform: scale(1.001);
+  transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1), filter 0.4s;
+  filter: saturate(0.85) brightness(0.88);
+}
+/* Two mullions and a sill: enough to read as a window, light enough to look through. */
+.window__frame::before, .window__frame::after {
+  content: ""; position: absolute; pointer-events: none; z-index: 1;
+  background: var(--code); opacity: 0.85;
+  transition: opacity 0.4s;
+}
+.window__frame::before { left: 50%; top: 7px; bottom: 7px; width: 3px; transform: translateX(-50%); }
+.window__frame::after { left: 7px; right: 7px; top: 58%; height: 3px; }
+.window__sill {
+  position: absolute; left: -9px; right: -9px; bottom: -1px; height: 7px;
+  border: 1px solid var(--rule-2); background: var(--sheet);
+  transition: border-color 0.3s;
+}
+
+.window__plate {
+  display: flex; align-items: baseline; gap: 10px;
+  margin-top: 16px;
+  font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--ink-2);
+}
+.window__plate i { font-style: normal; font-family: var(--f-pixel); font-size: 9.5px; letter-spacing: 0.06em; color: var(--ink-3); }
+.window__plate b { font-weight: 400; color: var(--ink); transition: color 0.2s; }
+.window__go { margin-left: auto; color: var(--ink-3); opacity: 0; transform: translateX(-4px); transition: opacity 0.25s, transform 0.25s, color 0.2s; }
+
+.window:hover .window__frame, .window:focus-visible .window__frame,
+.window:hover .window__sill, .window:focus-visible .window__sill { border-color: var(--accent); }
+.window:hover .window__view, .window:focus-visible .window__view { transform: scale(1.08); filter: none; }
+.window:hover .window__frame::before, .window:hover .window__frame::after,
+.window:focus-visible .window__frame::before, .window:focus-visible .window__frame::after { opacity: 0; }
+.window:hover .window__plate b, .window:focus-visible .window__plate b,
+.window:hover .window__go, .window:focus-visible .window__go { color: var(--accent); }
+.window:hover .window__go, .window:focus-visible .window__go { opacity: 1; transform: none; }
+.window:focus-visible .window__frame { outline: 1px solid var(--accent); outline-offset: 4px; }
+@media (hover: none) { .window__go { opacity: 1; transform: none; } }
+
+/* Going through a window: the opening grows into the stage. The rest of the
+   page cross-fades underneath. */
+::view-transition-group(scene-portal) { animation-duration: 0.6s; animation-timing-function: cubic-bezier(0.65, 0, 0.25, 1); }
+::view-transition-old(scene-portal), ::view-transition-new(scene-portal) {
+  height: 100%; object-fit: cover; overflow: clip;
+}
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.35s; }
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
+  .hall__item, .scenes__plate { animation: none; }
+  .window__view { transition: none; }
 }
 
 /* Easter-egg readout: a hairline caption that rides just above the strip. */
@@ -3249,10 +3313,6 @@ kbd {
 @media (max-width: 639px) {
   .hero__cue, .hero__scene-go { display: none; }
   .hero__scene::after { content: "\2192"; color: var(--ink-3); }
-}
-@media (pointer: coarse) {
-  .scenes__tools kbd, .scenes__restore kbd { display: none; }
-  .scenes__tools button, .scenes__restore { padding-left: 10px; }
 }
 
 /* Code blocks: token-driven Prism theme on the code ground. */

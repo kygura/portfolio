@@ -113,7 +113,7 @@ const CartographicHero = () => {
         {/* Hairline footer strip: which scene this is (and the way to the
             rest) on the left, the scroll cue on the right. */}
         <footer ref={footerRef} className="hero__strip">
-          <Link to={`/scenes/${SHEETS[sheet].id}`} className="hero__scene" data-no-orbit>
+          <Link to="/scenes" className="hero__scene" data-no-orbit>
             <span className="hero__scene-no">
               {String(sheet + 1).padStart(2, "0")}/{String(SHEETS.length).padStart(2, "0")}
             </span>

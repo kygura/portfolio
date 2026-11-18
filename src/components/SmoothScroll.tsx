@@ -1,4 +1,4 @@
-import { useEffect, useRef, ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, ReactNode } from "react";
 import { useLocation } from "react-router-dom";
 import Lenis from "lenis";
 
@@ -46,9 +46,14 @@ export default function SmoothScroll({ children }: SmoothScrollProps) {
     };
   }, []);
 
-  useEffect(() => {
+  // A layout effect, so a view transition snapshots the new page already at the top.
+  // A navigation can ask to keep its place (state.keepScroll): the page then scrolls itself.
+  const keepScroll = Boolean((location.state as { keepScroll?: boolean } | null)?.keepScroll);
+  useLayoutEffect(() => {
+    if (keepScroll) return;
     if (lenisRef.current) lenisRef.current.scrollTo(0, { immediate: true });
     else window.scrollTo(0, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
   return <>{children}</>;

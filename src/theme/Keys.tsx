@@ -72,7 +72,7 @@ function HelpOverlay({ onClose }: { onClose: () => void }) {
               <div><dt><K k="j" /> <K k="k" /></dt><dd>Scroll down / up</dd></div>
               <div><dt><K k="G" /></dt><dd>Bottom of page</dd></div>
               <div><dt><K k="←" /> <K k="→" /></dt><dd>Move along the nav (when focused)</dd></div>
-              <div><dt><K k="[" /> <K k="]" /></dt><dd>Previous / next scene (scenes)</dd></div>
+              <div><dt><K k="Esc" /></dt><dd>Back to the scene windows (in a scene)</dd></div>
               <div><dt><K k="A" /> <K k="D" /></dt><dd>Previous / next quote</dd></div>
               <div><dt><K k="m" /></dt><dd>Play / pause music</dd></div>
               <div><dt><K k="`" /></dt><dd>Terminal</dd></div>

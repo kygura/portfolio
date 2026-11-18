@@ -6,8 +6,8 @@ import { createCipherField, type CipherField } from "./cipher";
 
 /**
  * Engine + cipher wiring shared by the home hero and the /scenes viewer.
- * three.js is fetched with a dynamic import the first time a WebGL scene is
- * shown, so routes (and the home hero when it lands on Cipher) never download it. The cipher sheet is a black stage in the engine
+ * three.js and the scene's builder are fetched with dynamic imports the first time a WebGL scene
+ * is shown, so routes (and the home hero when it lands on Cipher) never download them. The cipher sheet is a black stage in the engine
  * with a 2D glyph canvas over it; the engine's clock stops while it is up.
  */
 
@@ -34,6 +34,8 @@ export function useHeroStage(sheet: number) {
   const accent = useAccent();
   const [noGl, setNoGl] = useState(false);
   const [egg, setEgg] = useState<EggNote | null>(null);
+  /** Sheet whose first frame is on the canvas, or -1 before the engine has drawn. */
+  const [shown, setShown] = useState(-1);
   const found = useRef<Set<string> | null>(null);
   const eggTimer = useRef(0);
 
@@ -58,8 +60,10 @@ export function useHeroStage(sheet: number) {
     if (!needsEngine) return;
     let dead = false;
     let engine: HeroEngine | null = null;
-    import("./engine/hero-engine")
-      .then(({ createHeroEngine }) => {
+    // The engine and the current scene's builder load side by side.
+    const first = live.current.sheet;
+    Promise.all([import("./engine/hero-engine"), import("./engine/registry").then((r) => r.loadBuilder(SHEETS[first].id).then((b) => [r, b] as const))])
+      .then(([{ createHeroEngine }, [registry, initial]]) => {
         if (dead || !canvasRef.current || !stageRef.current) return;
         engine = createHeroEngine({
           canvas: canvasRef.current,
@@ -68,7 +72,10 @@ export function useHeroStage(sheet: number) {
           readVals: [],
           compass: null,
           accent: ACCENTS[live.current.accent],
-          sheet: live.current.sheet,
+          sheet: first,
+          initial,
+          load: registry.loadBuilder,
+          onShown: setShown,
           motion: live.current.motion,
           psx: true,
           reducedMotion: Boolean(reduceQuery()?.matches),
@@ -86,6 +93,8 @@ export function useHeroStage(sheet: number) {
           },
         });
         engineRef.current = engine;
+        // The sheet may have changed while the chunks loaded.
+        engine.setSheet(live.current.sheet);
       })
       .catch(() => {
         if (!dead) setNoGl(true);
@@ -126,5 +135,5 @@ export function useHeroStage(sheet: number) {
     engineRef.current?.setMotion(!cipherOn && !reduceQuery()?.matches);
   }, [cipherOn]);
 
-  return { canvasRef, cipherCanvasRef, stageRef, engineRef, noGl, egg, cipherOn };
+  return { canvasRef, cipherCanvasRef, stageRef, engineRef, noGl, egg, cipherOn, shown };
 }

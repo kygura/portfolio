@@ -12,7 +12,8 @@
     "sync-posts": "bun scripts/build-writings.ts",
     "test": "node --test --experimental-strip-types \"api/**/*.test.ts\" \"scripts/**/*.test.ts\" \"content/**/*.test.ts\"",
     "typecheck": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json && tsc -p tsconfig.api.json",
-    "translate": "bun scripts/translate-writings.ts"
+    "translate": "bun scripts/translate-writings.ts",
+    "posters": "node --experimental-strip-types scripts/capture-scene-posters.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.137.0",
