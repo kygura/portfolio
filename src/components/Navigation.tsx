@@ -55,7 +55,7 @@ function NavItem({ path, label, end, wide }: { path: string; label: string; end?
 
 /**
  * From 1024px: every palette as a square in one strip, clustered by family
- * (three squares each, a gap between families). Hovering or focusing a square
+ * (five squares each in order of hue, a gap between families). Hovering or focusing a square
  * names it under the strip; arrows move along it. Narrower bars use
  * ThemePicker instead.
  */
@@ -144,6 +144,7 @@ function ThemePicker() {
                 <kbd aria-hidden="true">{fi + 1}</kbd>
                 <span>{f.name}</span>
                 <small>{f.mood}</small>
+                <small className="theme-fam__range">{f.range}</small>
               </div>
               <div className="theme-fam__chips">
                 {familyAccents(f.id).map(({ a, i }) => (
