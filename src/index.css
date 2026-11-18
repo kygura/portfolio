@@ -3127,7 +3127,6 @@ kbd {
   font-family: var(--f-mono); font-size: 9.5px; letter-spacing: 0;
   color: var(--ink-3); background: var(--sheet);
 }
-.scenes__btn { width: 32px; padding: 0; }
 .scenes__btn--wide { width: auto; padding: 0 12px 0 7px; }
 
 .scenes__back { position: absolute; top: 16px; left: var(--page-gutter); }
@@ -3174,14 +3173,12 @@ kbd {
 
 @media (max-width: 719px) {
   .scenes__plate {
-    left: 12px; right: 12px; bottom: 64px; max-width: none;
+    left: 12px; right: 12px; bottom: 66px; max-width: none;
     padding: 11px 14px 12px;
   }
   .scenes__hint { display: none; }
   .scenes__tools { left: 12px; right: auto; bottom: 14px; }
-  .scenes__btn { width: 40px; height: 40px; }
-  .scenes__btn--wide { width: auto; height: 40px; }
-  .scenes__btn--wide:first-of-type:not(:last-child) { display: none; }
+  .scenes__btn--wide { height: 40px; }
   .scenes__back { top: 12px; left: 12px; }
   .scenes__egg.hero__egg { left: 12px; top: 56px; }
 }
