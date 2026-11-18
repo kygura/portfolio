@@ -562,3 +562,38 @@ export const burst = (e: number, v0: number, T: number) => (e <= 0 ? 0 : e < T ?
 export const pulse = (e: number, T: number) => (e > 0 && e < T ? Math.sin((Math.PI * e) / T) : 0);
 
 export type PsxKit = ReturnType<typeof createKit>;
+
+/**
+ * Per-frame displacement of a faceted water sheet: `grid` is the indexed plane it was faceted
+ * from, `sheet` the faceted copy that is drawn. Each grid point is shared by up to six triangle
+ * corners, so its height is worked out once and copied to them, and the flat normals are written
+ * straight from the corners. The arithmetic follows computeVertexNormals step for step, rounding
+ * included, so the sheet comes out the same as recomputing it in full, at a fraction of the cost.
+ */
+export function rippleSheet(grid: THREE.BufferGeometry, sheet: THREE.BufferGeometry) {
+  const corner = grid.index!.array;
+  const gp = grid.attributes.position.array, n = gp.length / 3;
+  const h = new Float64Array(n);
+  const posA = sheet.attributes.position as THREE.BufferAttribute, norA = sheet.attributes.normal as THREE.BufferAttribute;
+  const p = posA.array as Float32Array, nn = norA.array as Float32Array;
+  const f = Math.fround;
+  return (height: (x: number, z: number) => number) => {
+    for (let j = 0; j < n; j++) h[j] = height(gp[j * 3], gp[j * 3 + 2]);
+    for (let k = 0; k < corner.length; k++) p[k * 3 + 1] = h[corner[k]];
+    for (let i = 0; i < p.length; i += 9) {
+      // cb = C - B, ab = A - B, cb x ab, stored as float32, then normalized as normalizeNormals does.
+      const cbx = p[i + 6] - p[i + 3], cby = p[i + 7] - p[i + 4], cbz = p[i + 8] - p[i + 5];
+      const abx = p[i] - p[i + 3], aby = p[i + 1] - p[i + 4], abz = p[i + 2] - p[i + 5];
+      const x = f(cby * abz - cbz * aby), y = f(cbz * abx - cbx * abz), z = f(cbx * aby - cby * abx);
+      const s = 1 / (Math.sqrt(x * x + y * y + z * z) || 1);
+      const nx = x * s, ny = y * s, nz = z * s;
+      for (let v = 0; v < 9; v += 3) {
+        nn[i + v] = nx;
+        nn[i + v + 1] = ny;
+        nn[i + v + 2] = nz;
+      }
+    }
+    posA.needsUpdate = true;
+    norA.needsUpdate = true;
+  };
+}

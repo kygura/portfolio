@@ -557,8 +557,8 @@ export function buildBeach(k: PsxKit): SceneDef {
     g.setIndex(idx);
     return facet(g);
   };
-  const featherGeo = (droop: number, len: number) => {
-    const K = 14, pos: number[] = [], uvs: number[] = [];
+  const featherGeo = (droop: number, len: number, K = 14) => {
+    const pos: number[] = [], uvs: number[] = [];
     const rib = Array.from({ length: K + 1 }, (_, k) => {
       const t = k / K;
       return new THREE.Vector3(len * t * (1 - 0.12 * droop * t), len * (0.42 * Math.sin(t * Math.PI * 0.7) - droop * t * t), 0);
@@ -580,24 +580,28 @@ export function buildBeach(k: PsxKit): SceneDef {
     return g;
   };
   const feathers = [0.15, 0.35, 0.6, 0.85].map((d) => featherGeo(d, 3.8));
+  /* The horizon palms are a few pixels across: fronds with a third of the leaflets, a coarser
+     trunk and no coconuts (under half a pixel there). Nothing here draws from rnd(), so every
+     palm still stands, leans and turns as before. */
+  const feathersFar = [0.15, 0.35, 0.6, 0.85].map((d) => featherGeo(d, 3.8, 5));
   const fNut = facet(new THREE.IcosahedronGeometry(0.17, 1), 0.02);
   const featherPalm = (base: V3, s: number, lean: number, ry: number, cast = false) => {
-    const H = 6 + rnd() * 3, n = 18, wob = rnd() * 6, put = cast ? addC : add;
+    const far = !cast, H = 6 + rnd() * 3, n = far ? 8 : 18, wob = rnd() * 6, put = cast ? addC : add;
     const xf = new THREE.Matrix4().compose(base.clone().setY(base.y - 0.25), new THREE.Quaternion().setFromAxisAngle(up, ry), new THREE.Vector3(s, s, s));
     const P = (i: number) => {
       const t = i / n;
       return new THREE.Vector3(lean * (t * t * 0.85 + 0.15 * Math.sin(t * Math.PI)), H * t, 0.25 * Math.sin(t * 3 + wob) * t);
     };
-    put(trunkGeo(Array.from({ length: n + 1 }, (_, i) => P(i)), 0.26, 0.15).applyMatrix4(xf), m.fTrunk);
+    put(trunkGeo(Array.from({ length: n + 1 }, (_, i) => P(i)), 0.26, 0.15, far ? 5 : 9).applyMatrix4(xf), m.fTrunk);
     const top = P(n).applyMatrix4(xf);
     const crown = 12 + Math.floor(rnd() * 3);
     for (let f = 0; f < crown; f++) {
       const a = (f / crown) * Math.PI * 2 + rnd() * 0.35;
       const lift = f % 3 === 0 ? -0.25 - rnd() * 0.2 : 0.05 + (rnd() - 0.5) * 0.3;
-      const g = feathers[Math.min(3, Math.floor(rnd() * 4))].clone().rotateZ(lift).rotateX((rnd() - 0.5) * 0.5).rotateY(a);
+      const g = (far ? feathersFar : feathers)[Math.min(3, Math.floor(rnd() * 4))].clone().rotateZ(lift).rotateX((rnd() - 0.5) * 0.5).rotateY(a);
       put(g, m.fFrond, top.x, top.y, top.z, 0, 0, 0, s * (0.85 + rnd() * 0.3));
     }
-    for (let c = 0; c < 5; c++) {
+    for (let c = 0; c < (far ? 0 : 5); c++) {
       const a = c * 1.31 + wob;
       add(fNut, m.cork, top.x + Math.cos(a) * 0.24 * s, top.y - (0.22 + (c % 2) * 0.12) * s, top.z + Math.sin(a) * 0.24 * s, 0, 0, 0, s);
     }

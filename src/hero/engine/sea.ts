@@ -2,7 +2,7 @@
  *  wasteland has come in: shard towers and wreckage standing in the shallows, stone hanging over
  *  the water, islands floating upside down above the skyline. */
 import * as THREE from "three";
-import { pulse, type PsxKit, type SceneDef } from "./psx";
+import { pulse, rippleSheet, type PsxKit, type SceneDef } from "./psx";
 import { createWaste } from "./wasteland";
 
 export function buildSea(k: PsxKit): SceneDef {
@@ -40,13 +40,9 @@ export function buildSea(k: PsxKit): SceneDef {
   const wp0 = wg.attributes.position;
   for (let i = 0; i < wp0.count; i++) wp0.setXYZ(i, WCX + warp(wp0.getX(i)), 0, WCZ + warp(wp0.getZ(i)));
   const water = facet(wg);
+  const ripple = rippleSheet(wg, water);
   const wpos = water.attributes.position, wuv = water.attributes.uv;
-  const wx = new Float32Array(wpos.count), wz = new Float32Array(wpos.count);
-  for (let i = 0; i < wpos.count; i++) {
-    wx[i] = wpos.getX(i);
-    wz[i] = wpos.getZ(i);
-    wuv.setXY(i, wx[i] / 6, wz[i] / 6);
-  }
+  for (let i = 0; i < wpos.count; i++) wuv.setXY(i, wpos.getX(i) / 6, wpos.getZ(i) / 6);
   mesh(water, mat.water, scene).frustumCulled = false;
 
   /* ---- skyline: a city of towers standing in the sea, tallest where the line runs in ---- */
@@ -146,9 +142,7 @@ export function buildSea(k: PsxKit): SceneDef {
     ],
     update(t) {
       hang(t);
-      for (let i = 0; i < wpos.count; i++) wpos.setY(i, wave(wx[i], wz[i], t));
-      wpos.needsUpdate = true;
-      water.computeVertexNormals();
+      ripple((x, z) => wave(x, z, t));
 
       const ec = t - tCity;
       cityFlare.g.visible = ec > 0 && ec < 1.2;
