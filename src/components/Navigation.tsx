@@ -55,7 +55,7 @@ function NavItem({ path, label, end, wide }: { path: string; label: string; end?
 
 /**
  * From 1024px: every palette as a square in one strip, clustered by family
- * (five squares each in order of hue, a gap between families). Hovering or focusing a square
+ * (three squares each in order of hue, a gap between families). Hovering or focusing a square
  * names it under the strip; arrows move along it. Narrower bars use
  * ThemePicker instead.
  */

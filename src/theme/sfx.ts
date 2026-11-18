@@ -19,25 +19,17 @@ interface Voice {
 
 const VOICES: Record<Accent["id"], Voice> = {
   manuscript: { notes: [247, 311, 370], wave: "triangle", step: 0.06, decay: 0.4 },
-  torch: { notes: [294, 370, 440], wave: "sine", step: 0.06, decay: 0.4 },
   madder: { notes: [196, 294], wave: "triangle", step: 0.07, decay: 0.45 },
-  sunset: { notes: [262, 330, 392, 523], wave: "triangle", step: 0.07, decay: 0.48 },
   saffron: { notes: [311, 392, 466], wave: "triangle", step: 0.06, decay: 0.44 },
   lichen: { notes: [349, 440, 523], wave: "sine", step: 0.055, decay: 0.38 },
-  willow: { notes: [370, 466, 554], wave: "sine", step: 0.055, decay: 0.4 },
   moss: { notes: [330, 392, 494], wave: "triangle", step: 0.06, decay: 0.42 },
-  sage: { notes: [330, 415, 494], wave: "sine", step: 0.065, decay: 0.46 },
   jade: { notes: [392, 494, 587], wave: "sine", step: 0.05, decay: 0.38 },
   astral: { notes: [523, 659, 784, 1047], wave: "sine", step: 0.05, decay: 0.36 },
-  azure: { notes: [494, 622, 740, 988], wave: "sine", step: 0.05, decay: 0.36 },
   iris: { notes: [466, 587, 698, 932], wave: "sine", step: 0.055, decay: 0.4 },
-  orchid: { notes: [440, 554, 659, 880], wave: "sine", step: 0.06, decay: 0.42 },
   mauve: { notes: [415, 523, 622, 831], wave: "triangle", step: 0.065, decay: 0.44 },
   mono: { notes: [180], wave: "square", step: 0, decay: 0.06 },
   phosphor: { notes: [1320, 1760], wave: "square", step: 0.04, decay: 0.05 },
   vermilion: { notes: [140, 110], wave: "sawtooth", step: 0.05, decay: 0.08 },
-  sodium: { notes: [880, 880], wave: "square", step: 0.09, decay: 0.05 },
-  ultramarine: { notes: [520, 780], wave: "square", step: 0.045, decay: 0.06 },
 };
 
 const LEVEL = 0.06;

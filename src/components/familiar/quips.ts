@@ -55,25 +55,17 @@ const BY_SECTION: Record<string, string[]> = {
 /** What Bit says when the palette changes, one line per palette. */
 const ON_PALETTE: Record<Accent["id"], string> = {
   manuscript: "manuscript. monastery candlelight. and soup.",
-  torch: "amber. the light of the forge that made me.",
   madder: "rose. the ruin had roses once. they won.",
-  sunset: "sunset. the hour the old guards changed. i'll keep watch.",
   saffron: "saffron. they paid the masons in it once. the masons got fat.",
   lichen: "lichen. my true colour. i was waiting for you to notice.",
-  willow: "willow. it wept over the moat for a century. then it stopped. i never asked why.",
   moss: "moss. it grows on me. it always has.",
-  sage: "sage. the hedge-witch burned it to keep me out. it did not work.",
   jade: "jade. a king once paid his weight in it for me. he was short.",
   astral: "sky. i saw it through a crack for four hundred years. about this much.",
-  azure: "azure. the banner of a kingdom that lost. good colour though.",
   iris: "iris. the colour wizards wore before they stopped coming back.",
-  orchid: "orchid. a queen grew them in the tower. the tower is gone. so is she.",
   mauve: "mauve. the sky does this right before it forgets you.",
   mono: "graphite. colourless. like a tax collector.",
   phosphor: "phosphor. a green fire with no heat. sorcery, plainly.",
   vermilion: "vermilion. the old warning colour. i'll stand ready.",
-  sodium: "sodium. a lamp that hums all night and lights nothing well.",
-  ultramarine: "ultramarine. ground from stone and worth more than me. i've checked.",
 };
 
 export const paletteQuip = (id: Accent["id"]) => ON_PALETTE[id] ?? "new colours. the stone takes them in.";

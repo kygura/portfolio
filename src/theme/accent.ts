@@ -6,7 +6,7 @@
  * scene. `bg`/`ink` only paint the chips in the picker; the page itself reads
  * the CSS tokens.
  *
- * Twenty palettes in four families of five. A family shares the character of
+ * Twelve palettes in four families of three. A family shares the character of
  * its ground (warm, green, cold, neutral black); inside a family the palettes
  * run in order of accent hue, so each row of the picker reads as a slice of the
  * spectrum. Keys 1–4 pick a family and pressing the same key again steps
@@ -19,10 +19,10 @@ export type FamilyId = "hearth" | "grove" | "tide" | "signal";
 
 export interface Accent {
   id:
-    | "madder" | "manuscript" | "sunset" | "torch" | "saffron"
-    | "lichen" | "willow" | "moss" | "sage" | "jade"
-    | "astral" | "azure" | "iris" | "orchid" | "mauve"
-    | "mono" | "vermilion" | "sodium" | "phosphor" | "ultramarine";
+    | "madder" | "manuscript" | "saffron"
+    | "lichen" | "moss" | "jade"
+    | "astral" | "iris" | "mauve"
+    | "mono" | "vermilion" | "phosphor";
   name: string;
   family: FamilyId;
   /** Accent colour. */
@@ -49,7 +49,7 @@ export const FAMILIES: Family[] = [
   { id: "hearth", name: "Hearth", mood: "Warm, lamp-lit", range: "Rose to gold" },
   { id: "grove", name: "Grove", mood: "Living green", range: "Olive to jade" },
   { id: "tide", name: "Tide", mood: "Cold, after dark", range: "Cyan to mauve" },
-  { id: "signal", name: "Signal", mood: "Stark, one colour", range: "Grey, then red to blue" },
+  { id: "signal", name: "Signal", mood: "Stark, one colour", range: "Grey, then red to green" },
 ];
 
 /** Grouped by family, in FAMILIES order; inside a family, by accent hue. Every one swaps the whole sheet (see index.css). */
@@ -57,27 +57,19 @@ export const ACCENTS: Accent[] = [
   // Hearth: warm grounds, accents from rose (356°) to gold (45°).
   { id: "madder", name: "Rose", family: "hearth", hex: "#e5787f", deep: "#7e2638", fog: "#4d343c", zen: "#150b10", bg: "#1a0f14", ink: "#f2dfdc" },
   { id: "manuscript", name: "Manuscript", family: "hearth", hex: "#e08a62", deep: "#9a4524", fog: "#4a4038", zen: "#14110e", bg: "#1b1a17", ink: "#ebe6db" },
-  { id: "sunset", name: "Sunset", family: "hearth", hex: "#f4945c", deep: "#b02a6a", fog: "#4a2a3c", zen: "#14060f", bg: "#1a0c18", ink: "#f8e6d6" },
-  { id: "torch", name: "Amber", family: "hearth", hex: "#eaa24c", deep: "#a24e1c", fog: "#4d4046", zen: "#130f16", bg: "#17121a", ink: "#f0e1cd" },
   { id: "saffron", name: "Saffron", family: "hearth", hex: "#f0c14b", deep: "#9c6a14", fog: "#493527", zen: "#110c09", bg: "#1b130e", ink: "#f1e7d0" },
   // Grove: green grounds, accents from olive (69°) to jade (160°).
   { id: "lichen", name: "Lichen", family: "grove", hex: "#bcc77c", deep: "#5d7a3a", fog: "#3b4c4b", zen: "#0f171b", bg: "#111617", ink: "#e0d9c8" },
-  { id: "willow", name: "Willow", family: "grove", hex: "#a6d65e", deep: "#5a8a22", fog: "#3b432d", zen: "#0d0f0a", bg: "#151810", ink: "#e7ecd5" },
   { id: "moss", name: "Moss", family: "grove", hex: "#7fcf8a", deep: "#2f7a45", fog: "#2e4637", zen: "#07110b", bg: "#0e1611", ink: "#dde8d4" },
-  { id: "sage", name: "Sage", family: "grove", hex: "#9cc5ad", deep: "#4c7a62", fog: "#323e38", zen: "#0c0e0d", bg: "#131614", ink: "#dee5dc" },
   { id: "jade", name: "Jade", family: "grove", hex: "#5ad6ad", deep: "#1d7a63", fog: "#2b4844", zen: "#061110", bg: "#0b1615", ink: "#d6ebe4" },
   // Tide: cold grounds, accents from cyan (186°) to mauve (320°).
   { id: "astral", name: "Sky", family: "tide", hex: "#86d3dc", deep: "#2f6f9a", fog: "#2f4562", zen: "#08101e", bg: "#0b1424", ink: "#d6e6f2" },
-  { id: "azure", name: "Azure", family: "tide", hex: "#6fa8ff", deep: "#2a55b8", fog: "#1d3353", zen: "#070c13", bg: "#0b121e", ink: "#cedff3" },
   { id: "iris", name: "Iris", family: "tide", hex: "#a99cf5", deep: "#5543b0", fog: "#38335c", zen: "#0b0a1c", bg: "#111024", ink: "#e6e2f6" },
-  { id: "orchid", name: "Orchid", family: "tide", hex: "#cd92f2", deep: "#7a3aa8", fog: "#40254b", zen: "#0e0811", bg: "#170d1b", ink: "#e7d3ee" },
   { id: "mauve", name: "Mauve", family: "tide", hex: "#ee8fcf", deep: "#9a2f7a", fog: "#492744", zen: "#110910", bg: "#1b0e19", ink: "#edd4e4" },
-  // Signal: neutral black grounds, one pure colour; grey first, then red (9°) to blue (230°).
+  // Signal: neutral black grounds, one pure colour; grey first, then red (9°) to green (139°).
   { id: "mono", name: "Graphite", family: "signal", hex: "#d4d4d4", deep: "#6b6b6b", fog: "#3f3f3f", zen: "#0e0e0e", bg: "#121212", ink: "#e2e2e2" },
   { id: "vermilion", name: "Vermilion", family: "signal", hex: "#ff5a3c", deep: "#a8261a", fog: "#3a2a26", zen: "#0a0707", bg: "#0d0c0c", ink: "#efe8dd" },
-  { id: "sodium", name: "Sodium", family: "signal", hex: "#ffc21a", deep: "#a87400", fog: "#3e3a32", zen: "#070606", bg: "#0f0e0d", ink: "#e7e3da" },
   { id: "phosphor", name: "Phosphor", family: "signal", hex: "#5cf08a", deep: "#1f8a43", fog: "#1f3a26", zen: "#040805", bg: "#080c09", ink: "#c9f2cf" },
-  { id: "ultramarine", name: "Ultramarine", family: "signal", hex: "#6680ff", deep: "#2a3ec2", fog: "#32353e", zen: "#060607", bg: "#0d0d0f", ink: "#dbdee6" },
 ];
 
 /** Palettes of one family, with their index in ACCENTS. */
@@ -133,12 +125,18 @@ export function storedSheet(length: number): number {
   return storedIndex(SHEET_KEY, length);
 }
 
+/** Palettes that were cut, mapped to the closest one that stayed (kept in sync with index.html). */
+const RETIRED: Record<string, Accent["id"]> = {
+  glacier: "astral", sunset: "manuscript", torch: "saffron", willow: "lichen", sage: "moss",
+  azure: "astral", orchid: "iris", sodium: "vermilion", ultramarine: "mono",
+};
+
 function storedAccent(): number {
-  const id =
+  const raw =
     readStored(ACCENT_KEY) ??
     LEGACY_ACCENT_ORDER[Number.parseInt(readStored(LEGACY_ACCENT_KEY) ?? "", 10)];
-  // Glacier was replaced by Sunset.
-  const i = ACCENTS.findIndex((a) => a.id === (id === "glacier" ? "sunset" : id));
+  const id = raw ? RETIRED[raw] ?? raw : raw;
+  const i = ACCENTS.findIndex((a) => a.id === id);
   return i >= 0 ? i : DEFAULT_ACCENT;
 }
 

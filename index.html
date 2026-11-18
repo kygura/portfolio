@@ -26,13 +26,14 @@
       try {
         var a = localStorage.getItem("nca-accent-v2") ||
           ["lichen", "torch", "astral", "madder", "mono", "manuscript"][parseInt(localStorage.getItem("nca-accent"), 10)];
-        if (a === "glacier") a = "sunset";
+        // Cut palettes map to the closest one that stayed (same table as RETIRED in src/theme/accent.ts).
+        a = { glacier: "astral", sunset: "manuscript", torch: "saffron", willow: "lichen", sage: "moss",
+          azure: "astral", orchid: "iris", sodium: "vermilion", ultramarine: "mono" }[a] || a;
         if (a && a !== "lichen") document.documentElement.setAttribute("data-accent", a);
         // Grounds per palette, so mobile browser chrome matches from first paint (see src/theme/accent.ts).
-        var g = { madder: "#1a0f14", manuscript: "#1b1a17", sunset: "#1a0c18", torch: "#17121a", saffron: "#1b130e",
-          willow: "#151810", moss: "#0e1611", sage: "#131614", jade: "#0b1615",
-          astral: "#0b1424", azure: "#0b121e", iris: "#111024", orchid: "#170d1b", mauve: "#1b0e19",
-          mono: "#121212", vermilion: "#0d0c0c", sodium: "#0f0e0d", phosphor: "#080c09", ultramarine: "#0d0d0f" }[a];
+        var g = { madder: "#1a0f14", manuscript: "#1b1a17", saffron: "#1b130e",
+          moss: "#0e1611", jade: "#0b1615", astral: "#0b1424", iris: "#111024", mauve: "#1b0e19",
+          mono: "#121212", vermilion: "#0d0c0c", phosphor: "#080c09" }[a];
         if (g) document.querySelector('meta[name="theme-color"]').setAttribute("content", g);
       } catch (e) {}
 

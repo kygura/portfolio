@@ -66,54 +66,12 @@
   --page-block: clamp(2.25rem, 7vw, 4rem);
 }
 
-/* Amber, Sky and Rose, like Manuscript and Graphite, swap the whole sheet:
-   ground, ink, rules, kit tokens and the surface texture behind the page, so
-   each reads as its own place and not the Lichen sheet with a new highlight.
-   Amber: a plum-black dusk lit from above. Sky: a navy blueprint with a
-   drafting grid. Rose: oxblood wine with a dotted lattice. */
-:root[data-accent="torch"] {
-  --bg: #17121a;
-  --bg-2: #1d1721;
-  --sheet: #271e2a;
-  --code: #110d14;
-  --ink: #f0e1cd;
-  --ink-2: #c1ae9f;
-  --ink-3: #8b7a78;
-  --rule: #342a38;
-  --rule-2: #4b3d4c;
-  --grid: transparent;
-  --scrim: rgba(17, 13, 20, 0.86);
-  --danger: #f0836b;
-  --accent: #eaa24c;
-  --accent-deep: #a24e1c;
-  --on-accent: #1d1206;
-  --accent-h: 33 79% 61%;
-  --on-accent-h: 31 66% 7%;
-  /* No lattice: a lamp-glow falling from the top edge instead. */
-  --tex: radial-gradient(120% 70% at 50% -10%, rgba(234, 162, 76, 0.1), transparent 70%);
-  --tex-size: auto;
+/* Every variant swaps the whole sheet: ground, ink, rules, kit tokens and
+   the surface texture, so each reads as its own place and not the Lichen
+   sheet with a new highlight. Twelve palettes, three per family; see
+   src/theme/accent.ts for the families and their order. */
 
-  --background: 275 19% 9%;
-  --foreground: 36 55% 87%;
-  --card: 277 20% 11%;
-  --card-foreground: 36 55% 87%;
-  --popover: 277 20% 11%;
-  --popover-foreground: 36 55% 87%;
-  --secondary: 280 17% 14%;
-  --secondary-foreground: 36 55% 87%;
-  --destructive: 11 82% 67%;
-  --destructive-foreground: 275 19% 9%;
-  --muted: 280 17% 14%;
-  --muted-foreground: 17 14% 66%;
-  --border: 288 14% 18%;
-  --input: 290 12% 27%;
-  --sidebar-background: 277 20% 11%;
-  --sidebar-foreground: 36 55% 87%;
-  --sidebar-border: 288 14% 18%;
-  --sidebar-accent: 280 17% 14%;
-  --sidebar-accent-foreground: 36 55% 87%;
-}
-
+/* Sky: a navy blueprint with a drafting grid. */
 :root[data-accent="astral"] {
   --bg: #0b1424;
   --bg-2: #0f1a2e;
@@ -281,52 +239,7 @@
   --sidebar-accent-foreground: 41 29% 89%;
 }
 
-/* Sunset: the Orb's raytraced dusk. Plum ground, warm cream ink, an apricot accent over magenta. */
-:root[data-accent="sunset"] {
-  --bg: #1a0c18;
-  --bg-2: #20101e;
-  --sheet: #2e1629;
-  --code: #130810;
-  --ink: #f8e6d6;
-  --ink-2: #d4b0b0;
-  --ink-3: #a07c88;
-  --rule: #34182e;
-  --rule-2: #4a2440;
-  --grid: rgba(244, 148, 92, 0.045);
-  --scrim: rgba(19, 8, 16, 0.86);
-  --danger: #ff8a8a;
-  --accent: #f4945c;
-  --accent-deep: #b02a6a;
-  --on-accent: #1e0a12;
-  --accent-h: 22 87% 66%;
-  --on-accent-h: 335 50% 8%;
-  --tex: linear-gradient(180deg, rgba(176, 42, 106, 0.14), transparent 45%);
-  --tex-size: auto;
-
-  --background: 309 37% 7%;
-  --foreground: 28 72% 91%;
-  --card: 312 35% 13%;
-  --card-foreground: 28 72% 91%;
-  --popover: 312 35% 13%;
-  --popover-foreground: 28 72% 91%;
-  --secondary: 313 37% 15%;
-  --secondary-foreground: 28 72% 91%;
-  --destructive: 0 100% 77%;
-  --destructive-foreground: 309 37% 7%;
-  --muted: 313 37% 15%;
-  --muted-foreground: 0 31% 76%;
-  --border: 312 37% 15%;
-  --input: 314 35% 22%;
-  --sidebar-background: 312 35% 13%;
-  --sidebar-foreground: 28 72% 91%;
-  --sidebar-border: 312 37% 15%;
-  --sidebar-accent: 313 37% 15%;
-  --sidebar-accent-foreground: 28 72% 91%;
-}
-
-/* ── Added palettes: Moss and Jade join Lichen in Grove, Iris joins
-   Sky in Tide, Sunset joins Hearth, Phosphor and Vermilion join Graphite in Signal. Each swaps the
-   whole sheet like the originals. ── */
+/* ── Moss and Jade (Grove), Iris (Tide), Phosphor and Vermilion (Signal). ── */
 
 /* Moss: a deep forest floor. Green-black ground, sap-pale ink, a fern accent. */
 :root[data-accent="moss"] {
@@ -544,10 +457,8 @@
 }
 
 
-/* ── Spectrum fill: five palettes per family. Saffron (Hearth), Willow and
-   Sage (Grove), Azure, Orchid and Mauve (Tide), Sodium and Ultramarine
-   (Signal). Same lightness ladder as the rest: ground ~8% (Signal ~5.5%),
-   card ~10%, sheet ~13.5%, rules ~17.5% and ~25%, ink ~88%. ── */
+/* ── Saffron (Hearth) and Mauve (Tide). Same lightness ladder as the rest:
+   ground ~8%, card ~10%, sheet ~13.5%, rules ~17.5% and ~25%, ink ~88%. ── */
 /* Saffron: a sepia ledger. Tobacco-brown ground, cream ink, a gold-leaf accent. */
 :root[data-accent="saffron"] {
   --bg: #1b130e;
@@ -591,178 +502,6 @@
   --sidebar-accent-foreground: 42 54% 88%;
 }
 
-/* Willow: new leaves at dusk. Olive-black ground, pale straw ink, a leaf-green accent. */
-:root[data-accent="willow"] {
-  --bg: #151810;
-  --bg-2: #1b1f14;
-  --sheet: #24291c;
-  --code: #0f110b;
-  --ink: #e7ecd5;
-  --ink-2: #b3b89e;
-  --ink-3: #81866f;
-  --rule: #2f3425;
-  --rule-2: #424a36;
-  --grid: rgba(166, 214, 94, 0.045);
-  --scrim: rgba(15, 17, 11, 0.86);
-  --danger: #f0907c;
-  --accent: #a6d65e;
-  --accent-deep: #5a8a22;
-  --on-accent: #131a07;
-  --accent-h: 84 59% 60%;
-  --on-accent-h: 82 58% 6%;
-  --tex: radial-gradient(120% 70% at 50% -10%, rgba(166, 214, 94, 0.07), transparent 70%);
-  --tex-size: auto;
-
-  --background: 83 20% 8%;
-  --foreground: 73 38% 88%;
-  --card: 82 22% 10%;
-  --card-foreground: 73 38% 88%;
-  --popover: 82 22% 10%;
-  --popover-foreground: 73 38% 88%;
-  --secondary: 83 19% 14%;
-  --secondary-foreground: 73 38% 88%;
-  --destructive: 10 79% 71%;
-  --destructive-foreground: 83 20% 8%;
-  --muted: 83 19% 14%;
-  --muted-foreground: 72 15% 67%;
-  --border: 80 17% 17%;
-  --input: 84 16% 25%;
-  --sidebar-background: 82 22% 10%;
-  --sidebar-foreground: 73 38% 88%;
-  --sidebar-border: 80 17% 17%;
-  --sidebar-accent: 83 19% 14%;
-  --sidebar-accent-foreground: 73 38% 88%;
-}
-
-/* Sage: dried herbs on stone. Grey-green ground, linen ink, a muted sage accent. */
-:root[data-accent="sage"] {
-  --bg: #131614;
-  --bg-2: #171c1a;
-  --sheet: #202522;
-  --code: #0d0f0e;
-  --ink: #dee5dc;
-  --ink-2: #a8b0a6;
-  --ink-3: #787f76;
-  --rule: #2a302d;
-  --rule-2: #3c4440;
-  --grid: rgba(156, 197, 173, 0.045);
-  --scrim: rgba(13, 15, 14, 0.86);
-  --danger: #e8907f;
-  --accent: #9cc5ad;
-  --accent-deep: #4c7a62;
-  --on-accent: #0c1510;
-  --accent-h: 145 26% 69%;
-  --on-accent-h: 147 27% 6%;
-  --tex: none;
-  --tex-size: auto;
-
-  --background: 140 7% 8%;
-  --foreground: 107 15% 88%;
-  --card: 156 10% 10%;
-  --card-foreground: 107 15% 88%;
-  --popover: 156 10% 10%;
-  --popover-foreground: 107 15% 88%;
-  --secondary: 144 7% 14%;
-  --secondary-foreground: 107 15% 88%;
-  --destructive: 10 70% 70%;
-  --destructive-foreground: 140 7% 8%;
-  --muted: 144 7% 14%;
-  --muted-foreground: 108 6% 67%;
-  --border: 150 7% 18%;
-  --input: 150 6% 25%;
-  --sidebar-background: 156 10% 10%;
-  --sidebar-foreground: 107 15% 88%;
-  --sidebar-border: 150 7% 18%;
-  --sidebar-accent: 144 7% 14%;
-  --sidebar-accent-foreground: 107 15% 88%;
-}
-
-/* Azure: deep water at night. Cobalt-black ground, ice ink, a clear blue accent. */
-:root[data-accent="azure"] {
-  --bg: #0b121e;
-  --bg-2: #0d1726;
-  --sheet: #131f32;
-  --code: #070d15;
-  --ink: #cedff3;
-  --ink-2: #97aabf;
-  --ink-3: #68798d;
-  --rule: #1a293f;
-  --rule-2: #273b58;
-  --grid: rgba(111, 168, 255, 0.045);
-  --scrim: rgba(7, 13, 21, 0.86);
-  --danger: #ff8f9a;
-  --accent: #6fa8ff;
-  --accent-deep: #2a55b8;
-  --on-accent: #050e1c;
-  --accent-h: 216 100% 72%;
-  --on-accent-h: 217 70% 6%;
-  --tex: radial-gradient(130% 70% at 50% 115%, rgba(111, 168, 255, 0.08), transparent 70%);
-  --tex-size: auto;
-
-  --background: 218 46% 8%;
-  --foreground: 212 61% 88%;
-  --card: 216 49% 10%;
-  --card-foreground: 212 61% 88%;
-  --popover: 216 49% 10%;
-  --popover-foreground: 212 61% 88%;
-  --secondary: 217 45% 14%;
-  --secondary-foreground: 212 61% 88%;
-  --destructive: 354 100% 78%;
-  --destructive-foreground: 218 46% 8%;
-  --muted: 217 45% 14%;
-  --muted-foreground: 212 24% 67%;
-  --border: 216 42% 17%;
-  --input: 216 39% 25%;
-  --sidebar-background: 216 49% 10%;
-  --sidebar-foreground: 212 61% 88%;
-  --sidebar-border: 216 42% 17%;
-  --sidebar-accent: 217 45% 14%;
-  --sidebar-accent-foreground: 212 61% 88%;
-}
-
-/* Orchid: a violet hour. Aubergine ground, lilac ink, an orchid accent. */
-:root[data-accent="orchid"] {
-  --bg: #170d1b;
-  --bg-2: #1d1122;
-  --sheet: #27172e;
-  --code: #100913;
-  --ink: #e7d3ee;
-  --ink-2: #b29cba;
-  --ink-3: #816d88;
-  --rule: #32203a;
-  --rule-2: #472e51;
-  --grid: rgba(205, 146, 242, 0.045);
-  --scrim: rgba(16, 9, 19, 0.86);
-  --danger: #ff92a0;
-  --accent: #cd92f2;
-  --accent-deep: #7a3aa8;
-  --on-accent: #13051c;
-  --accent-h: 277 79% 76%;
-  --on-accent-h: 277 70% 6%;
-  --tex: none;
-  --tex-size: auto;
-
-  --background: 283 35% 8%;
-  --foreground: 284 44% 88%;
-  --card: 282 33% 10%;
-  --card-foreground: 284 44% 88%;
-  --popover: 282 33% 10%;
-  --popover-foreground: 284 44% 88%;
-  --secondary: 282 33% 14%;
-  --secondary-foreground: 284 44% 88%;
-  --destructive: 352 100% 79%;
-  --destructive-foreground: 283 35% 8%;
-  --muted: 282 33% 14%;
-  --muted-foreground: 284 18% 67%;
-  --border: 282 29% 18%;
-  --input: 283 28% 25%;
-  --sidebar-background: 282 33% 10%;
-  --sidebar-foreground: 284 44% 88%;
-  --sidebar-border: 282 29% 18%;
-  --sidebar-accent: 282 33% 14%;
-  --sidebar-accent-foreground: 284 44% 88%;
-}
-
 /* Mauve: the last light going cold. Mulberry ground, pink-grey ink, a mauve accent. */
 :root[data-accent="mauve"] {
   --bg: #1b0e19;
@@ -804,92 +543,6 @@
   --sidebar-border: 308 26% 17%;
   --sidebar-accent: 306 28% 14%;
   --sidebar-accent-foreground: 322 41% 88%;
-}
-
-/* Sodium: a streetlamp on asphalt. Warm-black ground, bone ink, one hazard yellow. */
-:root[data-accent="sodium"] {
-  --bg: #0f0e0d;
-  --bg-2: #141312;
-  --sheet: #1d1c1b;
-  --code: #090908;
-  --ink: #e7e3da;
-  --ink-2: #b2aea3;
-  --ink-3: #817d74;
-  --rule: #282725;
-  --rule-2: #3c3a37;
-  --grid: rgba(255, 194, 26, 0.045);
-  --scrim: rgba(9, 9, 8, 0.86);
-  --danger: #ff6b5a;
-  --accent: #ffc21a;
-  --accent-deep: #a87400;
-  --on-accent: #1c1605;
-  --accent-h: 44 100% 55%;
-  --on-accent-h: 44 70% 6%;
-  --tex: none;
-  --tex-size: auto;
-
-  --background: 30 7% 5%;
-  --foreground: 42 21% 88%;
-  --card: 30 5% 7%;
-  --card-foreground: 42 21% 88%;
-  --popover: 30 5% 7%;
-  --popover-foreground: 42 21% 88%;
-  --secondary: 30 4% 11%;
-  --secondary-foreground: 42 21% 88%;
-  --destructive: 6 100% 68%;
-  --destructive-foreground: 30 7% 5%;
-  --muted: 30 4% 11%;
-  --muted-foreground: 44 9% 67%;
-  --border: 40 4% 15%;
-  --input: 36 4% 23%;
-  --sidebar-background: 30 5% 7%;
-  --sidebar-foreground: 42 21% 88%;
-  --sidebar-border: 40 4% 15%;
-  --sidebar-accent: 30 4% 11%;
-  --sidebar-accent-foreground: 42 21% 88%;
-}
-
-/* Ultramarine: blueprint ink on carbon. Blue-black ground, cool bone ink, one pure blue. */
-:root[data-accent="ultramarine"] {
-  --bg: #0d0d0f;
-  --bg-2: #121214;
-  --sheet: #1a1b1e;
-  --code: #08090a;
-  --ink: #dbdee6;
-  --ink-2: #a5a8b1;
-  --ink-3: #757880;
-  --rule: #242529;
-  --rule-2: #36373d;
-  --grid: rgba(102, 128, 255, 0.045);
-  --scrim: rgba(8, 9, 10, 0.86);
-  --danger: #ffb36b;
-  --accent: #6680ff;
-  --accent-deep: #2a3ec2;
-  --on-accent: #05091c;
-  --accent-h: 230 100% 70%;
-  --on-accent-h: 230 70% 6%;
-  --tex: none;
-  --tex-size: auto;
-
-  --background: 240 7% 5%;
-  --foreground: 224 18% 88%;
-  --card: 240 5% 7%;
-  --card-foreground: 224 18% 88%;
-  --popover: 240 5% 7%;
-  --popover-foreground: 224 18% 88%;
-  --secondary: 225 7% 11%;
-  --secondary-foreground: 224 18% 88%;
-  --destructive: 29 100% 71%;
-  --destructive-foreground: 240 7% 5%;
-  --muted: 225 7% 11%;
-  --muted-foreground: 225 7% 67%;
-  --border: 228 6% 15%;
-  --input: 231 6% 23%;
-  --sidebar-background: 240 5% 7%;
-  --sidebar-foreground: 224 18% 88%;
-  --sidebar-border: 228 6% 15%;
-  --sidebar-accent: 225 7% 11%;
-  --sidebar-accent-foreground: 224 18% 88%;
 }
 
 @media (min-width: 640px) {
@@ -3100,14 +2753,14 @@ kbd {
     border: 1px solid var(--rule-2); transition: border-color 0.15s ease;
   }
   .swatch-strip:hover, .swatch-strip:focus-within { border-color: var(--rule-2); }
-  .swatch-strip__fam { display: inline-flex; gap: 3px; }
+  .swatch-strip__fam { display: inline-flex; gap: 4px; }
   /* Hairline between families. */
   .swatch-strip__fam + .swatch-strip__fam { position: relative; }
   .swatch-strip__fam + .swatch-strip__fam::before {
     content: ""; position: absolute; left: -7px; top: 1px; bottom: 1px; width: 1px; background: var(--rule-2);
   }
   .swatch-strip button {
-    width: 12px; height: 12px; padding: 0; background: var(--c-acc);
+    width: 14px; height: 14px; padding: 0; background: var(--c-acc);
     border: 0; outline-offset: 2px; opacity: 0.45;
     transition: opacity 0.15s ease, transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
   }
@@ -3124,19 +2777,6 @@ kbd {
   .swatch-strip__tag b { font-weight: 400; color: var(--ink); }
   .swatch-strip[data-peek] .swatch-strip__tag { opacity: 1; transform: none; }
 }
-/* Twenty squares: they grow with the bar (9px, 10px, then 12px from 1440px)
-   so the strip always clears the last nav link (checked 1024–1600px). */
-@media (min-width: 1024px) and (max-width: 1279px) {
-  .swatch-strip { gap: 9px; padding: 6px 8px; }
-  .swatch-strip__fam + .swatch-strip__fam::before { left: -5px; }
-  .swatch-strip button { width: 9px; height: 9px; }
-}
-@media (min-width: 1024px) and (max-width: 1439px) {
-  .swatch-strip__fam { gap: 2px; }
-}
-@media (min-width: 1280px) and (max-width: 1439px) {
-  .swatch-strip button { width: 10px; height: 10px; }
-}
 @media (min-width: 1024px) and (prefers-reduced-motion: reduce) {
   .swatch-strip button, .swatch-strip__tag { transition: none; transform: none !important; }
 }
@@ -3149,10 +2789,10 @@ kbd {
   .cmd-open { font-size: 12px; }
 }
 
-/* The panel: one block per family, its label over five paint chips that run
+/* The panel: one block per family, its label over three paint chips that run
    in order of accent hue. */
 .theme-panel {
-  z-index: 99000; width: min(520px, calc(100vw - 24px)); padding: 0;
+  z-index: 99000; width: min(440px, calc(100vw - 24px)); padding: 0;
   background: var(--bg-2); border: 1px solid var(--rule-2); border-top: 1px solid var(--accent);
   font-family: var(--f-mono); color: var(--ink-2); outline: none;
   animation: themeFade 0.14s ease;
@@ -3176,7 +2816,7 @@ kbd {
 .theme-fam__label span { font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink); }
 .theme-fam__label small { font-size: 10px; letter-spacing: 0.04em; color: var(--ink-3); white-space: nowrap; }
 .theme-fam__label .theme-fam__range { margin-left: auto; overflow: hidden; text-overflow: ellipsis; }
-.theme-fam__chips { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.theme-fam__chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 
 /* A chip is a miniature sheet in the palette's own colours: ground, an
    accent rule down the left, two lines of ink and an accent mark. */

@@ -17,9 +17,9 @@ The only fills are the accent and the sheet. Corners are square and shadows flat
 
 ### Accent variants
 
-Twenty palettes in four families of five. A family is defined by the character of its ground: warm, green, cold, or neutral black. Inside a family the palettes run in order of accent hue, so each row of the picker is one slice of the colour wheel and the four rows together cover it. Every palette swaps the whole sheet (ground, ink, rules, danger, shadcn kit tokens, surface texture), not only the highlight, and all of them sit on the same lightness ladder: ground about 8% (Signal about 5.5%), card 10%, sheet 13.5%, rules 17.5% and 25%, ink 88%. Accent on ground is at least 5.6:1 and the faintest ink at least 4:1.
+Twelve palettes in four families of three. A family is defined by the character of its ground: warm, green, cold, or neutral black. Inside a family the palettes run in order of accent hue, so each row of the picker is one slice of the colour wheel and the four rows together cover it. Every palette swaps the whole sheet (ground, ink, rules, danger, shadcn kit tokens, surface texture), not only the highlight, and all of them sit on the same lightness ladder: ground about 8% (Signal darker), card 10%, sheet 13.5%, rules 17.5% and 25%, ink 88%. Accent on ground is at least 6:1 and the faintest ink at least 4:1.
 
-From 1024px the picker is a strip of twenty accent squares at the right of the nav bar, clustered by family with a hairline between families; hovering or focusing a square names it in a tag under the strip, arrows move along it, and the active family sits brighter. Under 1024px it folds into one swatch (the palette's ground split with its accent) that opens a panel with one block per family (name, mood, hue range) over five paint chips, each drawn in that palette's own ground, ink and accent. The panel stays open on a pick so palettes can be compared against the live page. Keys `1`–`4` pick a family; pressing the same key again steps through it. `t` cycles all twenty. The command palette lists them under `Theme · <family>`.
+From 1024px the picker is a strip of twelve accent squares at the right of the nav bar, clustered by family with a hairline between families; hovering or focusing a square names it in a tag under the strip, arrows move along it, and the active family sits brighter. Under 1024px it folds into one swatch (the palette's ground split with its accent) that opens a panel with one block per family (name, mood, hue range) over three paint chips, each drawn in that palette's own ground, ink and accent. The panel stays open on a pick so palettes can be compared against the live page. Keys `1`–`4` pick a family; pressing the same key again steps through it. `t` cycles all twelve. Palettes that were cut (Sunset, Amber, Willow, Sage, Azure, Orchid, Sodium, Ultramarine) map to the closest one that stayed, so a saved choice still lands somewhere sensible. The command palette lists them under `Theme · <family>`.
 
 Stored in `localStorage["nca-accent-v2"]` as the variant id (the older `nca-accent` index key is still read once and mapped). Guarded with try/catch; an inline script in `index.html` applies it, and the matching `theme-color`, before first paint. One switch rewrites the CSS tokens and the hero's shader uniforms (accent, deep accent, fog, zenith). Where the browser supports view transitions, the new palette opens as a circle from the clicked chip (`vtReveal`); under reduced motion it swaps at once. It also plays a short synthesised motif (`src/theme/sfx.ts`, Web Audio, no files), pitched by family.
 
@@ -28,30 +28,22 @@ Palette data lives in `src/theme/accent.ts` (`FAMILIES`, `ACCENTS`); tokens in `
 **Hearth** (warm, lamp-lit; rose to gold)
 - Rose `#e5787f` (`madder`): oxblood wine ground, blush ink.
 - Manuscript `#e08a62` (`manuscript`): warm brown ground, paper ink, clay accent.
-- Sunset `#f4945c` (`sunset`): plum ground, cream ink, an apricot accent over a magenta wash.
-- Amber `#eaa24c` (`torch`): plum-black dusk with a lamp-glow falling from the top edge.
 - Saffron `#f0c14b` (`saffron`): tobacco-brown ledger with faint ruled lines, cream ink, gold-leaf accent.
 
 **Grove** (living green; olive to jade)
 - Lichen `#bcc77c` (default, `:root`): slate ground with a green-blue bias, bone ink.
-- Willow `#a6d65e` (`willow`): olive-black ground, straw ink, leaf-green accent, a glow from above.
 - Moss `#7fcf8a` (`moss`): green-black forest floor, a fern accent, a faint glow rising from the bottom.
-- Sage `#9cc5ad` (`sage`): grey-green stone, linen ink, the most muted accent in the set.
 - Jade `#5ad6ad` (`jade`): teal-black, celadon ink, mint accent.
 
 **Tide** (cold, after dark; cyan to mauve)
 - Sky `#86d3dc` (`astral`): navy blueprint with a drafting grid.
-- Azure `#6fa8ff` (`azure`): cobalt-black deep water, ice ink, clear blue accent.
 - Iris `#a99cf5` (`iris`): indigo night, lavender ink, periwinkle accent.
-- Orchid `#cd92f2` (`orchid`): aubergine ground, lilac ink, orchid accent.
 - Mauve `#ee8fcf` (`mauve`): mulberry ground, pink-grey ink, mauve accent over a magenta wash.
 
-**Signal** (stark, one colour; grey, then red to blue)
+**Signal** (stark, one colour; grey, then red to green)
 - Graphite `#d4d4d4` (`mono`): pure grays, no hue anywhere; errors read as the brightest ink.
 - Vermilion `#ff5a3c` (`vermilion`): soot-black ground, bone ink, one hot red like a seal stamp.
-- Sodium `#ffc21a` (`sodium`): warm black like asphalt under a streetlamp, one hazard yellow.
 - Phosphor `#5cf08a` (`phosphor`): green-screen terminal, near-black ground with faint scanlines.
-- Ultramarine `#6680ff` (`ultramarine`): blue-black carbon, cool bone ink, one pure blue.
 
 The surface texture is two tokens, `--tex` and `--tex-size`, which `body` reads; a variant that sets both changes the page's texture. Fonts and layout stay as they are in every variant.
 
