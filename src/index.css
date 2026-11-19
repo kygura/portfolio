@@ -59,6 +59,8 @@
   --hero-gutter: clamp(20px, 4vw, 46px);
   /* Shared page gutters + vertical rhythm for every routed page. */
   --page-gutter: clamp(1.15rem, 5vw, 4rem);
+  /* The home intro, the footer rule and the colophon share this column. */
+  --content-w: min(900px, calc(100% - 2 * var(--page-gutter)));
   --page-block: clamp(2.25rem, 7vw, 4rem);
 }
 
@@ -2152,6 +2154,14 @@
 .page-shell--mid { max-width: 56rem; }
 .page-shell--narrow { max-width: 48rem; }
 
+/* The hairline above the footer quote: same column as the colophon. */
+.footer-rule {
+  width: var(--content-w);
+  height: 1px;
+  margin-inline: auto;
+  background: var(--rule-2);
+}
+
 /* ─────────────────────────────────────────────
    COLOPHON — the last line of every page
    ───────────────────────────────────────────── */
@@ -2160,8 +2170,7 @@
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 0.75rem 1.5rem;
-  width: 100%;
-  max-width: 900px;
+  width: var(--content-w);
   margin-inline: auto;
   padding: 0.9rem 0 1.1rem;
   border-top: 1px solid var(--rule);
@@ -2171,10 +2180,9 @@
   text-transform: uppercase;
   color: var(--ink-3);
 }
-/* Narrower than the rule above it: take the gutters, and keep clear of the
-   tape deck in the window's bottom-right corner. */
+/* Keep the links clear of the tape deck in the window's bottom-right corner. */
 @media (max-width: 1099px) {
-  .colophon { padding-inline: var(--page-gutter); padding-right: max(var(--page-gutter), calc(var(--hero-gutter) + 54px + 1rem)); }
+  .colophon { padding-right: max(0px, calc(var(--hero-gutter) + 54px + 1rem - var(--page-gutter))); }
 }
 .colophon__who, .colophon__links { display: flex; flex-wrap: wrap; gap: 0.3rem 1.1rem; }
 .colophon__who span + span::before { content: "·"; margin-right: 1.1rem; color: var(--rule-2); }
@@ -2184,7 +2192,7 @@
 .colophon a { color: var(--ink-2); text-decoration: none; transition: color 0.2s; }
 .colophon a:hover, .colophon a:focus-visible { color: var(--accent); }
 @media (max-width: 639px) {
-  .colophon { grid-template-columns: 1fr auto; padding-right: var(--page-gutter); padding-bottom: 4.25rem; }
+  .colophon { grid-template-columns: 1fr auto; padding-right: 0; padding-bottom: 4.25rem; }
   .colophon__links { grid-column: 1 / -1; justify-content: flex-start; }
 }
 @media print { .colophon { display: none; } }
@@ -3287,24 +3295,19 @@ kbd {
    HOME INTRO — first section under the hero
    ───────────────────────────────────────────── */
 .intro {
-  padding-inline: var(--page-gutter);
-  padding-block: clamp(3.5rem, 10vw, 7rem);
+  padding-block: clamp(3.5rem, 9vw, 6rem) clamp(3rem, 7vw, 5rem);
 }
 .intro__inner {
-  max-width: 1000px;
+  width: var(--content-w);
   margin-inline: auto;
   display: grid;
-  gap: 1.75rem;
-}
-@media (min-width: 900px) {
-  .intro__inner { grid-template-columns: 11rem 1fr; gap: 2.5rem; }
+  gap: 1.5rem;
 }
 .intro__eyebrow {
   font-family: var(--f-pixel);
   font-size: 11px;
   letter-spacing: 0.12em;
   color: var(--ink-3);
-  padding-top: 0.55em;
 }
 .intro__lead {
   font-family: var(--f-body);
@@ -4048,10 +4051,10 @@ kbd {
 .familiar__bubble-text {
   margin: 0;
   color: var(--ink);
-  font-family: var(--f-body);
-  font-style: italic;
-  font-size: 13px;
-  line-height: 1.45;
+  font-family: var(--f-pixel);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  line-height: 1.6;
 }
 
 .familiar__caret {

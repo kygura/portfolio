@@ -62,17 +62,11 @@ const Footer = () => {
   return (
     <footer className="w-full relative overflow-hidden flex flex-col mt-auto bg-background">
       {/* Divider line */}
-      <div
-        className="w-full h-px mx-auto"
-        style={{
-          background: "var(--rule-2)",
-          maxWidth: "900px",
-        }}
-      />
+      <div className="footer-rule" />
 
-      <div className="relative w-full max-w-4xl mx-auto py-6 sm:py-8 md:py-10 px-4 sm:px-6 grid grid-cols-2 gap-x-6 gap-y-3 sm:gap-x-0 sm:flex items-center justify-center">
+      <div className="relative [width:var(--content-w)] mx-auto py-6 sm:py-8 md:py-10 grid grid-cols-2 gap-x-6 gap-y-3 sm:gap-x-0 sm:flex items-center justify-center">
         {/* Left */}
-        <div className="justify-self-end sm:justify-self-auto sm:absolute sm:left-6 z-10 flex flex-col items-center gap-1 sm:gap-2">
+        <div className="justify-self-end sm:justify-self-auto sm:absolute sm:-left-2 z-10 flex flex-col items-center gap-1 sm:gap-2">
           <motion.button
             onClick={hasPrev ? handlePrev : undefined}
             disabled={!hasPrev}
@@ -159,7 +153,7 @@ const Footer = () => {
         </div>
 
         {/* Right */}
-        <div className="justify-self-start sm:justify-self-auto sm:absolute sm:right-6 z-10 flex flex-col items-center gap-1 sm:gap-2">
+        <div className="justify-self-start sm:justify-self-auto sm:absolute sm:-right-2 z-10 flex flex-col items-center gap-1 sm:gap-2">
           <motion.button
             onClick={hasNext ? handleNext : undefined}
             disabled={!hasNext}
