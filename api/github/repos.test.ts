@@ -71,6 +71,10 @@ test("detects pages that refuse to be framed", () => {
   assert.equal(blocksFraming(new Headers({ "content-security-policy": "frame-ancestors 'self'" })), true);
   assert.equal(blocksFraming(new Headers({ "content-security-policy": "default-src 'self'; frame-ancestors *" })), false);
   assert.equal(blocksFraming(new Headers({ "content-security-policy": "default-src 'self'" })), false);
+  // A site that lists this portfolio's origin may be framed here, and only that one.
+  assert.equal(blocksFraming(new Headers({ "content-security-policy": "frame-ancestors 'self' https://www.nca.ink" })), false);
+  assert.equal(blocksFraming(new Headers({ "content-security-policy": "frame-ancestors 'self' https://WWW.nca.ink/" })), false);
+  assert.equal(blocksFraming(new Headers({ "content-security-policy": "frame-ancestors https://evil.nca.ink.example" })), true);
 });
 
 test("finds og:image in either attribute order and resolves relative URLs", () => {

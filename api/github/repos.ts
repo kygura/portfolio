@@ -148,6 +148,9 @@ export function liveUrlFor(repo: GithubRepo, user: string): string | null {
   return null;
 }
 
+/** This site's origin: a deployment whose frame-ancestors lists it may be framed here. */
+export const SITE_ORIGIN = "https://www.nca.ink";
+
 /** True when the response headers forbid embedding the page in our frame. */
 export function blocksFraming(headers: Headers): boolean {
   const xfo = headers.get("x-frame-options");
@@ -156,8 +159,10 @@ export function blocksFraming(headers: Headers): boolean {
   const csp = headers.get("content-security-policy");
   const ancestors = csp?.match(/frame-ancestors([^;]*)/i)?.[1].trim();
   if (ancestors !== undefined) {
-    // Anything short of a wildcard would need our exact origin listed.
-    return !ancestors.split(/\s+/).some((source) => source === "*" || source === "https:");
+    // A wildcard, or our exact origin listed (trailing slash and case aside).
+    return !ancestors
+      .split(/\s+/)
+      .some((source) => source === "*" || source === "https:" || source.replace(/\/$/, "").toLowerCase() === SITE_ORIGIN);
   }
   return false;
 }
