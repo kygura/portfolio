@@ -1,15 +1,24 @@
 /**
  * Bit: a small stone automaton, woken from a ruin, that keeps to the
- * bottom-left corner of the page. It reads whatever page you open and says
+ * bottom-left corner of the page until you drag it somewhere else (or nudge
+ * it with the arrow keys; Home sends it back). The spot is remembered. It reads whatever page you open and says
  * something about it (see quips.ts), mutters now and then while you read,
  * dozes when nothing moves for a while, hops when pressed, and has an
  * opinion on every colour palette you switch to. With reduced
  * motion it doesn't hover or hop, but it still talks.
  */
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+} from "react";
 import { useLocation } from "react-router-dom";
 import { Sprite, type FrameName } from "./sprite";
-import { addPet } from "./store";
+import { addPet, readSpot, writeSpot, type Spot } from "./store";
 import { fallbackQuips, pageQuips, paletteQuip, pick } from "./quips";
 import { ACCENTS, useAccent } from "@/theme/accent";
 import { Bubble } from "./Bubble";
@@ -26,7 +35,54 @@ const LINGER_MS = 5000;
 /** Palette switches in quick succession (holding `t`) get one reaction, to the last. */
 const PALETTE_SETTLE = 450;
 
+/** Movement before a press counts as a drag rather than a touch. */
+const DRAG_SLOP = 5;
+/** Gap kept between Bit and the viewport edge. */
+const EDGE = 4;
+/** Arrow-key step in px; Shift moves further. */
+const NUDGE = 16;
+const NUDGE_FAR = 64;
+/** Space the bubble needs above Bit before it flips below instead. */
+const BUBBLE_ROOM = 160;
+
 type Mode = "idle" | "sleep" | "hop";
+
+/** Room left for Bit's top-left corner once its own size and the edge gap are taken out. */
+function room(el: HTMLElement) {
+  const { width, height } = el.getBoundingClientRect();
+  return {
+    w: Math.max(0, window.innerWidth - width - 2 * EDGE),
+    h: Math.max(0, window.innerHeight - height - 2 * EDGE),
+    width,
+  };
+}
+
+const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
+
+function spotAt(el: HTMLElement, left: number, top: number): Spot {
+  const r = room(el);
+  return { x: r.w ? clamp01((left - EDGE) / r.w) : 0, y: r.h ? clamp01((top - EDGE) / r.h) : 0 };
+}
+
+/** Put Bit at a spot (or back in its CSS corner) and turn the bubble toward open space. */
+function placeAt(el: HTMLElement, spot: Spot | null) {
+  if (!spot) {
+    el.style.removeProperty("left");
+    el.style.removeProperty("top");
+    el.style.removeProperty("bottom");
+    el.removeAttribute("data-bubble-x");
+    el.removeAttribute("data-bubble-y");
+    return;
+  }
+  const r = room(el);
+  const left = EDGE + spot.x * r.w;
+  const top = EDGE + spot.y * r.h;
+  el.style.left = `${left}px`;
+  el.style.top = `${top}px`;
+  el.style.bottom = "auto";
+  el.toggleAttribute("data-bubble-x", left + r.width / 2 > window.innerWidth / 2);
+  el.toggleAttribute("data-bubble-y", top < BUBBLE_ROOM);
+}
 
 export default function Familiar() {
   const { pathname } = useLocation();
@@ -41,6 +97,27 @@ export default function Familiar() {
   const bubbleTimer = useRef<number>();
   const modeRef = useRef(mode);
   modeRef.current = mode;
+
+  // Where Bit stands. Dragging moves the element directly and saves on release.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [spot, setSpot] = useState<Spot | null>(readSpot);
+  const [dragging, setDragging] = useState(false);
+  const drag = useRef<{ id: number; dx: number; dy: number; sx: number; sy: number; spot: Spot | null } | null>(null);
+  const noClickUntil = useRef(0);
+
+  useLayoutEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    placeAt(el, spot);
+    const onResize = () => placeAt(el, spot);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [spot]);
+
+  const setDown = (next: Spot | null) => {
+    setSpot(next);
+    writeSpot(next);
+  };
 
   // Lines for the current page: the model's when it answered, then stock ones.
   const lines = useRef<string[]>(fallbackQuips(pathname));
@@ -166,7 +243,60 @@ export default function Familiar() {
     return () => window.clearTimeout(id);
   }, [shifting]);
 
+  const onPointerDown = (e: PointerEvent<HTMLButtonElement>) => {
+    const el = rootRef.current;
+    if (!el || (e.pointerType === "mouse" && e.button !== 0)) return;
+    const r = el.getBoundingClientRect();
+    drag.current = { id: e.pointerId, dx: e.clientX - r.left, dy: e.clientY - r.top, sx: e.clientX, sy: e.clientY, spot: null };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const onPointerMove = (e: PointerEvent<HTMLButtonElement>) => {
+    const d = drag.current;
+    const el = rootRef.current;
+    if (!d || !el || d.id !== e.pointerId) return;
+    if (!d.spot && Math.hypot(e.clientX - d.sx, e.clientY - d.sy) < DRAG_SLOP) return;
+    if (!d.spot) setDragging(true);
+    d.spot = spotAt(el, e.clientX - d.dx, e.clientY - d.dy);
+    placeAt(el, d.spot);
+  };
+
+  const endDrag = (e: PointerEvent<HTMLButtonElement>) => {
+    const d = drag.current;
+    if (!d || d.id !== e.pointerId) return;
+    drag.current = null;
+    if (!d.spot) return;
+    // The release of a drag also fires a click; that one isn't a touch.
+    noClickUntil.current = performance.now() + 300;
+    setDragging(false);
+    setDown(d.spot);
+    chirp("touch");
+  };
+
+  const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    const el = rootRef.current;
+    if (!el) return;
+    if (e.key === "Home") {
+      e.preventDefault();
+      setDown(null);
+      return;
+    }
+    const step = e.shiftKey ? NUDGE_FAR : NUDGE;
+    const delta: Record<string, [number, number]> = {
+      ArrowLeft: [-step, 0],
+      ArrowRight: [step, 0],
+      ArrowUp: [0, -step],
+      ArrowDown: [0, step],
+    };
+    const move = delta[e.key];
+    if (!move) return;
+    e.preventDefault();
+    const r = el.getBoundingClientRect();
+    setDown(spotAt(el, r.left + move[0], r.top + move[1]));
+  };
+
   const pet = () => {
+    if (performance.now() < noClickUntil.current) return;
     lastActive.current = Date.now();
     const n = addPet();
     chirp("touch");
@@ -177,7 +307,7 @@ export default function Familiar() {
   };
 
   return (
-    <div className="familiar" data-mode={mode} data-shift={shifting || undefined}>
+    <div ref={rootRef} className="familiar" data-mode={mode} data-shift={shifting || undefined} data-drag={dragging || undefined}>
       {bubble && (
         <Bubble key={bubble.id} text={bubble.text} voiceMode={voiceSetting} onCycleVoice={cycleVoice} />
       )}
@@ -185,7 +315,12 @@ export default function Familiar() {
         type="button"
         className="familiar__body"
         onClick={pet}
-        aria-label="Bit, an old automaton. Press to touch it."
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={endDrag}
+        onPointerCancel={endDrag}
+        onKeyDown={onKeyDown}
+        aria-label="Bit, an old automaton. Press to touch it. Drag it, or use the arrow keys, to move it; Home returns it to the corner."
       >
         <Sprite frame={frame} />
       </button>
