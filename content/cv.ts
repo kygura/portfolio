@@ -84,7 +84,7 @@ export const cv: Cv = {
   education: [
     {
       degree: "B.Sc. Computer Engineering",
-      institution: "Universidad de Málaga",
+      institution: "Spanish public university",
       period: "2022 – 2024",
       description: "",
     },
