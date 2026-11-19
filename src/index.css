@@ -3091,53 +3091,60 @@ kbd {
 .cmd-open:hover, .cmd-open:focus-visible { border-color: var(--accent); outline: none; }
 .theme-trigger[data-state="open"] span, .theme-trigger:hover span { color: var(--ink); }
 .cmd-open:active { opacity: 0.7; }
-/* From 1024px the strip of squares takes over and the trigger hides. */
+/* From 1024px the strip takes over and the trigger hides. Four family bars
+   of fixed size (nothing in the strip moves); a click opens a dropdown of the
+   family's palettes under its bar. */
 .swatch-strip { display: none; }
 @media (min-width: 1024px) {
   .theme-trigger { display: none; }
   .swatch-strip {
-    position: relative; display: inline-flex; align-items: center; gap: 13px; width: 232px; padding: 6px 10px;
-    border: 1px solid var(--rule-2); transition: border-color 0.15s ease;
+    position: relative; display: inline-flex; align-items: center; gap: 13px; padding: 6px 10px;
+    border: 1px solid var(--rule-2);
   }
-  .swatch-strip:hover, .swatch-strip:focus-within { border-color: var(--rule-2); }
-  /* Folded families share the width; an open one takes what its squares need. */
-  .swatch-strip__fam { display: inline-flex; flex: 1 1 0; min-width: 0; align-items: center; transition: flex-grow 0.22s cubic-bezier(0.22, 1, 0.36, 1); }
-  .swatch-strip__fam[data-open] { flex: 0 0 auto; }
+  .swatch-strip__fam { position: relative; display: inline-flex; }
   /* Hairline between families. */
-  .swatch-strip__fam + .swatch-strip__fam { position: relative; }
   .swatch-strip__fam + .swatch-strip__fam::before {
     content: ""; position: absolute; left: -7px; top: 1px; bottom: 1px; width: 1px; background: var(--rule-2);
   }
-  .swatch-strip button {
-    flex: none; width: 14px; height: 14px; margin-left: 4px; padding: 0; background: var(--c-acc);
-    border: 0; outline-offset: 2px; opacity: 0.7;
-    transition: opacity 0.15s ease, transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
-      width 0.22s cubic-bezier(0.22, 1, 0.36, 1), margin 0.22s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-  .swatch-strip__fold + button { margin-left: 0; }
-  .swatch-strip button:hover, .swatch-strip button:focus-visible { opacity: 1; transform: translateY(-2px); outline: none; }
-  .swatch-strip button[aria-pressed="true"] { opacity: 1; outline: 1px solid var(--ink); }
-  /* Folding: at most one family open. A folded family is a bar with its five
-     accents as a gradient; its squares shrink to nothing (they stay focusable,
-     and focusing one opens the family). */
+  /* A family bar: its five accents side by side, the active one outlined. */
   .swatch-strip__fold {
-    flex: none; width: 0; height: 14px; opacity: 0; cursor: pointer;
+    display: flex; gap: 1px; width: 40px; height: 14px; padding: 0;
+    background: none; border: 0; cursor: pointer; opacity: 0.6; outline-offset: 3px;
     transition: opacity 0.15s ease;
   }
-  .swatch-strip__fam:not([data-open]) .swatch-strip__fold { flex: 1 1 auto; opacity: 0.55; }
-  .swatch-strip__fam[data-on]:not([data-open]) .swatch-strip__fold { opacity: 0.9; }
-  .swatch-strip__fam:not([data-open]) button { width: 0; margin-left: 0; opacity: 0; pointer-events: none; }
+  .swatch-strip__fold i { position: relative; flex: 1 1 0; }
+  .swatch-strip__fold i[data-on] { z-index: 1; box-shadow: 0 0 0 1px var(--ink); }
+  .swatch-strip__fam[data-on] .swatch-strip__fold { opacity: 0.9; }
+  .swatch-strip__fold:hover, .swatch-strip__fam[data-open] .swatch-strip__fold { opacity: 1; }
+  .swatch-strip__fold:focus-visible { outline: 1px dashed var(--ink-2); }
+  /* The dropdown: centred under its bar (the last one aligns to the strip's
+     right edge so it stays on screen). Fixed width, so a longer palette name
+     never resizes it and moves the squares under the pointer. */
+  .swatch-strip__drop {
+    position: absolute; top: calc(100% + 14px); left: 50%; z-index: 60; transform: translateX(-50%);
+    display: flex; flex-direction: column; gap: 8px; width: 184px; padding: 9px 10px 8px;
+    background: var(--bg-2); border: 1px solid var(--rule-2); border-top: 1px solid var(--accent);
+    animation: themeFade 0.14s ease;
+  }
+  .swatch-strip__fam:last-child .swatch-strip__drop { left: auto; right: -11px; transform: none; }
+  .swatch-strip__squares { display: flex; gap: 5px; }
+  .swatch-strip__sq {
+    flex: 1 1 0; min-width: 0; height: 18px; padding: 0; background: var(--c-acc); border: 0; cursor: pointer;
+    opacity: 0.8; outline-offset: 2px;
+    transition: opacity 0.15s ease, transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .swatch-strip__sq:hover, .swatch-strip__sq:focus-visible { opacity: 1; transform: translateY(-2px); outline: none; }
+  .swatch-strip__sq[aria-pressed="true"] { opacity: 1; outline: 1px solid var(--ink); }
   .swatch-strip__tag {
-    position: absolute; top: calc(100% + 7px); right: -1px; padding: 4px 8px; white-space: nowrap; pointer-events: none;
-    font: 10px var(--f-mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3);
-    background: var(--bg-2); border: 1px solid var(--rule-2);
-    opacity: 0; transform: translateY(-3px); transition: opacity 0.15s ease, transform 0.15s ease;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font: 10px var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3);
   }
   .swatch-strip__tag b { font-weight: 400; color: var(--ink); }
-  .swatch-strip[data-peek] .swatch-strip__tag { opacity: 1; transform: none; }
 }
 @media (min-width: 1024px) and (prefers-reduced-motion: reduce) {
-  .swatch-strip button, .swatch-strip__fold, .swatch-strip__tag { transition: none; transform: none !important; }
+  .swatch-strip__fold, .swatch-strip__sq { transition: none; }
+  .swatch-strip__sq:hover, .swatch-strip__sq:focus-visible { transform: none; }
+  .swatch-strip__drop { animation: none; }
 }
 @media (max-width: 1023px) {
   .cmd-open { display: inline-flex; }
