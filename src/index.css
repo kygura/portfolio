@@ -4146,10 +4146,11 @@ kbd {
 }
 
 .bay__title {
-  font-family: var(--f-body);
+  font-family: var(--f-pixel);
   font-size: clamp(2.5rem, 9vw, 4.5rem);
   line-height: 0.95;
-  letter-spacing: -0.03em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--ink);
 }
 
