@@ -188,7 +188,7 @@ const Footer = () => {
       <div className="colophon">
         <p className="colophon__who">
           <span>NCA.ink</span>
-          <span>M&aacute;laga</span>
+          <span>Europe</span>
           <span>{new Date().getFullYear()}</span>
         </p>
         <p className="colophon__count" aria-label={`Quote ${currentQuote.index + 1} of ${QUOTES_ARRAY.length}`}>

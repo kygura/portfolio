@@ -14,10 +14,6 @@
   --ink-3: #75817b;
   --rule: #2b3739;
   --rule-2: #3d4b4d;
-  --grid: rgba(224, 217, 200, 0.035);
-  /* Surface texture behind every sheet; none by default, a variant may set both. */
-  --tex: none;
-  --tex-size: auto;
   --scrim: rgba(12, 17, 18, 0.86);
   --danger: #e5787f;
   /* Accent — default variant "Lichen"; [data-accent] variants below.
@@ -67,10 +63,9 @@
 }
 
 /* Amber, Sky and Rose, like Manuscript and Graphite, swap the whole sheet:
-   ground, ink, rules, kit tokens and the surface texture behind the page, so
-   each reads as its own place and not the Lichen sheet with a new highlight.
-   Amber: a plum-black dusk lit from above. Sky: a navy blueprint with a
-   drafting grid. Rose: oxblood wine with a dotted lattice. */
+   ground, ink, rules and kit tokens, so each reads as its own place and not
+   the Lichen sheet with a new highlight. Amber: plum-black dusk. Sky: navy
+   blueprint. Rose: oxblood wine. */
 :root[data-accent="torch"] {
   --bg: #17121a;
   --bg-2: #1d1721;
@@ -81,7 +76,6 @@
   --ink-3: #8b7a78;
   --rule: #342a38;
   --rule-2: #4b3d4c;
-  --grid: transparent;
   --scrim: rgba(17, 13, 20, 0.86);
   --danger: #f0836b;
   --accent: #eaa24c;
@@ -89,9 +83,6 @@
   --on-accent: #1d1206;
   --accent-h: 33 79% 61%;
   --on-accent-h: 31 66% 7%;
-  /* No lattice: a lamp-glow falling from the top edge instead. */
-  --tex: radial-gradient(120% 70% at 50% -10%, rgba(234, 162, 76, 0.1), transparent 70%);
-  --tex-size: auto;
 
   --background: 275 19% 9%;
   --foreground: 36 55% 87%;
@@ -124,7 +115,6 @@
   --ink-3: #6a8199;
   --rule: #1f3250;
   --rule-2: #2f4a70;
-  --grid: rgba(134, 211, 220, 0.07);
   --scrim: rgba(8, 14, 27, 0.86);
   --danger: #ff8f9a;
   --accent: #86d3dc;
@@ -132,8 +122,6 @@
   --on-accent: #08171b;
   --accent-h: 186 55% 69%;
   --on-accent-h: 193 54% 7%;
-  --tex: none;
-  --tex-size: auto;
 
   --background: 219 55% 9%;
   --foreground: 205 52% 89%;
@@ -166,7 +154,6 @@
   --ink-3: #8c6f75;
   --rule: #3a252d;
   --rule-2: #53363f;
-  --grid: rgba(229, 120, 127, 0.1);
   --scrim: rgba(19, 10, 14, 0.86);
   --danger: #ffb3a0;
   --accent: #e5787f;
@@ -174,8 +161,6 @@
   --on-accent: #1f0a0d;
   --accent-h: 356 68% 68%;
   --on-accent-h: 351 51% 8%;
-  --tex: none;
-  --tex-size: auto;
 
   --background: 342 27% 8%;
   --foreground: 7 38% 91%;
@@ -210,7 +195,6 @@
   --ink-3: #7c7c7c;
   --rule: #2e2e2e;
   --rule-2: #444444;
-  --grid: rgba(226, 226, 226, 0.035);
   --scrim: rgba(12, 12, 12, 0.86);
   --danger: #f5f5f5;
   --accent: #d4d4d4;
@@ -253,7 +237,6 @@
   --ink-3: #807a6f;
   --rule: #35322c;
   --rule-2: #4a463e;
-  --grid: rgba(235, 230, 219, 0.03);
   --scrim: rgba(21, 20, 17, 0.86);
   --accent: #e08a62;
   --accent-deep: #9a4524;
@@ -292,7 +275,6 @@
   --ink-3: #a07c88;
   --rule: #34182e;
   --rule-2: #4a2440;
-  --grid: rgba(244, 148, 92, 0.045);
   --scrim: rgba(19, 8, 16, 0.86);
   --danger: #ff8a8a;
   --accent: #f4945c;
@@ -300,8 +282,6 @@
   --on-accent: #1e0a12;
   --accent-h: 22 87% 66%;
   --on-accent-h: 335 50% 8%;
-  --tex: linear-gradient(180deg, rgba(176, 42, 106, 0.14), transparent 45%);
-  --tex-size: auto;
 
   --background: 309 37% 7%;
   --foreground: 28 72% 91%;
@@ -339,7 +319,6 @@
   --ink-3: #6f846d;
   --rule: #21312a;
   --rule-2: #32473a;
-  --grid: rgba(127, 207, 138, 0.05);
   --scrim: rgba(9, 16, 12, 0.86);
   --danger: #ee8c7c;
   --accent: #7fcf8a;
@@ -347,8 +326,6 @@
   --on-accent: #08170c;
   --accent-h: 128 45% 65%;
   --on-accent-h: 136 48% 6%;
-  --tex: radial-gradient(140% 60% at 50% 110%, rgba(127, 207, 138, 0.07), transparent 70%);
-  --tex-size: auto;
 
   --background: 142 22% 7%;
   --foreground: 93 30% 87%;
@@ -382,7 +359,6 @@
   --ink-3: #678a81;
   --rule: #1d3431;
   --rule-2: #2c4a46;
-  --grid: rgba(90, 214, 173, 0.05);
   --scrim: rgba(7, 16, 16, 0.86);
   --danger: #f08f86;
   --accent: #5ad6ad;
@@ -390,8 +366,6 @@
   --on-accent: #04170f;
   --accent-h: 160 60% 60%;
   --on-accent-h: 155 70% 5%;
-  --tex: none;
-  --tex-size: auto;
 
   --background: 175 33% 6%;
   --foreground: 160 34% 88%;
@@ -425,7 +399,6 @@
   --ink-3: #7a7499;
   --rule: #29254a;
   --rule-2: #3c3764;
-  --grid: rgba(169, 156, 245, 0.06);
   --scrim: rgba(11, 10, 25, 0.86);
   --danger: #ff92a8;
   --accent: #a99cf5;
@@ -433,8 +406,6 @@
   --on-accent: #110c2a;
   --accent-h: 249 82% 79%;
   --on-accent-h: 250 56% 11%;
-  --tex: radial-gradient(120% 70% at 50% 115%, rgba(169, 156, 245, 0.09), transparent 70%);
-  --tex-size: auto;
 
   --background: 243 38% 10%;
   --foreground: 252 53% 93%;
@@ -457,7 +428,7 @@
   --sidebar-accent-foreground: 252 53% 93%;
 }
 
-/* Phosphor: a green-screen terminal. Near-black ground, phosphor ink, a lit-green accent and faint scanlines. */
+/* Phosphor: a green-screen terminal. Near-black ground, phosphor ink, and a lit-green accent. */
 :root[data-accent="phosphor"] {
   --bg: #080c09;
   --bg-2: #0c120d;
@@ -468,7 +439,6 @@
   --ink-3: #5c8564;
   --rule: #18251a;
   --rule-2: #253a28;
-  --grid: rgba(92, 240, 138, 0.05);
   --scrim: rgba(5, 8, 6, 0.86);
   --danger: #ffb36b;
   --accent: #5cf08a;
@@ -476,8 +446,6 @@
   --on-accent: #03140a;
   --accent-h: 139 83% 65%;
   --on-accent-h: 145 74% 5%;
-  --tex: repeating-linear-gradient(0deg, rgba(92, 240, 138, 0.025) 0 1px, transparent 1px 3px);
-  --tex-size: auto;
 
   --background: 135 20% 4%;
   --foreground: 129 61% 87%;
@@ -511,7 +479,6 @@
   --ink-3: #7f7972;
   --rule: #2a2725;
   --rule-2: #3e3a37;
-  --grid: rgba(239, 232, 221, 0.03);
   --scrim: rgba(8, 7, 7, 0.86);
   --danger: #ffd08a;
   --accent: #ff5a3c;
@@ -519,8 +486,6 @@
   --on-accent: #1c0703;
   --accent-h: 9 100% 62%;
   --on-accent-h: 10 81% 6%;
-  --tex: none;
-  --tex-size: auto;
 
   --background: 0 4% 5%;
   --foreground: 37 36% 90%;
@@ -559,7 +524,6 @@
   --ink-3: #8b816a;
   --rule: #382a21;
   --rule-2: #4f3d30;
-  --grid: rgba(240, 193, 75, 0.045);
   --scrim: rgba(18, 13, 10, 0.86);
   --danger: #f28a7a;
   --accent: #f0c14b;
@@ -567,8 +531,6 @@
   --on-accent: #1c1605;
   --accent-h: 43 85% 62%;
   --on-accent-h: 44 70% 6%;
-  --tex: repeating-linear-gradient(180deg, transparent 0 27px, rgba(240, 193, 75, 0.035) 27px 28px);
-  --tex-size: auto;
 
   --background: 23 32% 8%;
   --foreground: 42 54% 88%;
@@ -602,7 +564,6 @@
   --ink-3: #81866f;
   --rule: #2f3425;
   --rule-2: #424a36;
-  --grid: rgba(166, 214, 94, 0.045);
   --scrim: rgba(15, 17, 11, 0.86);
   --danger: #f0907c;
   --accent: #a6d65e;
@@ -610,8 +571,6 @@
   --on-accent: #131a07;
   --accent-h: 84 59% 60%;
   --on-accent-h: 82 58% 6%;
-  --tex: radial-gradient(120% 70% at 50% -10%, rgba(166, 214, 94, 0.07), transparent 70%);
-  --tex-size: auto;
 
   --background: 83 20% 8%;
   --foreground: 73 38% 88%;
@@ -645,7 +604,6 @@
   --ink-3: #787f76;
   --rule: #2a302d;
   --rule-2: #3c4440;
-  --grid: rgba(156, 197, 173, 0.045);
   --scrim: rgba(13, 15, 14, 0.86);
   --danger: #e8907f;
   --accent: #9cc5ad;
@@ -653,8 +611,6 @@
   --on-accent: #0c1510;
   --accent-h: 145 26% 69%;
   --on-accent-h: 147 27% 6%;
-  --tex: none;
-  --tex-size: auto;
 
   --background: 140 7% 8%;
   --foreground: 107 15% 88%;
@@ -688,7 +644,6 @@
   --ink-3: #68798d;
   --rule: #1a293f;
   --rule-2: #273b58;
-  --grid: rgba(111, 168, 255, 0.045);
   --scrim: rgba(7, 13, 21, 0.86);
   --danger: #ff8f9a;
   --accent: #6fa8ff;
@@ -696,8 +651,6 @@
   --on-accent: #050e1c;
   --accent-h: 216 100% 72%;
   --on-accent-h: 217 70% 6%;
-  --tex: radial-gradient(130% 70% at 50% 115%, rgba(111, 168, 255, 0.08), transparent 70%);
-  --tex-size: auto;
 
   --background: 218 46% 8%;
   --foreground: 212 61% 88%;
@@ -731,7 +684,6 @@
   --ink-3: #816d88;
   --rule: #32203a;
   --rule-2: #472e51;
-  --grid: rgba(205, 146, 242, 0.045);
   --scrim: rgba(16, 9, 19, 0.86);
   --danger: #ff92a0;
   --accent: #cd92f2;
@@ -739,8 +691,6 @@
   --on-accent: #13051c;
   --accent-h: 277 79% 76%;
   --on-accent-h: 277 70% 6%;
-  --tex: none;
-  --tex-size: auto;
 
   --background: 283 35% 8%;
   --foreground: 284 44% 88%;
@@ -774,7 +724,6 @@
   --ink-3: #876e7e;
   --rule: #382135;
   --rule-2: #4f304b;
-  --grid: rgba(238, 143, 207, 0.045);
   --scrim: rgba(18, 10, 17, 0.86);
   --danger: #ffb08a;
   --accent: #ee8fcf;
@@ -782,8 +731,6 @@
   --on-accent: #1c0514;
   --accent-h: 320 74% 75%;
   --on-accent-h: 321 70% 6%;
-  --tex: linear-gradient(180deg, rgba(154, 47, 122, 0.12), transparent 45%);
-  --tex-size: auto;
 
   --background: 309 32% 8%;
   --foreground: 322 41% 88%;
@@ -817,7 +764,6 @@
   --ink-3: #817d74;
   --rule: #282725;
   --rule-2: #3c3a37;
-  --grid: rgba(255, 194, 26, 0.045);
   --scrim: rgba(9, 9, 8, 0.86);
   --danger: #ff6b5a;
   --accent: #ffc21a;
@@ -825,8 +771,6 @@
   --on-accent: #1c1605;
   --accent-h: 44 100% 55%;
   --on-accent-h: 44 70% 6%;
-  --tex: none;
-  --tex-size: auto;
 
   --background: 30 7% 5%;
   --foreground: 42 21% 88%;
@@ -860,7 +804,6 @@
   --ink-3: #757880;
   --rule: #242529;
   --rule-2: #36373d;
-  --grid: rgba(102, 128, 255, 0.045);
   --scrim: rgba(8, 9, 10, 0.86);
   --danger: #ffb36b;
   --accent: #6680ff;
@@ -868,8 +811,6 @@
   --on-accent: #05091c;
   --accent-h: 230 100% 70%;
   --on-accent-h: 230 70% 6%;
-  --tex: none;
-  --tex-size: auto;
 
   --background: 240 7% 5%;
   --foreground: 224 18% 88%;
@@ -1357,10 +1298,7 @@
   display: grid;
   place-items: center;
   padding: 1.5rem;
-  background:
-    repeating-linear-gradient(0deg, transparent 0 23px, var(--rule) 23px 24px),
-    repeating-linear-gradient(90deg, transparent 0 23px, var(--rule) 23px 24px),
-    var(--bg);
+  background: var(--bg);
   font-family: var(--f-pixel);
   font-size: clamp(0.8rem, 2vw, 1.1rem);
   letter-spacing: 0.08em;
@@ -1403,9 +1341,6 @@
   flex: 1;
   min-height: 0;
   margin: 0.5rem 0.5rem 0;
-  background:
-    repeating-linear-gradient(0deg, transparent 0 23px, var(--grid) 23px 24px),
-    repeating-linear-gradient(90deg, transparent 0 23px, var(--grid) 23px 24px);
 }
 .code-map__group,
 .code-map__cell {
@@ -1952,11 +1887,8 @@
 
   html { background: var(--bg); }
 
-  /* Survey grid: a faint 48px hairline lattice behind every sheet. */
   body {
     background-color: var(--bg);
-    background-image: var(--tex);
-    background-size: var(--tex-size);
     color: var(--ink);
     font-family: var(--f-body);
     font-size: 1.125rem;
