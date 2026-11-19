@@ -43,7 +43,7 @@ export const cv: Cv = {
   contact: {
     name: "Nicolás Cerrato Antón",
     headline: "Software Engineer · Agentic Systems · Markets",
-    location: "Málaga, Spain",
+    location: "Europe",
     email: "ncerratoanton@gmail.com",
     website: "nca.ink",
     github: "github.com/kygura",
