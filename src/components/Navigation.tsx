@@ -161,7 +161,7 @@ function SwatchStrip() {
 
 /**
  * Theme picker under 1024px: one swatch in the nav that opens a panel with
- * every palette in a single spectrum row, grouped by family in hue order, the
+ * every palette in spectrum order (one row on tablets, two on phones), grouped by family in hue order, the
  * family names under their groups. The head names the current palette. The
  * panel stays open on a pick so palettes can be compared against the live page;
  * a tap anywhere outside it closes it.

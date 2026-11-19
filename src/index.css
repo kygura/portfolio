@@ -3158,7 +3158,7 @@ kbd {
 /* The panel (phones and tablets): every palette in one spectrum row, grouped
    by family in hue order, the family names under their groups. */
 .theme-panel {
-  z-index: 99000; width: min(440px, calc(100vw - 24px)); padding: 0;
+  z-index: 99000; width: min(600px, calc(100vw - 24px)); padding: 0;
   background: var(--bg-2); border: 1px solid var(--rule-2); border-top: 1px solid var(--accent);
   font-family: var(--f-mono); color: var(--ink-2); outline: none;
   animation: themeFade 0.14s ease;
@@ -3176,9 +3176,9 @@ kbd {
 .theme-panel__now b { font-weight: 400; color: var(--ink); }
 .theme-row { display: flex; gap: 8px; padding: 14px 14px 12px; border-bottom: 1px solid var(--rule); }
 .theme-row__fam { display: flex; flex: 1 1 0; min-width: 0; flex-direction: column; gap: 7px; }
-.theme-row__swatches { display: flex; gap: 2px; }
+.theme-row__swatches { display: flex; gap: 3px; }
 .theme-row__swatch {
-  position: relative; flex: 1 1 0; min-width: 0; height: 36px; padding: 0;
+  position: relative; flex: 1 1 0; min-width: 0; height: 40px; padding: 0;
   background: var(--c-acc); border: 0; cursor: pointer; opacity: 0.8;
   transition: opacity 0.15s ease, transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -3195,14 +3195,24 @@ kbd {
   font-size: 10px; letter-spacing: 0.06em; color: var(--ink-3);
 }
 .theme-panel__foot span { display: inline-flex; align-items: center; gap: 4px; }
-/* Phones: same row, tighter; the key hints drop out. */
+/* Phones: the row wraps into two, with taller swatches; the key hints drop out. */
 @media (max-width: 639px) {
   .theme-panel__head { padding: 8px 10px; font-size: 10px; }
   .theme-panel__head > span:first-child { display: none; }
   .theme-panel__now { width: 100%; text-align: left; }
-  .theme-row { gap: 6px; padding: 12px 10px 10px; border-bottom: 0; }
-  .theme-row__name { font-size: 9px; letter-spacing: 0.08em; }
+  /* Two families per row (Hearth, Grove / Tide, Signal), still in spectrum
+     order, so each swatch is about 30px wide and 44px tall on a 390px phone. */
+  .theme-row { flex-wrap: wrap; gap: 14px 12px; padding: 12px 10px; border-bottom: 0; }
+  .theme-row__fam { flex: 1 1 calc(50% - 6px); }
+  .theme-row__swatches { gap: 4px; }
+  .theme-row__swatch { height: 44px; }
+  .theme-row__name { font-size: 9.5px; letter-spacing: 0.1em; }
   .theme-panel__foot { display: none; }
+}
+/* The narrowest phones (320px): tighter gaps keep each swatch at least 24px wide. */
+@media (max-width: 359px) {
+  .theme-row { column-gap: 10px; padding-inline: 8px; }
+  .theme-row__swatches { gap: 3px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .theme-row__swatch { transition: none; }
