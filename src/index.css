@@ -3996,7 +3996,9 @@ kbd {
   position: fixed;
   left: var(--hero-gutter);
   bottom: 12px;
-  z-index: 40;
+  /* Above the sticky nav (50) and the deck button (45) so it can be picked
+     up wherever it's set down; under menus (60) and overlays. */
+  z-index: 55;
   pointer-events: none;
 }
 
@@ -4006,7 +4008,10 @@ kbd {
   border: 0;
   background: none;
   pointer-events: auto;
-  cursor: pointer;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
   image-rendering: pixelated;
   filter:
     drop-shadow(0 0 5px color-mix(in srgb, var(--accent) 30%, transparent))
@@ -4026,6 +4031,23 @@ kbd {
 .familiar[data-mode="hop"] .familiar__body svg { animation: familiarHop 0.64s steps(4) both; }
 .familiar[data-mode="sleep"] .familiar__body { opacity: 0.8; filter: none; }
 .familiar[data-mode="sleep"] .familiar__body svg { animation: none; }
+
+/* Carried: Bit lifts a little and stops drifting until set down. */
+.familiar[data-drag] .familiar__body { cursor: grabbing; }
+.familiar[data-drag] .familiar__body svg { animation: none; transform: translateY(-3px); }
+
+/* Set down near the right edge or the top, the bubble turns toward open space. */
+.familiar[data-bubble-x] .familiar__bubble { left: auto; right: -4px; }
+.familiar[data-bubble-x] .familiar__bubble::before { left: auto; right: 22px; }
+.familiar[data-bubble-x] .familiar__bubble::after { left: auto; right: 25px; }
+.familiar[data-bubble-y] .familiar__bubble { bottom: auto; top: calc(100% + 14px); }
+.familiar[data-bubble-y] .familiar__bubble::before,
+.familiar[data-bubble-y] .familiar__bubble::after {
+  border-top: 1px solid var(--tab-edge);
+  border-bottom: 0;
+}
+.familiar[data-bubble-y] .familiar__bubble::before { top: auto; bottom: 100%; }
+.familiar[data-bubble-y] .familiar__bubble::after { top: auto; bottom: calc(100% + 4px); }
 
 /* The bubble: a small carved tablet. Double hairline frame, a rune header,
    a stepped pixel tail pointing down at Bit. */
