@@ -3091,54 +3091,60 @@ kbd {
 .cmd-open:hover, .cmd-open:focus-visible { border-color: var(--accent); outline: none; }
 .theme-trigger[data-state="open"] span, .theme-trigger:hover span { color: var(--ink); }
 .cmd-open:active { opacity: 0.7; }
-/* From 1024px the strip of squares takes over and the trigger hides. */
+/* From 1024px the strip takes over and the trigger hides. Four family bars
+   of fixed size (nothing in the strip moves); a click opens a dropdown of the
+   family's palettes under its bar. */
 .swatch-strip { display: none; }
 @media (min-width: 1024px) {
   .theme-trigger { display: none; }
   .swatch-strip {
     position: relative; display: inline-flex; align-items: center; gap: 13px; padding: 6px 10px;
-    border: 1px solid var(--rule-2); transition: border-color 0.15s ease;
+    border: 1px solid var(--rule-2);
   }
-  .swatch-strip:hover, .swatch-strip:focus-within { border-color: var(--rule-2); }
-  .swatch-strip__fam { display: inline-flex; gap: 3px; }
+  .swatch-strip__fam { position: relative; display: inline-flex; }
   /* Hairline between families. */
-  .swatch-strip__fam + .swatch-strip__fam { position: relative; }
   .swatch-strip__fam + .swatch-strip__fam::before {
     content: ""; position: absolute; left: -7px; top: 1px; bottom: 1px; width: 1px; background: var(--rule-2);
   }
-  .swatch-strip button {
-    width: 12px; height: 12px; padding: 0; background: var(--c-acc);
-    border: 0; outline-offset: 2px; opacity: 0.45;
+  /* A family bar: its five accents side by side, the active one outlined. */
+  .swatch-strip__fold {
+    display: flex; gap: 1px; width: 40px; height: 14px; padding: 0;
+    background: none; border: 0; cursor: pointer; opacity: 0.6; outline-offset: 3px;
+    transition: opacity 0.15s ease;
+  }
+  .swatch-strip__fold i { position: relative; flex: 1 1 0; }
+  .swatch-strip__fold i[data-on] { z-index: 1; box-shadow: 0 0 0 1px var(--ink); }
+  .swatch-strip__fam[data-on] .swatch-strip__fold { opacity: 0.9; }
+  .swatch-strip__fold:hover, .swatch-strip__fam[data-open] .swatch-strip__fold { opacity: 1; }
+  .swatch-strip__fold:focus-visible { outline: 1px dashed var(--ink-2); }
+  /* The dropdown: centred under its bar (the last one aligns to the strip's
+     right edge so it stays on screen). Fixed width, so a longer palette name
+     never resizes it and moves the squares under the pointer. */
+  .swatch-strip__drop {
+    position: absolute; top: calc(100% + 14px); left: 50%; z-index: 60; transform: translateX(-50%);
+    display: flex; flex-direction: column; gap: 8px; width: 184px; padding: 9px 10px 8px;
+    background: var(--bg-2); border: 1px solid var(--rule-2); border-top: 1px solid var(--accent);
+    animation: themeFade 0.14s ease;
+  }
+  .swatch-strip__fam:last-child .swatch-strip__drop { left: auto; right: -11px; transform: none; }
+  .swatch-strip__squares { display: flex; gap: 5px; }
+  .swatch-strip__sq {
+    flex: 1 1 0; min-width: 0; height: 18px; padding: 0; background: var(--c-acc); border: 0; cursor: pointer;
+    opacity: 0.8; outline-offset: 2px;
     transition: opacity 0.15s ease, transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  /* The active family sits a little brighter than the rest. */
-  .swatch-strip__fam[data-on] button { opacity: 0.7; }
-  .swatch-strip button:hover, .swatch-strip button:focus-visible { opacity: 1; transform: translateY(-2px); outline: none; }
-  .swatch-strip button[aria-pressed="true"] { opacity: 1; outline: 1px solid var(--ink); }
+  .swatch-strip__sq:hover, .swatch-strip__sq:focus-visible { opacity: 1; transform: translateY(-2px); outline: none; }
+  .swatch-strip__sq[aria-pressed="true"] { opacity: 1; outline: 1px solid var(--ink); }
   .swatch-strip__tag {
-    position: absolute; top: calc(100% + 7px); right: -1px; padding: 4px 8px; white-space: nowrap; pointer-events: none;
-    font: 10px var(--f-mono); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3);
-    background: var(--bg-2); border: 1px solid var(--rule-2);
-    opacity: 0; transform: translateY(-3px); transition: opacity 0.15s ease, transform 0.15s ease;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font: 10px var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-3);
   }
   .swatch-strip__tag b { font-weight: 400; color: var(--ink); }
-  .swatch-strip[data-peek] .swatch-strip__tag { opacity: 1; transform: none; }
-}
-/* Twenty squares: they grow with the bar (9px, 10px, then 12px from 1440px)
-   so the strip always clears the last nav link (checked 1024–1600px). */
-@media (min-width: 1024px) and (max-width: 1279px) {
-  .swatch-strip { gap: 9px; padding: 6px 8px; }
-  .swatch-strip__fam + .swatch-strip__fam::before { left: -5px; }
-  .swatch-strip button { width: 9px; height: 9px; }
-}
-@media (min-width: 1024px) and (max-width: 1439px) {
-  .swatch-strip__fam { gap: 2px; }
-}
-@media (min-width: 1280px) and (max-width: 1439px) {
-  .swatch-strip button { width: 10px; height: 10px; }
 }
 @media (min-width: 1024px) and (prefers-reduced-motion: reduce) {
-  .swatch-strip button, .swatch-strip__tag { transition: none; transform: none !important; }
+  .swatch-strip__fold, .swatch-strip__sq { transition: none; }
+  .swatch-strip__sq:hover, .swatch-strip__sq:focus-visible { transform: none; }
+  .swatch-strip__drop { animation: none; }
 }
 @media (max-width: 1023px) {
   .cmd-open { display: inline-flex; }
@@ -3149,10 +3155,10 @@ kbd {
   .cmd-open { font-size: 12px; }
 }
 
-/* The panel: one block per family, its label over five paint chips that run
-   in order of accent hue. */
+/* The panel (phones and tablets): every palette in one spectrum row, grouped
+   by family in hue order, the family names under their groups. */
 .theme-panel {
-  z-index: 99000; width: min(520px, calc(100vw - 24px)); padding: 0;
+  z-index: 99000; width: min(440px, calc(100vw - 24px)); padding: 0;
   background: var(--bg-2); border: 1px solid var(--rule-2); border-top: 1px solid var(--accent);
   font-family: var(--f-mono); color: var(--ink-2); outline: none;
   animation: themeFade 0.14s ease;
@@ -3168,77 +3174,39 @@ kbd {
 .theme-panel__head > span:first-child { font-family: var(--f-pixel); letter-spacing: 0.06em; color: var(--accent); }
 .theme-panel__now { color: var(--ink-3); }
 .theme-panel__now b { font-weight: 400; color: var(--ink); }
-.theme-fam {
-  display: grid; grid-template-columns: minmax(0, 1fr); gap: 9px; padding: 11px 14px 12px;
-  border-bottom: 1px solid var(--rule);
+.theme-row { display: flex; gap: 8px; padding: 14px 14px 12px; border-bottom: 1px solid var(--rule); }
+.theme-row__fam { display: flex; flex: 1 1 0; min-width: 0; flex-direction: column; gap: 7px; }
+.theme-row__swatches { display: flex; gap: 2px; }
+.theme-row__swatch {
+  position: relative; flex: 1 1 0; min-width: 0; height: 36px; padding: 0;
+  background: var(--c-acc); border: 0; cursor: pointer; opacity: 0.8;
+  transition: opacity 0.15s ease, transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.theme-fam__label { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
-.theme-fam__label span { font-size: 11.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink); }
-.theme-fam__label small { font-size: 10px; letter-spacing: 0.04em; color: var(--ink-3); white-space: nowrap; }
-.theme-fam__label .theme-fam__range { margin-left: auto; overflow: hidden; text-overflow: ellipsis; }
-.theme-fam__chips { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
-
-/* A chip is a miniature sheet in the palette's own colours: ground, an
-   accent rule down the left, two lines of ink and an accent mark. */
-.theme-chip {
-  display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 0;
-  text-align: left; background: transparent; border: 0; color: var(--ink-3); cursor: pointer;
-}
-.theme-chip__card {
-  position: relative; display: block; height: 42px; overflow: hidden;
-  background: var(--c-bg); border-left: 3px solid var(--c-acc);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-ink) 14%, transparent);
-  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s ease;
-}
-.theme-chip__card i { position: absolute; left: 8px; height: 2px; background: var(--c-ink); }
-.theme-chip__card i:nth-child(1) { top: 10px; width: 55%; opacity: 0.9; }
-.theme-chip__card i:nth-child(2) { top: 17px; width: 38%; opacity: 0.45; }
-.theme-chip__card i:nth-child(3) { left: auto; right: 7px; top: auto; bottom: 7px; width: 9px; height: 9px; background: var(--c-acc); }
-.theme-chip__name {
+.theme-row__swatch:hover { opacity: 1; transform: translateY(-2px); }
+.theme-row__swatch:focus-visible { z-index: 1; opacity: 1; outline: 1px dashed var(--ink); outline-offset: 2px; }
+.theme-row__swatch[aria-pressed="true"] { z-index: 1; opacity: 1; outline: 1px solid var(--ink); outline-offset: 2px; }
+.theme-row__name {
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; transition: color 0.15s ease;
+  font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3);
 }
-.theme-chip:hover .theme-chip__card, .theme-chip:focus-visible .theme-chip__card {
-  transform: translateY(-2px);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c-ink) 30%, transparent);
-}
-.theme-chip:hover .theme-chip__name, .theme-chip:focus-visible .theme-chip__name { color: var(--ink); }
-.theme-chip:focus-visible { outline: none; }
-.theme-chip:focus-visible .theme-chip__card { outline: 1px dashed var(--ink-2); outline-offset: 2px; }
-.theme-chip[aria-pressed="true"] .theme-chip__card { outline: 1px solid var(--c-acc); outline-offset: 2px; }
-.theme-chip[aria-pressed="true"] .theme-chip__name { color: var(--ink); }
-.theme-chip[aria-pressed="true"] .theme-chip__name::before { content: "> "; color: var(--accent); }
+.theme-row__fam:has([aria-pressed="true"]) .theme-row__name { color: var(--ink); }
 .theme-panel__foot {
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 14px; padding: 9px 14px;
   font-size: 10px; letter-spacing: 0.06em; color: var(--ink-3);
 }
 .theme-panel__foot span { display: inline-flex; align-items: center; gap: 4px; }
-/* Phones: the panel shrinks to a 4-row swatch grid. Each family is one row,
-   name on the left, palettes as small squares (ground with an accent mark)
-   on the right. Names, moods and key hints drop out; the head still names
-   the current palette. */
+/* Phones: same row, tighter; the key hints drop out. */
 @media (max-width: 639px) {
-  .theme-panel { width: auto; min-width: 0; }
   .theme-panel__head { padding: 8px 10px; font-size: 10px; }
   .theme-panel__head > span:first-child { display: none; }
   .theme-panel__now { width: 100%; text-align: left; }
-  .theme-fam { grid-template-columns: 58px auto; gap: 10px; padding: 7px 10px; }
-  .theme-fam:last-of-type { border-bottom: 0; }
-  .theme-fam__label { display: block; }
-  .theme-fam__label kbd, .theme-fam__label small { display: none; }
-  .theme-fam__label span { font-size: 10px; letter-spacing: 0.12em; color: var(--ink-3); }
-  .theme-fam__chips { display: flex; gap: 6px; }
-  .theme-chip { gap: 0; }
-  .theme-chip__card { width: 28px; height: 28px; border-left: 0; }
-  .theme-chip__card i:nth-child(1), .theme-chip__card i:nth-child(2) { display: none; }
-  .theme-chip__card i:nth-child(3) { right: 50%; bottom: 50%; width: 10px; height: 10px; transform: translate(50%, 50%); }
-  .theme-chip__name { display: none; }
-  .theme-chip:hover .theme-chip__card, .theme-chip:focus-visible .theme-chip__card { transform: none; }
+  .theme-row { gap: 6px; padding: 12px 10px 10px; border-bottom: 0; }
+  .theme-row__name { font-size: 9px; letter-spacing: 0.08em; }
   .theme-panel__foot { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .theme-chip__card { transition: none; }
-  .theme-chip:hover .theme-chip__card, .theme-chip:focus-visible .theme-chip__card { transform: none; }
+  .theme-row__swatch { transition: none; }
+  .theme-row__swatch:hover { transform: none; }
 }
 
 .skip-link {
