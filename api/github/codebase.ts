@@ -30,6 +30,9 @@ export const SHOWCASE: readonly string[] = [
   "iceberg",
   "atlas",
   "hyperion",
+  "claude-mods",
+  "voxflow",
+  "tiny-cove",
 ];
 
 const isShowcased = (name: string, showcase: readonly string[]) =>

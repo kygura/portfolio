@@ -29,6 +29,9 @@ export const SHOWCASE: readonly string[] = [
   "iceberg",
   "atlas",
   "hyperion",
+  "claude-mods",
+  "voxflow",
+  "tiny-cove",
 ];
 
 /** Old bookkeeping topics some repos still carry; they say nothing to a visitor. */
