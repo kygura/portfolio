@@ -2251,6 +2251,8 @@
 .colophon__links { justify-content: flex-end; }
 .colophon a { color: var(--ink-2); text-decoration: none; transition: color 0.2s; }
 .colophon a:hover, .colophon a:focus-visible { color: var(--accent); }
+.colophon__consent { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink-2); background: none; border: 0; padding: 0; cursor: pointer; transition: color 0.2s; }
+.colophon__consent:hover, .colophon__consent:focus-visible { color: var(--accent); }
 @media (max-width: 639px) {
   .colophon { grid-template-columns: 1fr auto; padding-right: var(--page-gutter); padding-bottom: 4.25rem; }
   .colophon__links { grid-column: 1 / -1; justify-content: flex-start; }
@@ -4342,3 +4344,52 @@ kbd {
   .ledger__cluster { grid-template-columns: minmax(0, 1fr); --cluster-size: 16px; }
   .ledger__cluster-thesis { padding-left: 0; }
 }
+
+/* ─────────────────────────────────────────────
+   CONSENT — one ruled slip, bottom centre, between the familiar (left)
+   and the tape deck (right). Accept and decline carry the same weight.
+   ───────────────────────────────────────────── */
+.consent {
+  position: fixed;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  z-index: 60;
+  width: min(30rem, calc(100vw - 2 * var(--hero-gutter)));
+  display: flex;
+  align-items: center;
+  gap: 0.9rem 1.25rem;
+  padding: 0.8rem 1rem;
+  background: var(--sheet);
+  border: 1px solid var(--rule-2);
+  border-left: 2px solid var(--accent);
+  color: var(--ink);
+  font-family: var(--f-mono);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  animation: consent-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.consent__text { margin: 0; color: var(--ink-2); }
+.consent__keys { display: flex; gap: 0.5rem; flex-shrink: 0; }
+.consent__key {
+  font: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.35rem 0.7rem;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--rule-2);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+.consent__key:hover, .consent__key:focus-visible { color: var(--accent); border-color: var(--accent); outline: none; }
+@keyframes consent-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+@media (max-width: 639px) {
+  .consent { flex-direction: column; align-items: stretch; }
+  .consent__keys { justify-content: flex-end; }
+}
+@media (prefers-reduced-motion: reduce) { .consent { animation: none; } }
+@media print { .consent { display: none; } }

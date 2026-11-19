@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { isTyping } from "@/theme/keymap";
 import { cv } from "../../content/cv";
+import { GA_ID, openConsentBanner } from "@/lib/analytics";
 
 function initQuote(list: string[]) {
   const r = Math.floor(Math.random() * list.length);
@@ -200,6 +201,11 @@ const Footer = () => {
           </a>
           <a href={`mailto:${cv.contact.email}`}>Email</a>
           <Link to="/cv">CV</Link>
+          {GA_ID && (
+            <button type="button" className="colophon__consent" onClick={openConsentBanner}>
+              Cookies
+            </button>
+          )}
         </p>
       </div>
     </footer>

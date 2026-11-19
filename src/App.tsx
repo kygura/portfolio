@@ -12,6 +12,8 @@ import Keys from "./theme/Keys";
 import LofiPlayer from "./components/player/LofiPlayer";
 import FamiliarHost from "./components/familiar/FamiliarHost";
 import { isGate } from "./components/familiar/gate";
+import RouteTracker from "./components/RouteTracker";
+import ConsentBanner from "./components/ConsentBanner";
 
 // Toast viewports render nothing until something fires a toast, and only
 // two lazily-routed pages ever do — no reason to ship them up front.
@@ -48,6 +50,8 @@ const App = () => (
       <Sonner />
     </Suspense>
     <BrowserRouter>
+      <RouteTracker />
+      <ConsentBanner />
       <SmoothScroll>
         <CustomCursor />
         <ScrollProgress />

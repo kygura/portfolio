@@ -1,7 +1,12 @@
 import { createRoot } from "react-dom/client";
 import { ThemeProvider } from "next-themes";
 import App from "./App.tsx";
+import { initAnalytics } from "./lib/analytics";
 import "./index.css";
+
+// Consent defaults must be in the dataLayer before gtag.js loads, so this
+// runs ahead of the first render. It does nothing without VITE_GA_ID.
+initAnalytics();
 
 // Every Notion edit redeploys the site, which renames the hashed chunks. A
 // tab opened before the deploy then asks for chunks that no longer exist, and
