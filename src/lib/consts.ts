@@ -51,6 +51,7 @@ export const QUOTES_ARRAY = [
     "古人の跡を求めず、古人の求めたる所を求めよ。<br>Do not seek to follow in the footsteps of the wise; seek what they sought.",
     "Omnia praeclara tam difficilia quam rara sunt. <br>All things excellent are as difficult as they are rare.",
     "Omnia aliena sunt, tempus tantum nostrum est. <br>Nothing is ours except time.",
+    "Per aspera ad astra. <br>Through hardships to the stars.",
 
     "Born of struck flint, dead in a breath, I woke the forge and what sleeps beneath.<br>Speak my name at the sealed door: nca.ink/_____",
 ];
