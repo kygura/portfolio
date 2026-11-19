@@ -75,6 +75,16 @@ test("detects pages that refuse to be framed", () => {
   assert.equal(blocksFraming(new Headers({ "content-security-policy": "frame-ancestors 'self' https://www.nca.ink" })), false);
   assert.equal(blocksFraming(new Headers({ "content-security-policy": "frame-ancestors 'self' https://WWW.nca.ink/" })), false);
   assert.equal(blocksFraming(new Headers({ "content-security-policy": "frame-ancestors https://evil.nca.ink.example" })), true);
+  // The check runs against the page that embeds the preview.
+  const meridian = new Headers({ "content-security-policy": "frame-ancestors 'self' https://www.nca.ink" });
+  assert.equal(blocksFraming(meridian, "https://portfolio-git-x-projects.vercel.app"), true);
+  assert.equal(blocksFraming(meridian, "https://www.nca.ink"), false);
+  const wild = new Headers({ "content-security-policy": "frame-ancestors 'self' https://*.vercel.app" });
+  assert.equal(blocksFraming(wild, "https://portfolio-git-x-projects.vercel.app"), false);
+  assert.equal(blocksFraming(wild, "https://vercel.app"), true);
+  assert.equal(blocksFraming(wild, "https://vercel.app.evil.example"), true);
+  assert.equal(blocksFraming(new Headers({ "content-security-policy": "frame-ancestors https:" }), "http://localhost:5173"), true);
+  assert.equal(blocksFraming(new Headers({ "content-security-policy": "frame-ancestors http://localhost:5173" }), "http://localhost:5173"), false);
 });
 
 test("finds og:image in either attribute order and resolves relative URLs", () => {

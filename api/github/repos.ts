@@ -109,6 +109,8 @@ interface ShowcaseOptions {
   limit?: number;
   now?: Date;
   fetchImpl?: Fetch;
+  /** Origin of the page that will embed the previews; defaults to SITE_ORIGIN. */
+  origin?: string;
 }
 
 /**
@@ -148,21 +150,46 @@ export function liveUrlFor(repo: GithubRepo, user: string): string | null {
   return null;
 }
 
-/** This site's origin: a deployment whose frame-ancestors lists it may be framed here. */
+/** This site's production origin: the default embedder for framing checks. */
 export const SITE_ORIGIN = "https://www.nca.ink";
 
-/** True when the response headers forbid embedding the page in our frame. */
-export function blocksFraming(headers: Headers): boolean {
+/**
+ * True when one frame-ancestors source admits `origin`: `*`, a bare scheme,
+ * an exact origin, or a `*.` host wildcard (one or more labels deep, as in
+ * CSP). Trailing slashes and case are ignored; a source with a path or an
+ * explicit port other than the origin's is not matched.
+ */
+function sourceAllows(source: string, origin: URL): boolean {
+  const s = source.replace(/\/$/, "").toLowerCase();
+  if (s === "*") return true;
+  if (/^[a-z][a-z0-9+.-]*:$/.test(s)) return s === origin.protocol;
+  const m = s.match(/^(?:([a-z][a-z0-9+.-]*):\/\/)?(\*\.)?([a-z0-9.-]+)(?::(\d+|\*))?$/);
+  if (!m) return false;
+  const [, scheme, wild, host, port] = m;
+  if (scheme ? `${scheme}:` !== origin.protocol : origin.protocol !== "https:") return false;
+  if (port && port !== "*" && port !== (origin.port || (origin.protocol === "https:" ? "443" : "80"))) return false;
+  const h = origin.hostname.toLowerCase();
+  return wild ? h.endsWith(`.${host}`) : h === host;
+}
+
+/**
+ * True when the response headers forbid embedding the page in a frame on
+ * `origin` (the page that hosts the preview, production by default).
+ */
+export function blocksFraming(headers: Headers, origin: string = SITE_ORIGIN): boolean {
   const xfo = headers.get("x-frame-options");
   if (xfo && /deny|sameorigin/i.test(xfo)) return true;
 
   const csp = headers.get("content-security-policy");
   const ancestors = csp?.match(/frame-ancestors([^;]*)/i)?.[1].trim();
   if (ancestors !== undefined) {
-    // A wildcard, or our exact origin listed (trailing slash and case aside).
-    return !ancestors
-      .split(/\s+/)
-      .some((source) => source === "*" || source === "https:" || source.replace(/\/$/, "").toLowerCase() === SITE_ORIGIN);
+    let embedder: URL;
+    try {
+      embedder = new URL(origin);
+    } catch {
+      return true;
+    }
+    return !ancestors.split(/\s+/).some((source) => sourceAllows(source, embedder));
   }
   return false;
 }
@@ -455,7 +482,12 @@ async function readmeFor(
  * site, or a 403/5xx (often bot protection against our fetch), is still
  * framed: the visitor's browser can load what this request could not.
  */
-async function previewFor(liveUrl: string, fallback: RepoPreview, fetchImpl: Fetch): Promise<RepoPreview | null> {
+async function previewFor(
+  liveUrl: string,
+  fallback: RepoPreview,
+  fetchImpl: Fetch,
+  origin: string,
+): Promise<RepoPreview | null> {
   try {
     const response = await fetchImpl(liveUrl, {
       redirect: "follow",
@@ -464,7 +496,7 @@ async function previewFor(liveUrl: string, fallback: RepoPreview, fetchImpl: Fet
     });
     if (response.status === 404 || response.status === 410) return null;
     if (!response.ok) return { kind: "frame", src: liveUrl };
-    if (!blocksFraming(response.headers)) return { kind: "frame", src: response.url || liveUrl };
+    if (!blocksFraming(response.headers, origin)) return { kind: "frame", src: response.url || liveUrl };
     const image = findSocialImage(await response.text(), response.url || liveUrl);
     return image ? { kind: "image", src: image } : fallback;
   } catch (error) {
@@ -479,6 +511,7 @@ export async function buildShowcase({
   limit = showcase.length,
   now = new Date(),
   fetchImpl = fetch,
+  origin = SITE_ORIGIN,
 }: ShowcaseOptions): Promise<Showcase> {
   const headers: Record<string, string> = {
     accept: "application/vnd.github+json",
@@ -508,7 +541,7 @@ export async function buildShowcase({
       const liveUrl = liveUrlFor(repo, user);
       if (liveUrl) {
         const fallback: RepoPreview = card ? { kind: "image", src: card } : { kind: "none" };
-        const preview = await previewFor(liveUrl, fallback, fetchImpl);
+        const preview = await previewFor(liveUrl, fallback, fetchImpl, origin);
         if (preview) return { repo, liveUrl, card, preview };
       }
       return { repo, liveUrl: null, card, preview: null };
@@ -577,15 +610,30 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN?.trim() || null;
 export const runtime = "nodejs";
 
 /**
+ * The origin the request was made from, so a preview deployment checks
+ * framing against its own host and not production's. The CDN keys its cache
+ * on the host, so each deployment gets its own copy.
+ */
+function requestOrigin(request: Request | undefined): string {
+  if (!request) return SITE_ORIGIN;
+  try {
+    return new URL(request.url).origin;
+  } catch {
+    return SITE_ORIGIN;
+  }
+}
+
+/**
  * The CDN holds a response for an hour and serves the stale copy for a day
  * while it refreshes, so GitHub sees a handful of requests whatever the
  * traffic.
  */
-export async function GET(): Promise<Response> {
+export async function GET(request?: Request): Promise<Response> {
   try {
     const showcase = await buildShowcase({
       user: GITHUB_USER,
       token: GITHUB_TOKEN,
+      origin: requestOrigin(request),
     });
     return Response.json(showcase, {
       headers: { "cache-control": "public, s-maxage=3600, stale-while-revalidate=86400" },

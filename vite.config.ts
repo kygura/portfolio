@@ -47,13 +47,15 @@ function devGithubApi(): Plugin {
         if (response.body) Readable.fromWeb(response.body as never).pipe(res);
         else res.end();
       });
-      server.middlewares.use("/api/github/repos", async (_req, res) => {
+      server.middlewares.use("/api/github/repos", async (req, res) => {
         res.setHeader("content-type", "application/json");
         try {
           if (!cached || Date.now() - cached.at > 600_000) {
             const body = await buildShowcase({
               user: process.env.GITHUB_USER || "kygura",
               token: process.env.GITHUB_TOKEN,
+              // Check framing against the dev server's own origin.
+              origin: `http://${req.headers.host ?? "localhost"}`,
             });
             cached = { at: Date.now(), body };
           }
