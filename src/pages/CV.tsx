@@ -1,7 +1,8 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { Download } from "lucide-react";
 import PageHead from "../components/PageHead";
 import { cv } from "../../content/cv";
+import { trackEvent } from "@/lib/analytics";
 
 /**
  * CV as a ledger: each section is a row with its label in a left margin
@@ -22,6 +23,12 @@ const Section = ({ no, label, children }: { no: string; label: string; children:
 const CV = () => {
   const { contact, summary, education, projects, languages, skills } = cv;
 
+  // Its own event, on top of the page_view, so CV opens are one row to
+  // read in GA (by city, country and source) instead of a page filter.
+  useEffect(() => {
+    trackEvent("cv_view");
+  }, []);
+
   return (
     <div className="page-shell page-shell--wide animate-fade-in">
       <PageHead
@@ -37,15 +44,30 @@ const CV = () => {
         <div className="cv-contact">
           <p className="page-head__facts">
             <span>{contact.location}</span>
-            <a href={`mailto:${contact.email}`}>{contact.email}</a>
-            <a href={`https://${contact.website}`} target="_blank" rel="noopener noreferrer">
+            <a href={`mailto:${contact.email}`} onClick={() => trackEvent("cv_contact", { method: "email" })}>{contact.email}</a>
+            <a
+              href={`https://${contact.website}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackEvent("cv_contact", { method: "website" })}
+            >
               {contact.website}
             </a>
-            <a href={`https://${contact.github}`} target="_blank" rel="noopener noreferrer">
+            <a
+              href={`https://${contact.github}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => trackEvent("cv_contact", { method: "github" })}
+            >
               {contact.github}
             </a>
           </p>
-          <a href={cv.pdf} download="CV_NCA.pdf" className="cv-download-btn">
+          <a
+            href={cv.pdf}
+            download="CV_NCA.pdf"
+            className="cv-download-btn"
+            onClick={() => trackEvent("cv_download", { file_name: "CV_NCA.pdf" })}
+          >
             <Download size={14} aria-hidden="true" />
             Download PDF
           </a>
