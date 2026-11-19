@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { NavLink } from "@/components/NavLink";
 import { ACCENTS, FAMILIES, familyAccents, setAccent, useAccent, type FamilyId } from "@/theme/accent";
@@ -58,21 +58,36 @@ const spectrum = (f: FamilyId) =>
   `linear-gradient(90deg, ${familyAccents(f).map(({ a }, k, all) => `${a.hex} ${(k / all.length) * 100}% ${((k + 1) / all.length) * 100}%`).join(", ")})`;
 
 /**
- * From 1024px: the palettes in one strip, folded by family. Only one family is
- * open at a time, as five squares in hue order: the active one, or the one under
- * the pointer or holding focus. The others fold to a short bar showing their
- * five accents as a gradient, so the strip keeps one width and still reads as a
- * spectrum. Hovering or focusing a square names it under the strip; arrows move
- * along every square, and focusing a folded family's square opens it.
- * Narrower bars use ThemePicker instead.
+ * From 1024px: the palettes in one strip of fixed width, folded by family. At
+ * rest every family is a bar showing its five accents as a gradient, so the
+ * strip reads as one spectrum. Hovering, focusing or clicking a family opens it
+ * as five squares in hue order; it stays open while you pick, and a click
+ * anywhere outside the strip (or Escape) folds it again. Hovering or focusing
+ * a square names it under the strip; arrows move along every square, and
+ * focusing a folded family's square opens it. Narrower bars use ThemePicker.
  */
 function SwatchStrip() {
   const accent = useAccent();
   const [peek, setPeek] = useState<number | null>(null);
-  const [hover, setHover] = useState<FamilyId | null>(null);
+  const [open, setOpen] = useState<FamilyId | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
   const shown = ACCENTS[peek ?? accent];
   const family = FAMILIES.find((f) => f.id === shown.family);
-  const open = hover ?? ACCENTS[accent].family;
+  useEffect(() => {
+    if (!open) return;
+    const away = (e: PointerEvent) => {
+      if (!ref.current?.contains(e.target as Node)) setOpen(null);
+    };
+    const esc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(null);
+    };
+    document.addEventListener("pointerdown", away);
+    document.addEventListener("keydown", esc);
+    return () => {
+      document.removeEventListener("pointerdown", away);
+      document.removeEventListener("keydown", esc);
+    };
+  }, [open]);
   const onKey = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
     const btns = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>("button"));
@@ -84,16 +99,14 @@ function SwatchStrip() {
   };
   return (
     <div
+      ref={ref}
       className="swatch-strip"
       role="group"
       aria-label="Theme"
       onKeyDown={onKey}
-      onMouseLeave={() => {
-        setPeek(null);
-        setHover(null);
-      }}
+      onMouseLeave={() => setPeek(null)}
       onBlur={(e) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHover(null);
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setOpen(null);
       }}
       data-peek={peek !== null || undefined}
     >
@@ -103,10 +116,15 @@ function SwatchStrip() {
           className="swatch-strip__fam"
           data-on={f.id === ACCENTS[accent].family || undefined}
           data-open={f.id === open || undefined}
-          onMouseEnter={() => setHover(f.id)}
-          onFocus={() => setHover(f.id)}
+          onMouseEnter={() => setOpen(f.id)}
+          onFocus={() => setOpen(f.id)}
         >
-          <span className="swatch-strip__fold" aria-hidden="true" style={{ background: spectrum(f.id) }} />
+          <span
+            className="swatch-strip__fold"
+            aria-hidden="true"
+            style={{ background: spectrum(f.id) }}
+            onClick={() => setOpen(f.id)}
+          />
           {familyAccents(f.id).map(({ a, i }) => (
             <button
               key={a.id}
@@ -134,22 +152,17 @@ function SwatchStrip() {
 }
 
 /**
- * Theme picker: one swatch in the nav (with the palette's name from 1024px)
- * that opens the palettes grouped by family. Only one family is unfolded at a
- * time, as five paint chips in hue order drawn in each palette's own ground,
- * ink and accent; the others fold to their name and a gradient of their
- * accents, and tapping one unfolds it. The active family starts open. The panel
- * stays open on a pick so palettes can be compared against the live page.
+ * Theme picker under 1024px: one swatch in the nav that opens a panel with
+ * every palette in a single spectrum row, grouped by family in hue order, the
+ * family names under their groups. The head names the current palette. The
+ * panel stays open on a pick so palettes can be compared against the live page;
+ * a tap anywhere outside it closes it.
  */
 function ThemePicker() {
   const accent = useAccent();
   const current = ACCENTS[accent];
-  const [chosen, setChosen] = useState<FamilyId | null>(null);
-  // A palette switch (click, 1-4, t) unfolds the family it landed in.
-  useEffect(() => setChosen(null), [accent]);
-  const open = chosen ?? current.family;
   return (
-    <Popover.Root onOpenChange={() => setChosen(null)}>
+    <Popover.Root>
       <Popover.Trigger
         className="theme-trigger"
         aria-label={`Theme: ${current.name}`}
@@ -167,58 +180,30 @@ function ThemePicker() {
               {FAMILIES.find((f) => f.id === current.family)?.name} / <b>{current.name}</b>
             </span>
           </div>
-          {FAMILIES.map((f, fi) => {
-            const isOpen = f.id === open;
-            return (
-              <section key={f.id} className="theme-fam" aria-label={f.name} data-open={isOpen || undefined}>
-                <button
-                  type="button"
-                  className="theme-fam__label"
-                  aria-expanded={isOpen}
-                  aria-controls={`theme-fam-${f.id}`}
-                  onClick={() => setChosen(f.id)}
-                >
-                  <kbd aria-hidden="true">{fi + 1}</kbd>
-                  <span>{f.name}</span>
-                  <small>{f.mood}</small>
-                  <small className="theme-fam__range">{f.range}</small>
-                </button>
-                {isOpen ? (
-                  <div className="theme-fam__chips" id={`theme-fam-${f.id}`}>
-                    {familyAccents(f.id).map(({ a, i }) => (
-                      <button
-                        key={a.id}
-                        type="button"
-                        className="theme-chip"
-                        onClick={(e) => {
-                          const r = e.currentTarget.getBoundingClientRect();
-                          setAccent(i, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
-                        }}
-                        aria-pressed={i === accent}
-                        aria-label={`${f.name}: ${a.name}`}
-                        style={chipVars(a)}
-                      >
-                        <span className="theme-chip__card" aria-hidden="true">
-                          <i />
-                          <i />
-                          <i />
-                        </span>
-                        <span className="theme-chip__name">{a.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <span
-                    className="theme-fam__fold"
-                    id={`theme-fam-${f.id}`}
-                    aria-hidden="true"
-                    style={{ background: spectrum(f.id) }}
-                    onClick={() => setChosen(f.id)}
-                  />
-                )}
+          <div className="theme-row">
+            {FAMILIES.map((f) => (
+              <section key={f.id} className="theme-row__fam" aria-label={f.name}>
+                <div className="theme-row__swatches">
+                  {familyAccents(f.id).map(({ a, i }) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      className="theme-row__swatch"
+                      onClick={(e) => {
+                        const r = e.currentTarget.getBoundingClientRect();
+                        setAccent(i, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
+                      }}
+                      aria-pressed={i === accent}
+                      aria-label={`${f.name}: ${a.name}`}
+                      title={a.name}
+                      style={chipVars(a)}
+                    />
+                  ))}
+                </div>
+                <span className="theme-row__name" aria-hidden="true">{f.name}</span>
               </section>
-            );
-          })}
+            ))}
+          </div>
           <div className="theme-panel__foot" aria-hidden="true">
             <span><kbd>1</kbd>–<kbd>4</kbd> family, again to step</span>
             <span><kbd>t</kbd> cycle all</span>
