@@ -262,7 +262,8 @@ const CodeMapView = ({ map }: { map: CodeMap }) => {
             const top = cell.y + offset.y;
             // Plots wholly outside the plot are skipped; at 8x most of them are.
             if (left > size.w || top > size.h || left + cell.w < 0 || top + cell.h < 0) return null;
-            const labelled = cell.w >= LABEL_MIN.w && (cell.group ? cell.h > HEADER_PX * 2.5 : cell.h >= LABEL_MIN.h);
+            // Group names go in the header layer below, so they can pin above the children.
+            const labelled = !cell.group && cell.w >= LABEL_MIN.w && cell.h >= LABEL_MIN.h;
             return (
               <div
                 key={cell.key}
@@ -278,6 +279,28 @@ const CodeMapView = ({ map }: { map: CodeMap }) => {
                 }}
               >
                 {labelled && <span>{cell.label}</span>}
+              </div>
+            );
+          })}
+          {cells.map((cell) => {
+            if (!cell.group || cell.h <= HEADER_PX * 2.5) return null;
+            const left = cell.x + offset.x;
+            const top = cell.y + offset.y;
+            // The header holds to the plot's top and left edges while any of its
+            // group is in view, and rides up with the group's bottom edge as it leaves.
+            const pinnedTop = Math.min(Math.max(top, 0), top + cell.h - HEADER_PX);
+            const pinnedLeft = Math.max(left, 0);
+            const width = Math.min(left + cell.w, size.w) - pinnedLeft;
+            if (width < LABEL_MIN.w || pinnedTop > size.h || pinnedTop + HEADER_PX < 0) return null;
+            return (
+              <div
+                key={`${cell.key}#header`}
+                className="code-map__header"
+                data-pinned={pinnedTop !== top || pinnedLeft !== left}
+                aria-hidden="true"
+                style={{ left: pinnedLeft, top: pinnedTop, width, animationDelay: `${cell.delay}ms` }}
+              >
+                {cell.label}
               </div>
             );
           })}

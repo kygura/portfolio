@@ -1355,7 +1355,7 @@
 .code-map__plot:focus-visible { outline: 1px solid var(--accent); outline-offset: 2px; }
 .code-map__plot[data-zoomed="true"] { cursor: grab; touch-action: none; }
 .code-map__plot[data-dragging="true"] { cursor: grabbing; }
-.code-map__plot[data-smooth="true"] :is(.code-map__group, .code-map__cell) {
+.code-map__plot[data-smooth="true"] :is(.code-map__group, .code-map__cell, .code-map__header) {
   transition: left 0.22s ease-out, top 0.22s ease-out, width 0.22s ease-out, height 0.22s ease-out, border-color 0.2s, filter 0.2s;
 }
 .code-map__zoom {
@@ -1406,11 +1406,11 @@
   transition: border-color 0.2s;
 }
 .code-map__group:hover { border-color: var(--accent); z-index: 1; }
-.code-map__group > span {
+/* Group names sit in their own layer above the plots, so they can pin to the plot's edges. */
+.code-map__header {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  z-index: 2;
+  box-sizing: border-box;
   height: 16px;
   padding: 0 0.35rem;
   font-family: var(--f-pixel);
@@ -1422,6 +1422,13 @@
   text-overflow: ellipsis;
   overflow: hidden;
   color: var(--ink-2);
+  pointer-events: none;
+  animation: codePlot 0.5s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+.code-map__header[data-pinned="true"] {
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  border-bottom: 1px solid var(--rule-2);
+  line-height: 15px;
 }
 .code-map__cell {
   border: 1px solid var(--bg);
@@ -1864,9 +1871,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .repo-card, .repo-skeleton, .code-map__group, .code-map__cell, .cb-caret, .cb-skeleton { animation: none; }
+  .repo-card, .repo-skeleton, .code-map__group, .code-map__cell, .code-map__header, .cb-caret, .cb-skeleton { animation: none; }
   .repo-card__preview, .repo-window__frame, .repo-window__image { transition: none; }
-  .code-map__plot[data-smooth="true"] :is(.code-map__group, .code-map__cell) { transition: none; }
+  .code-map__plot[data-smooth="true"] :is(.code-map__group, .code-map__cell, .code-map__header) { transition: none; }
 }
 
 /* ─────────────────────────────────────────────
