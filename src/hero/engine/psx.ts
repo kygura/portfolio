@@ -69,16 +69,24 @@ export interface SceneDef {
    *  (pan, twist, pinch; three fingers orbit). The pan target arrives in `view.panX/panZ`,
    *  world units on the y = 0 plane, held within `pan` of the origin. */
   freeCam?: { pan: number };
-  /** Optional pointer bridge. Plain drags orbit like every scene and a tap presses it; Shift+drag hands the drag to the scene. */
+  /** Optional pointer bridge. Plain drags orbit like every scene and a tap presses it; Shift+drag hands the drag to the scene,
+   *  and so does a plain press that `grab` claims. */
   pointer?: {
     /** Pointer ray in world space, or null when it is away. `moved` is false while the cursor itself is still. */
     aim: (ray: THREE.Ray | null, moved: boolean) => void;
     press: () => void;
+    /** Asked on a plain press, right after `aim` has taken the pointer ray: true if the press picked something up.
+     *  The drag then belongs to the scene (no orbit) and ends in `release`. */
+    grab?: () => boolean;
     /** `tap`: released close to where it was pressed. */
     release: (tap: boolean) => void;
     /** True while the scene still has something to animate on its own. */
     busy: () => boolean;
   };
+  /** CSS cursor for the pointer where it hovers now (read after `pointer.aim`), or "" for the stage's own. */
+  cursor?: () => string;
+  /** Called when the engine is disposed: stop audio, timers and anything else the scene started. */
+  dispose?: () => void;
   update: (t: number) => void;
   readout: () => [string, string][];
 }

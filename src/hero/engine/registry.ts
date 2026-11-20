@@ -23,6 +23,7 @@ const LOADERS: Record<SheetMeta["id"], () => Promise<SceneBuilder>> = {
   beach: () => import("./beach").then((m) => m.buildBeach),
   cliff: () => import("./cliff").then((m) => m.buildCliff),
   orb: () => import("./orb").then((m) => m.buildOrb),
+  room: () => import("./room").then((m) => m.buildRoom),
 };
 
 const cache = new Map<SheetMeta["id"], Promise<SceneBuilder>>();

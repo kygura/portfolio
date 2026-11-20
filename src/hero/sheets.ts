@@ -1,7 +1,7 @@
 /** Hero scene metadata. Kept free of three.js so the tabs can render
  *  before (or without) the lazily loaded engine. */
 export interface SheetMeta {
-  id: "ocean" | "sea" | "astral" | "ruins" | "drift" | "dunes" | "rift" | "frost" | "field" | "matrix" | "beach" | "cliff" | "orb" | "cipher";
+  id: "ocean" | "sea" | "astral" | "ruins" | "drift" | "dunes" | "rift" | "frost" | "field" | "matrix" | "beach" | "cliff" | "orb" | "cipher" | "room";
   name: string;
   aria: string;
   /** Overrides the default drag/zoom hint under the tabs. */
@@ -102,6 +102,13 @@ const ALL_SHEETS: SheetMeta[] = [
     eggs: 2,
     name: "Orb",
     aria: "Animated low-poly scene in the style of an early raytraced render: a swirled chrome planet hangs over a lone pyramid standing on a glittering copper mirror sea, a long shadow on the water and both of them doubled in the reflection, small pyramids far out in the gold haze of the horizon, under a sky that runs from magenta overhead to orange and pale gold at the horizon.",
+  },
+  {
+    id: "room",
+    eggs: 3,
+    name: "Room",
+    aria: "Interactive low-poly scene: a small bedroom at night lit by one warm lamp on a nightstand, with a wooden desk holding a beige CRT computer, a boombox cassette deck on a low cabinet, a wall shelf of books, a plant and tapes, a CRT television with a game console on a low stand, a rug, a window with the moon, and cassette tapes lying about. Drag a tape onto the deck and it loads, the reels turn and the deck plays an original loop. Drag the loaded tape out to eject it, or tap a tape to play it.",
+    hint: "DRAG A TAPE ONTO THE DECK \u00b7 DRAG TO LOOK",
   },
 ];
 
