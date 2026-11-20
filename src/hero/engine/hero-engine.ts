@@ -238,6 +238,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     }
     sc.pointer.aim(ptr.in ? raycaster.ray : null, ptr.moved);
     ptr.moved = false;
+    const cu = sc.pointer.cursor?.();
+    if (cu !== undefined && host.style.cursor !== cu) host.style.cursor = cu;
   };
 
   /* ---- easter eggs: the nearest hidden target to a tap, within its screen radius ---- */
@@ -493,7 +495,14 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     const pan = free && e.button === 1;
     if ((e.button !== 0 && !rc && !pan) || !e.isPrimary || interactive(e.target)) return;
     const mod = e.shiftKey || e.altKey;
-    const own = Boolean(sc.pointer) && !rc && !pan && (free ? !mod : e.shiftKey);
+    let own = Boolean(sc.pointer) && !rc && !pan && (free ? !mod : e.shiftKey);
+    // A scene can claim a plain press on something it picks up (Study's tapes).
+    if (!own && !rc && !pan && !mod && sc.pointer?.grab) {
+      setPtr(e, false);
+      aimScene(sc);
+      own = sc.pointer.grab();
+      if (!own && e.pointerType === "touch") ptr.in = false;
+    }
     drag = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, own, pan };
     yawV = pitchV = 0;
     tpx = tpy = 0;
@@ -598,6 +607,8 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
      fingers are down keeps the pinch on the stage; one finger still scrolls. */
   const onTouch = (e: TouchEvent) => {
     if (e.touches.length > 1 && e.cancelable && !interactive(e.target)) e.preventDefault();
+    // A finger carrying something the scene picked up must not scroll the page.
+    else if (drag?.own && scene(cur).pointer?.grab && e.cancelable) e.preventDefault();
   };
   const onGesture = (e: Event) => e.preventDefault();
   // The middle button pans a free camera, so it must not start the browser's autoscroll.

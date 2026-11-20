@@ -78,6 +78,11 @@ export interface SceneDef {
     release: (tap: boolean) => void;
     /** True while the scene still has something to animate on its own. */
     busy: () => boolean;
+    /** Asked on a plain press, just after `aim`: true takes the drag for the scene (a press on
+     *  something it can pick up) instead of orbiting. Omit to keep plain drags orbiting. */
+    grab?: () => boolean;
+    /** CSS cursor for the stage while this scene is up, read after each `aim`. */
+    cursor?: () => string;
   };
   update: (t: number) => void;
   readout: () => [string, string][];

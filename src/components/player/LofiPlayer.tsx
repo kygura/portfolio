@@ -11,6 +11,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { isTyping } from "@/theme/keymap";
 import { readStored } from "@/theme/accent";
 import Cassette from "./Cassette";
+import { announceDeck, onDeckAsk, onDeckRequest, type DeckRequest } from "./bus";
 import { PLAYLIST_URL, STATIONS, type Playlist, type Station } from "./stations";
 
 const STORE_KEY = "nca-deck";
@@ -54,6 +55,8 @@ export default function LofiPlayer() {
   const [volume, setVolume] = useState(saved.volume);
   // The station in the deck, or null when it holds a tape.
   const [station, setStation] = useState<Station | null>(null);
+  // Whether a tape (not a station) is in the deck: an empty deck has no src.
+  const [loaded, setLoaded] = useState(false);
 
   const tracks = useMemo(() => playlist?.tracks ?? [], [playlist]);
   const track = tracks.length ? tracks[index % tracks.length] : null;
@@ -93,6 +96,7 @@ export default function LofiPlayer() {
   const load = (src: string) => {
     const audio = audioRef.current!;
     audio.src = src;
+    setLoaded(true);
     setTime(0);
     setDuration(NaN);
   };
@@ -105,6 +109,7 @@ export default function LofiPlayer() {
     audio.pause();
     audio.removeAttribute("src");
     audio.load();
+    setLoaded(false);
   };
 
   const playTape = useCallback(async () => {
@@ -150,6 +155,45 @@ export default function LofiPlayer() {
     },
     [tracks, index, station],
   );
+
+  // Other parts of the page (the Study scene) can put a tape in, toggle it or take it out.
+  const eject = useCallback(() => {
+    setStation(null);
+    hangUp();
+  }, []);
+  const playIndex = useCallback(
+    async (i: number) => {
+      const list = await loadPlaylist();
+      const audio = audioRef.current;
+      if (!audio || !list?.tracks.length) return;
+      const n = ((i % list.tracks.length) + list.tracks.length) % list.tracks.length;
+      setIndex(n);
+      setStation(null);
+      load(list.tracks[n].src);
+      audio.play().catch(() => setPlaying(false));
+    },
+    [loadPlaylist],
+  );
+  const handle = useRef<(r: DeckRequest) => void>(() => {});
+  handle.current = (r) => {
+    if (r.kind === "toggle") toggle();
+    else if (r.kind === "eject") eject();
+    else if (r.kind === "tape") void playIndex(r.index);
+    else {
+      const s = STATIONS.find((x) => x.id === r.id);
+      if (s) tuneIn(s);
+    }
+  };
+  useEffect(() => onDeckRequest((r) => handle.current(r)), []);
+
+  const deckState = useMemo(
+    () => ({ playing, station: station?.id ?? null, tape: !station && loaded ? index : null }),
+    [playing, station, loaded, index],
+  );
+  const stateRef = useRef(deckState);
+  stateRef.current = deckState;
+  useEffect(() => { announceDeck(deckState); }, [deckState]);
+  useEffect(() => onDeckAsk(() => { announceDeck(stateRef.current); }), []);
 
   // `m` plays / pauses whatever is in the deck, with the site's usual key guards.
   useEffect(() => {

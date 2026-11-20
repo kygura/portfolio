@@ -97,7 +97,7 @@ const ALL_SHEETS: SheetMeta[] = [
     id: "study",
     eggs: 3,
     name: "Study",
-    aria: "Animated low-poly interior at three in the morning: a small dark room with a desk under a rain-streaked window, an anglepoise lamp throwing a pool of light in the accent colour onto the desk, an old beige computer monitor scrolling lines of text, a tape deck with its reels turning, a mug and a stack of books, a tall bookshelf to one side with a small stone automaton asleep on top, and beyond the glass rain falling in front of a distant city of lit windows under a low glowing sky.",
+    aria: "Animated low-poly bedroom at three in the morning: a desk under a rain-streaked window with an old beige computer typing out lines of text, a table lamp with a glowing drum shade, a portable tape deck and cassettes lying on the desk and the rug, which can be dragged into the deck to play music; a bookshelf with a small stone automaton asleep on top, a low cabinet with a boxy television showing a little platform game, a games console and its controller on the floor, and beyond the glass rain falling in front of a distant city of lit windows.",
   },
   {
     id: "beach",
