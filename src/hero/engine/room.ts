@@ -925,6 +925,54 @@ export function buildRoom(kit: PsxKit): SceneDef {
     t.state = "fly";
   };
   const sendHome = (t: Tape) => flyTo(t, "home");
+
+  /* Surfaces a tape can be put down on: x and z ranges and the height of the top. A drop lands on
+     the nearest one under the pointer, and that spot becomes the tape's new home. */
+  const SURFACES: [number, number, number, number, number][] = [
+    [-HX + 0.5, HX - 0.5, BACK + 0.4, FRONT - 0.5, 0.03],
+    [-3.4, 1.4, -5.45, -3.15, T],
+    [-2.85, -0.95, -5.35, -3.95, T + 0.45],
+    [NX - 0.75, NX + 0.75, NZ - 0.65, NZ + 0.75, NS],
+    [3.7, 6.7, -5.45, -4.1, CB],
+    [3.75, 6.75, -5.45, -4.75, SAT],
+    [-7.05, -3.75, -5.45, -3.95, ST],
+    [-6.9, -4.8, -4.75, -4.35, ST + 1.8],
+    [CNX - 0.4, CNX + 0.4, CNZ - 0.32, CNZ + 0.32, 0.2],
+    [4.75, 7.1, -2.7, 0.4, 1.07],
+  ];
+  const inside = (r: (typeof SURFACES)[number], x: number, z: number) => x >= r[0] && x <= r[1] && z >= r[2] && z <= r[3];
+  const camDir = new THREE.Vector3();
+  /** Where a tape let go of away from the deck comes to rest, and which way it lies. */
+  const putDown = (t: Tape) => {
+    let best: (typeof SURFACES)[number] | null = null, bt = Infinity, px = 0, pz = 0;
+    if (ray.direction.y < -1e-4) {
+      for (const r of SURFACES) {
+        const k = (r[4] - ray.origin.y) / ray.direction.y;
+        if (k <= 0 || k >= bt) continue;
+        const x = ray.origin.x + ray.direction.x * k, z = ray.origin.z + ray.direction.z * k;
+        if (inside(r, x, z)) { best = r; bt = k; px = x; pz = z; }
+      }
+    }
+    if (!best) {
+      // Pointer on a wall or the ceiling: drop straight down from where the tape was carried.
+      px = t.target.x;
+      pz = t.target.z;
+      for (const r of SURFACES) if (inside(r, px, pz) && r[4] <= t.target.y && (!best || r[4] > best[4])) best = r;
+      best ??= SURFACES[0];
+    }
+    px = Math.max(best[0] + 0.3, Math.min(best[1] - 0.3, px));
+    pz = Math.max(best[2] + 0.2, Math.min(best[3] - 0.2, pz));
+    // On top of any tape already lying there.
+    let y = best[4] + TD / 2;
+    for (const o of [...tapes].sort((a, b) => a.hp.y - b.hp.y)) {
+      if (o === t || o.state === "loaded" || (o.state === "fly" && o.to === "loaded")) continue;
+      if (Math.hypot(o.hp.x - px, o.hp.z - pz) < 0.6 && o.hp.y >= y - 0.01 && o.hp.y < y + 0.5) y = o.hp.y + TD;
+    }
+    cam.getWorldDirection(camDir);
+    t.hp.set(px, y, pz);
+    t.hq.copy(flat(Math.atan2(-camDir.x, -camDir.z) + (Math.random() - 0.5) * 0.5));
+    sendHome(t);
+  };
   const eject = () => {
     audio.eject();
     loadedIdx = -1;
@@ -1065,7 +1113,7 @@ export function buildRoom(kit: PsxKit): SceneDef {
             else flyTo(t, "loaded");
           } else {
             if (g.i === loadedIdx) eject();
-            sendHome(t);
+            putDown(t);
           }
           return;
         }
