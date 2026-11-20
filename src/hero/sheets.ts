@@ -1,7 +1,7 @@
 /** Hero scene metadata. Kept free of three.js so the tabs can render
  *  before (or without) the lazily loaded engine. */
 export interface SheetMeta {
-  id: "ocean" | "sea" | "astral" | "ruins" | "drift" | "dunes" | "rift" | "frost" | "field" | "matrix" | "beach" | "cliff" | "orb" | "cipher";
+  id: "ocean" | "relief" | "survey" | "sea" | "astral" | "ruins" | "drift" | "dunes" | "rift" | "frost" | "field" | "matrix" | "beach" | "cliff" | "orb" | "cipher";
   name: string;
   aria: string;
   /** Overrides the default drag/zoom hint under the tabs. */
@@ -24,7 +24,15 @@ const ALL_SHEETS: SheetMeta[] = [
     id: "ocean",
     eggs: 3,
     name: "Ocean",
+    // Archived: the builder stays in engine/ocean.ts; delete this line to bring it back.
+    enabled: false,
     aria: "Animated low-poly scene: an endless ocean with palm islands and the King of Red Lions, the lion-headed sailboat from The Wind Waker, moored at a pier, under two setting suns, with a ring of sharp mossed spires on the horizon, wreckage in the swell and upside-down islands overhead.",
+  },
+  {
+    id: "relief",
+    eggs: 3,
+    name: "Relief",
+    aria: "Animated low-poly survey model: a square block of hill country cut clean on four sides, pale as plaster with contour lines drawn on it, every fifth in the accent colour, a dark tarn in a hollow and a trig pillar on the summit, folded rock strata with one glowing seam showing on the cut faces, hanging over a map sheet that repeats its contours inside a ticked frame, with a north arrow and a faint survey grid.",
   },
   {
     id: "sea",
@@ -81,7 +89,15 @@ const ALL_SHEETS: SheetMeta[] = [
     id: "matrix",
     eggs: 3,
     name: "Matrix",
+    // Archived: the builder stays in engine/matrix.ts; delete this line to bring it back.
+    enabled: false,
     aria: "Animated black void: streams of random glyphs rain down in the dark around a slowly turning wireframe tesseract above a ticked ring and survey grid.",
+  },
+  {
+    id: "survey",
+    eggs: 3,
+    name: "Survey",
+    aria: "Animated low-poly night scene: open hill country with a survey grid draped over it in fine lines, a white trig pillar on each of six hilltops joined by dashed sight lines into a triangulation network, and a theodolite on a tripod at the centre turning from pillar to pillar, a line in the accent colour running out to each one it sights, under stars, a faint graticule and a low moon.",
   },
   {
     id: "beach",

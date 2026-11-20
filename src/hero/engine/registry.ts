@@ -11,6 +11,7 @@ export type SceneBuilder = (k: PsxKit) => SceneDef;
 const LOADERS: Record<SheetMeta["id"], () => Promise<SceneBuilder>> = {
   cipher: () => import("./void").then((m) => () => m.buildVoid()),
   ocean: () => import("./ocean").then((m) => m.buildOcean),
+  relief: () => import("./relief").then((m) => m.buildRelief),
   sea: () => import("./sea").then((m) => m.buildSea),
   astral: () => import("./astral").then((m) => m.buildAstral),
   ruins: () => import("./ruins").then((m) => m.buildRuins),
@@ -20,6 +21,7 @@ const LOADERS: Record<SheetMeta["id"], () => Promise<SceneBuilder>> = {
   frost: () => import("./frost").then((m) => m.buildFrost),
   field: () => import("./field").then((m) => m.buildField),
   matrix: () => import("./matrix").then((m) => m.buildMatrix),
+  survey: () => import("./survey").then((m) => m.buildSurvey),
   beach: () => import("./beach").then((m) => m.buildBeach),
   cliff: () => import("./cliff").then((m) => m.buildCliff),
   orb: () => import("./orb").then((m) => m.buildOrb),
