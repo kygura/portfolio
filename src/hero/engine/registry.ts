@@ -21,7 +21,7 @@ const LOADERS: Record<SheetMeta["id"], () => Promise<SceneBuilder>> = {
   frost: () => import("./frost").then((m) => m.buildFrost),
   field: () => import("./field").then((m) => m.buildField),
   matrix: () => import("./matrix").then((m) => m.buildMatrix),
-  survey: () => import("./survey").then((m) => m.buildSurvey),
+  study: () => import("./study").then((m) => m.buildStudy),
   beach: () => import("./beach").then((m) => m.buildBeach),
   cliff: () => import("./cliff").then((m) => m.buildCliff),
   orb: () => import("./orb").then((m) => m.buildOrb),

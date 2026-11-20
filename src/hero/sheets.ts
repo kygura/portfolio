@@ -1,7 +1,7 @@
 /** Hero scene metadata. Kept free of three.js so the tabs can render
  *  before (or without) the lazily loaded engine. */
 export interface SheetMeta {
-  id: "ocean" | "relief" | "survey" | "sea" | "astral" | "ruins" | "drift" | "dunes" | "rift" | "frost" | "field" | "matrix" | "beach" | "cliff" | "orb" | "cipher";
+  id: "ocean" | "relief" | "study" | "sea" | "astral" | "ruins" | "drift" | "dunes" | "rift" | "frost" | "field" | "matrix" | "beach" | "cliff" | "orb" | "cipher";
   name: string;
   aria: string;
   /** Overrides the default drag/zoom hint under the tabs. */
@@ -94,10 +94,10 @@ const ALL_SHEETS: SheetMeta[] = [
     aria: "Animated black void: streams of random glyphs rain down in the dark around a slowly turning wireframe tesseract above a ticked ring and survey grid.",
   },
   {
-    id: "survey",
+    id: "study",
     eggs: 3,
-    name: "Survey",
-    aria: "Animated low-poly night scene: open hill country with a survey grid draped over it in fine lines, a white trig pillar on each of six hilltops joined by dashed sight lines into a triangulation network, and a theodolite on a tripod at the centre turning from pillar to pillar, a line in the accent colour running out to each one it sights, under stars, a faint graticule and a low moon.",
+    name: "Study",
+    aria: "Animated low-poly interior at three in the morning: a small dark room with a desk under a rain-streaked window, an anglepoise lamp throwing a pool of light in the accent colour onto the desk, an old beige computer monitor scrolling lines of text, a tape deck with its reels turning, a mug and a stack of books, a tall bookshelf to one side with a small stone automaton asleep on top, and beyond the glass rain falling in front of a distant city of lit windows under a low glowing sky.",
   },
   {
     id: "beach",
