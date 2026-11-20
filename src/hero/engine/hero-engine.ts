@@ -441,6 +441,12 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       // Touch only reports while a finger is down on the stage; the mouse hovers.
       if (e.pointerType === "touch" ? drag?.own : !interactive(e.target)) setPtr(e, true);
       else ptr.in = false;
+      // A scene that names a hover cursor gets it from the ray as it is now, unless a drag is under way.
+      const sc = scene(cur);
+      if (sc.cursor && !drag && e.pointerType !== "touch") {
+        aimScene(sc);
+        host.style.cursor = ptr.in ? sc.cursor() : "";
+      }
       dirty = true;
       kick();
     }
@@ -493,7 +499,14 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
     const pan = free && e.button === 1;
     if ((e.button !== 0 && !rc && !pan) || !e.isPrimary || interactive(e.target)) return;
     const mod = e.shiftKey || e.altKey;
-    const own = Boolean(sc.pointer) && !rc && !pan && (free ? !mod : e.shiftKey);
+    let own = Boolean(sc.pointer) && !rc && !pan && (free ? !mod : e.shiftKey);
+    // A plain press may also pick something up: the scene's `grab` is asked once the ray is aimed,
+    // and a yes makes the drag its own, so the camera stays put.
+    if (!own && sc.pointer?.grab && !rc && !pan && !free && e.button === 0) {
+      setPtr(e, false);
+      aimScene(sc);
+      own = sc.pointer.grab();
+    }
     drag = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, own, pan };
     yawV = pitchV = 0;
     tpx = tpy = 0;
@@ -501,6 +514,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       setPtr(e, false);
       aimScene(sc);
       sc.pointer!.press();
+      if (sc.cursor) host.style.cursor = "";
     }
     host.setPointerCapture(e.pointerId);
     host.classList.add("is-dragging");
@@ -595,9 +609,11 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   };
   /* touch-action: pan-y hands vertical swipes to the page, and Safari can still start a
      page zoom or scroll on a two-finger gesture. Cancelling touches while two or more
-     fingers are down keeps the pinch on the stage; one finger still scrolls. */
+     fingers are down keeps the pinch on the stage; one finger still scrolls, unless it carries a grabbed object. */
   const onTouch = (e: TouchEvent) => {
-    if (e.touches.length > 1 && e.cancelable && !interactive(e.target)) e.preventDefault();
+    // A finger carrying something the scene grabbed stays on the stage as well.
+    const carrying = Boolean(drag?.own && scene(cur).pointer?.grab);
+    if ((e.touches.length > 1 || carrying) && e.cancelable && !interactive(e.target)) e.preventDefault();
   };
   const onGesture = (e: Event) => e.preventDefault();
   // The middle button pans a free camera, so it must not start the browser's autoscroll.
@@ -634,6 +650,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
   host.addEventListener("pointermove", onPointer);
   const onLeave = () => {
     ptr.in = false;
+    if (scene(cur).cursor && !drag) host.style.cursor = "";
     dirty = true;
     kick();
   };
@@ -763,6 +780,7 @@ export function createHeroEngine(o: HeroEngineOptions): HeroEngine {
       host.classList.remove("is-dragging");
       canvas.style.imageRendering = "";
       host.style.cursor = "";
+      for (const s of builtScenes()) s.dispose?.();
       document.removeEventListener("visibilitychange", onVisibility);
       canvas.removeEventListener("webglcontextlost", onLost);
       const geos = new Set<THREE.BufferGeometry>();
