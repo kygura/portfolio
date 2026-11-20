@@ -179,12 +179,14 @@ export function buildRoom(kit: PsxKit): SceneDef {
     if ((y & 7) === 0 || x === (row * 13 + 7) % 32) k *= 0.5;
     return [160 * k, 112 * k, 76 * k];
   });
+  // Striped wallpaper: deep teal and dusty rose bands split by gold pinstripes, a small gold diamond in each teal band.
   const tWall = pix(32, (x, y) => {
-    const xm = x % 16;
-    let k = 0.96 + rnd() * 0.06;
-    if (xm < 3) k *= 0.9;
-    if ((xm === 9 && y % 16 === 8) || (xm === 8 && y % 16 === 7) || (xm === 10 && y % 16 === 7)) k *= 1.12;
-    return [214 * k, 208 * k, 200 * k];
+    const xm = x % 16, k = 0.94 + rnd() * 0.1;
+    if (xm === 0 || xm === 9) return [226 * k, 176 * k, 84 * k];
+    if (xm > 9) return [196 * k, 92 * k, 128 * k];
+    const dx = Math.abs(xm - 4.5), dy = Math.abs((y % 16) - 7.5);
+    if (dx + dy < 2.6) return [236 * k, 190 * k, 96 * k];
+    return [38 * k, 128 * k, 136 * k];
   });
   const tWood = pix(32, (x, y) => {
     const k = 0.84 + 0.14 * Math.sin((y + 3 * Math.sin(x * 0.35)) * 0.9) + (rnd() - 0.5) * 0.1;
@@ -357,7 +359,7 @@ export function buildRoom(kit: PsxKit): SceneDef {
       },
     });
   const mFloor = mk({ map: tPlank, tint: "#c0916a", planar: 0.5 });
-  const mWall = mk({ map: tWall, tint: "#a88598", planar: 0.3 });
+  const mWall = mk({ map: tWall, tint: "#ffffff", planar: 0.3 });
   const mWood = mk({ map: tWood, tint: "#c2915f", planar: 0.6 });
   const mDark = mk({ map: tWood, tint: "#6f4c36", planar: 0.6 });
   const mPlain = mk({ map: tPlain });
@@ -422,9 +424,10 @@ export function buildRoom(kit: PsxKit): SceneDef {
   /* ---- shell: floor, walls, ceiling, skirting ---- */
   plane(mFloor, 0, 0, 0, HX * 2, FRONT - BACK, -Math.PI / 2, 0, 14, 11);
   plane(mWall, 0, H / 2, BACK, HX * 2, H, 0, 0, 12, 5);
-  plane(mWall, -HX, H / 2, 0, FRONT - BACK, H, 0, Math.PI / 2, 10, 5);
-  plane(mWall, HX, H / 2, 0, FRONT - BACK, H, 0, -Math.PI / 2, 10, 5);
-  plane(mWall, 0, H / 2, FRONT, HX * 2, H, 0, Math.PI, 12, 5);
+  // Each wall gets its own cast of the paper: violet on the left, warm coral on the right.
+  plane(mWall, -HX, H / 2, 0, FRONT - BACK, H, 0, Math.PI / 2, 10, 5, "#b48cff");
+  plane(mWall, HX, H / 2, 0, FRONT - BACK, H, 0, -Math.PI / 2, 10, 5, "#ffb08a");
+  plane(mWall, 0, H / 2, FRONT, HX * 2, H, 0, Math.PI, 12, 5, "#b48cff");
   plane(mPlain, 0, H, 0, HX * 2, FRONT - BACK, Math.PI / 2, 0, 1, 1, "#585270");
   bx(mDark, 0, 0, BACK + 0.05, HX * 2, 0.34, 0.1);
   bx(mDark, -HX + 0.05, 0, 0, 0.1, 0.34, FRONT - BACK);
