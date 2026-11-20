@@ -22,6 +22,7 @@ const ALL_SHEETS: SheetMeta[] = [
   },
   {
     id: "ocean",
+    enabled: false,
     eggs: 3,
     name: "Ocean",
     aria: "Animated low-poly scene: an endless ocean with palm islands and the King of Red Lions, the lion-headed sailboat from The Wind Waker, moored at a pier, under two setting suns, with a ring of sharp mossed spires on the horizon, wreckage in the swell and upside-down islands overhead.",
@@ -79,6 +80,7 @@ const ALL_SHEETS: SheetMeta[] = [
   },
   {
     id: "matrix",
+    enabled: false,
     eggs: 3,
     name: "Matrix",
     aria: "Animated black void: streams of random glyphs rain down in the dark around a slowly turning wireframe tesseract above a ticked ring and survey grid.",
