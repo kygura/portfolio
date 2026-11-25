@@ -7,11 +7,12 @@
       "numeral": "I",
       "name": "The Sovereign Self",
       "thesis": "The self cannot step outside its own design, so every exit from a system is conditioned by the self that makes it, and knowing that design is the only real edge.",
+      "index": "quantum-history",
       "slugs": [
+        "quantum-history",
         "the-illusion-of-freedom",
         "the-perpetual-i",
         "on-the-ego",
-        "quantum-history",
         "thaumazein",
         "outsmarting-the-collective-greed-of-humanity",
         "mediterranean-hunger"
@@ -22,6 +23,7 @@
       "numeral": "II",
       "name": "Faith Without Altars",
       "thesis": "Religion and ideology answer the problem of death with claims no one can check, so the meaning they offer is handed down rather than found, and the seeker must clear the mind to find it alone.",
+      "index": "the-religious-problem",
       "slugs": [
         "the-religious-problem",
         "outsourced-spirituality",
@@ -37,6 +39,7 @@
       "numeral": "III",
       "name": "Of the State",
       "thesis": "The state recurs whatever is done to tear it down, its terms are set by whoever holds force and leverage, and the freedom it promises has never been a birthright.",
+      "index": "the-unsigned-contract",
       "slugs": [
         "the-unsigned-contract",
         "nothing-behind-the-words",
@@ -54,6 +57,7 @@
       "numeral": "IV",
       "name": "Of Authorship",
       "thesis": "A borrowed idea leaves the reader with no worldview of their own, while a work carries weight only when one author has lived through it and chosen what to keep.",
+      "index": "on-reading",
       "slugs": [
         "on-reading",
         "the-vessel",
@@ -68,6 +72,7 @@
       "numeral": "V",
       "name": "Of Machines",
       "thesis": "Language models are stateless maps of human text with no inner life, and the industry's claims of agency, memory and selfhood borrow the look of mind without its substance.",
+      "index": "static-intelligence",
       "slugs": [
         "static-intelligence",
         "the-projection-loop",

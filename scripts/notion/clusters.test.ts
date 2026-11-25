@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type Anthropic from "@anthropic-ai/sdk";
 import {
+  finish,
   clusterCorpus,
   clusterPrompt,
   corpusHash,
@@ -177,8 +178,8 @@ test("pendingSlugs lists essays left unsorted or without topics by a reconciled 
     hash: "h",
     source: "reconciled",
     clusters: [
-      { id: "one", numeral: "I", name: "One", thesis: "", slugs: ["a", "b"] },
-      { id: "unsorted", numeral: "II", name: "Unsorted", thesis: "", slugs: ["c"] },
+      { id: "one", numeral: "I", name: "One", thesis: "", slugs: ["a", "b"], index: "a" },
+      { id: "unsorted", numeral: "II", name: "Unsorted", thesis: "", slugs: ["c"], index: "c" },
     ],
     topics: { a: ["x"], c: ["y"] },
   };
@@ -210,4 +211,15 @@ test("fireClusterRoutine does nothing without configuration and never throws", a
   const throwing = (async () => { throw new Error("offline"); }) as unknown as typeof fetch;
   const errored = await fireClusterRoutine(["a"], { CLAUDE_CLUSTER_ROUTINE_ID: "trig_x", CLAUDE_CLUSTER_ROUTINE_TOKEN: "t" }, throwing);
   assert.equal(errored.fired, false);
+});
+
+test("finish leads each cluster with its index, or the first essay when the index is missing or foreign", () => {
+  const [chosen, fallback, foreign] = finish([
+    { name: "Of the State", thesis: "t", slugs: ["a", "b", "c"], index: "c" },
+    { name: "Of Machines", thesis: "t", slugs: ["d", "e"] },
+    { name: "Of Authorship", thesis: "t", slugs: ["f", "g"], index: "zzz" },
+  ]);
+  assert.deepEqual([chosen.index, chosen.slugs], ["c", ["c", "a", "b"]]);
+  assert.deepEqual([fallback.index, fallback.slugs], ["d", ["d", "e"]]);
+  assert.deepEqual([foreign.index, foreign.slugs], ["f", ["f", "g"]]);
 });

@@ -27,6 +27,8 @@ export interface Cluster {
   name: string;
   thesis: string;
   slugs: string[];
+  /** The essay that represents the cluster, chosen by the clustering. */
+  index?: string;
 }
 
 // The manifest is already in clustering order: cluster by cluster, each a reading path.

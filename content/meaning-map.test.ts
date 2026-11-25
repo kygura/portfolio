@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildEdges, buildSkeleton, labelsOf, labelWidth, layoutMap, linkingTopics, mapHeight, neighboursOf, type MapPost } from "./meaning-map.ts";
+import { buildEdges, buildSkeleton, clusterRegion, convexHull, labelsOf, labelWidth, layoutMap, linkingTopics, mapHeight, neighboursOf, type MapPost } from "./meaning-map.ts";
 
 const post = (slug: string, cluster: string, topics: string[], tags: string[] = []): MapPost => ({
   slug,
@@ -114,4 +114,26 @@ test("the skeleton gives each cluster a hub and joins the clusters through one c
   // One line per essay, less one: a tree.
   assert.equal(skeleton.links.length, posts.length - 1);
   assert.equal(buildSkeleton([], []).links.length, 0);
+});
+
+test("the skeleton uses a cluster's chosen index as its hub", () => {
+  const posts: MapPost[] = [
+    { slug: "a", title: "A", cluster: "one", tags: [], topics: ["x", "y"] },
+    { slug: "b", title: "B", cluster: "one", tags: [], topics: ["x", "y"] },
+    { slug: "c", title: "C", cluster: "one", tags: [], topics: ["x"] },
+  ];
+  const edges = buildEdges(posts);
+  assert.equal(buildSkeleton(posts, edges).hubs.get("one"), "a");
+  assert.equal(buildSkeleton(posts, edges, new Map([["one", "c"]])).hubs.get("one"), "c");
+  // An index outside the cluster is ignored.
+  assert.equal(buildSkeleton(posts, edges, new Map([["one", "zzz"]])).hubs.get("one"), "a");
+});
+
+test("a cluster region is the convex hull around its label boxes", () => {
+  const hull = convexHull([{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 5, y: 5 }, { x: 10, y: 10 }, { x: 0, y: 10 }]);
+  assert.equal(hull.length, 4);
+  assert.ok(!hull.some((p) => p.x === 5 && p.y === 5));
+  const path = clusterRegion([{ x: 100, y: 100 }], [80]);
+  assert.match(path, /^M.*Z$/);
+  assert.equal(clusterRegion([], []), "");
 });
