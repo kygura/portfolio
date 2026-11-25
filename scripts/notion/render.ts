@@ -8,9 +8,20 @@ import { renderRichText } from "./richtext.ts";
 /**
  * Convert a fully-fetched Notion block tree to GFM markdown.
  */
-export function renderBlocksToMarkdown(blocks: NotionBlock[]): string {
-  return renderBlockList(blocks, 0).trim();
+export function renderBlocksToMarkdown(
+  blocks: NotionBlock[],
+  onSkip?: (type: string) => void,
+): string {
+  skipReporter = onSkip;
+  try {
+    return renderBlockList(blocks, 0).trim();
+  } finally {
+    skipReporter = undefined;
+  }
 }
+
+/** Told about each block of an unhandled type that rendered nothing. */
+let skipReporter: ((type: string) => void) | undefined;
 
 // ---------------------------------------------------------------------------
 // Internal rendering
@@ -297,6 +308,7 @@ function renderSingleBlock(
         if (block.children && block.children.length > 0) {
           return renderBlockList(block.children, depth);
         }
+        skipReporter?.(type);
         return null;
       }
     }

@@ -207,7 +207,9 @@ export async function POST(request: Request): Promise<Response> {
   const { id, type, data } = event.data;
   const eventId = id ?? null;
 
+  // Every outcome leaves a log line, so a dropped event can be traced.
   if (!type || !rebuildEventTypes.has(type)) {
+    console.info("Notion webhook ignored: unsupported event type", { eventType: type ?? null, eventId });
     return Response.json({
       ok: true,
       ignored: true,
@@ -218,6 +220,12 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   if (!isFromWatchedParent(type, data?.parent)) {
+    console.info("Notion webhook ignored: page is outside the Publications database", {
+      eventType: type,
+      eventId,
+      parentId: data?.parent?.id ?? null,
+      parentDataSourceId: data?.parent?.data_source_id ?? null,
+    });
     return Response.json({
       ok: true,
       ignored: true,
@@ -233,6 +241,7 @@ export async function POST(request: Request): Promise<Response> {
       console.error("Notion webhook could not trigger a rebuild:", result.reason);
       return Response.json({ error: result.reason, eventType: type, eventId }, { status: 500 });
     }
+    console.info("Notion webhook queued a rebuild", { eventType: type, eventId });
     return Response.json({ ok: true, rebuild: "queued", eventType: type, eventId }, { status: 202 });
   } catch (error) {
     console.error("Failed to trigger rebuild from Notion webhook", error);
