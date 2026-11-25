@@ -1,6 +1,6 @@
 {
-  "hash": "5ac1add1062063d6",
-  "source": "model",
+  "hash": "fca2f42ca82de9f9",
+  "source": "reconciled",
   "clusters": [
     {
       "id": "the-sovereign-self",
@@ -8,12 +8,10 @@
       "name": "The Sovereign Self",
       "thesis": "The self cannot step outside its own design, so every exit from a system is conditioned by the self that makes it, and knowing that design is the only real edge.",
       "slugs": [
-        "the-illusion-of-freedom",
         "the-perpetual-i",
         "on-the-ego",
         "quantum-history",
-        "thaumazein",
-        "outsmarting-the-collective-greed-of-humanity"
+        "thaumazein"
       ]
     },
     {
@@ -24,8 +22,6 @@
       "slugs": [
         "the-religious-problem",
         "outsourced-spirituality",
-        "the-inversion",
-        "monk-mode",
         "an-empty-mind",
         "to-seek-higher-things"
       ]
@@ -36,11 +32,9 @@
       "name": "Of the State",
       "thesis": "The state recurs whatever is done to tear it down, its terms are set by whoever holds force and leverage, and the freedom it promises has never been a birthright.",
       "slugs": [
-        "the-last-sovereign-act",
+        "the-unsigned-contract",
         "nothing-behind-the-words",
         "on-the-movements-of-the-world",
-        "perpetua-libertas",
-        "the-design-question",
         "the-price-of-progress",
         "on-the-state-of-things"
       ]
@@ -51,10 +45,7 @@
       "name": "Of Authorship",
       "thesis": "A borrowed idea leaves the reader with no worldview of their own, while a work carries weight only when one author has lived through it and chosen what to keep.",
       "slugs": [
-        "on-reading",
-        "the-vessel",
-        "add-what-is-specifically-your-own",
-        "a-mind-you-can-locate"
+        "the-vessel"
       ]
     },
     {
@@ -64,10 +55,21 @@
       "thesis": "Language models are stateless maps of human text with no inner life, and the industry's claims of agency, memory and selfhood borrow the look of mind without its substance.",
       "slugs": [
         "static-intelligence",
-        "the-language-game",
-        "the-soul-as-a-system-prompt",
-        "black-magic",
-        "notion-as-a-backend"
+        "the-projection-loop",
+        "the-wrapper-and-the-soul"
+      ]
+    },
+    {
+      "id": "unsorted",
+      "numeral": "VI",
+      "name": "Unsorted",
+      "thesis": "New essays, not yet placed in the corpus.",
+      "slugs": [
+        "always-against",
+        "conditioned-by-freedom",
+        "corposlop",
+        "intellectual-opium",
+        "the-game-of-democracy"
       ]
     }
   ],
@@ -77,45 +79,30 @@
       "meaning",
       "desire"
     ],
+    "the-wrapper-and-the-soul": [
+      "llms",
+      "engineering",
+      "philosophy of mind"
+    ],
     "on-the-movements-of-the-world": [
       "history",
       "government",
       "ideology"
     ],
-    "a-mind-you-can-locate": [
-      "taste",
-      "markets",
-      "authorship"
-    ],
-    "the-design-question": [
-      "history",
-      "government",
-      "liberty"
-    ],
-    "the-last-sovereign-act": [
-      "government",
-      "power",
-      "liberty"
-    ],
-    "the-language-game": [
+    "the-projection-loop": [
       "language",
       "llms",
       "philosophy of mind"
     ],
-    "monk-mode": [
-      "desire",
-      "renunciation",
-      "religion"
+    "the-unsigned-contract": [
+      "government",
+      "power",
+      "liberty"
     ],
     "nothing-behind-the-words": [
       "power",
       "equality",
       "government"
-    ],
-    "notion-as-a-backend": [
-      "llms",
-      "publishing",
-      "engineering"
     ],
     "the-religious-problem": [
       "religion",
@@ -132,16 +119,6 @@
       "ideology",
       "institutions"
     ],
-    "perpetua-libertas": [
-      "history",
-      "government",
-      "liberty"
-    ],
-    "the-soul-as-a-system-prompt": [
-      "llms",
-      "engineering",
-      "philosophy of mind"
-    ],
     "the-perpetual-i": [
       "free will",
       "identity",
@@ -151,31 +128,6 @@
       "history",
       "free will",
       "identity"
-    ],
-    "on-reading": [
-      "taste",
-      "authorship",
-      "knowledge"
-    ],
-    "the-inversion": [
-      "religion",
-      "ideology",
-      "history"
-    ],
-    "add-what-is-specifically-your-own": [
-      "taste",
-      "authorship",
-      "desire"
-    ],
-    "black-magic": [
-      "language",
-      "llms",
-      "speculation"
-    ],
-    "outsmarting-the-collective-greed-of-humanity": [
-      "markets",
-      "leverage",
-      "speculation"
     ],
     "static-intelligence": [
       "llms",
@@ -206,11 +158,6 @@
       "government",
       "meaning",
       "ideology"
-    ],
-    "the-illusion-of-freedom": [
-      "free will",
-      "liberty",
-      "identity"
     ]
   }
 }

@@ -1,9 +1,9 @@
 ---
-slug: "the-last-sovereign-act"
+slug: "the-unsigned-contract"
 lang: "es"
 language: "Spanish"
-title: "El último acto soberano"
-sourceHash: "cceef01d40f4e9c5"
+title: "El contrato sin firmar"
+sourceHash: "a65b4b05b8ac2d21"
 ---
 
 El Estado existe, y volverá a surgir por muchas veces que se lo derribe. Nadie firmó el contrato que te ata a él, y aun así lo cobra cada día. Lo que sigue lee las cláusulas tal y como funcionan de verdad: qué es el poder, cómo habla, qué debe, qué tiene el individuo frente a él y cómo vivir con lucidez dentro de un juego en el que nunca elegiste entrar.

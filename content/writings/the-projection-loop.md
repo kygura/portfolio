@@ -1,6 +1,6 @@
 ---
-slug: "the-language-game"
-title: "The Language Game"
+slug: "the-projection-loop"
+title: "The Projection Loop"
 excerpt: "There is a product called OpenClaw. It is, technically, a local daemon that routes your messages through an LLM with bash access, a glorified shell agent dressed up in multi channel clothing. WhatsApp in, shell command o..."
 readTime: 5
 published: true

@@ -1,6 +1,6 @@
 ---
-slug: "the-last-sovereign-act"
-title: "The Last Sovereign Act"
+slug: "the-unsigned-contract"
+title: "The Unsigned Contract"
 excerpt: "The state exists, and it will keep re emerging however often it's torn down. Nobody signed the contract that binds you to it, yet it collects on that contract every day. What follows reads the terms as they actually oper..."
 readTime: 19
 published: true
