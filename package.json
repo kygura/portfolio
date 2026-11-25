@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "sync-posts": "bun scripts/build-writings.ts",
+    "cluster": "bun scripts/cluster-by-claude.ts",
     "test": "node --test --experimental-strip-types \"api/**/*.test.ts\" \"scripts/**/*.test.ts\" \"content/**/*.test.ts\"",
     "typecheck": "tsc -p tsconfig.app.json && tsc -p tsconfig.node.json && tsc -p tsconfig.api.json",
     "translate": "bun scripts/translate-writings.ts",

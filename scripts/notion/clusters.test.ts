@@ -9,6 +9,8 @@ import {
   orderedSlugs,
   cleanTopics,
   parseAnswer,
+  pendingSlugs,
+  fireClusterRoutine,
   reconcile,
   toRoman,
   type ClusterCache,
@@ -168,4 +170,44 @@ test("the prompt carries an essay's tags as a keywords attribute", () => {
   assert.match(user, /<essay slug="a" title="A" keywords="agency, craft">/);
   assert.match(user, /<essay slug="b" title="B">/);
   assert.match(system, /keywords/);
+});
+
+test("pendingSlugs lists essays left unsorted or without topics by a reconciled clustering", () => {
+  const clustering: Clustering = {
+    hash: "h",
+    source: "reconciled",
+    clusters: [
+      { id: "one", numeral: "I", name: "One", thesis: "", slugs: ["a", "b"] },
+      { id: "unsorted", numeral: "II", name: "Unsorted", thesis: "", slugs: ["c"] },
+    ],
+    topics: { a: ["x"], c: ["y"] },
+  };
+  assert.deepEqual(pendingSlugs(clustering, ["a", "b", "c"]), ["b", "c"]);
+  assert.deepEqual(pendingSlugs({ ...clustering, source: "model" }, ["a", "b", "c"]), []);
+});
+
+test("fireClusterRoutine posts the pending slugs to the routine's API trigger", async () => {
+  const calls: { url: string; init: RequestInit }[] = [];
+  const fakeFetch = (async (url: string, init: RequestInit) => {
+    calls.push({ url, init });
+    return new Response(JSON.stringify({ type: "routine_fire", claude_code_session_url: "https://claude.ai/code/session_x" }));
+  }) as unknown as typeof fetch;
+  const env = { CLAUDE_CLUSTER_ROUTINE_ID: "trig_abc", CLAUDE_CLUSTER_ROUTINE_TOKEN: "tok" };
+
+  const result = await fireClusterRoutine(["new-essay"], env, fakeFetch);
+  assert.deepEqual(result, { fired: true, sessionUrl: "https://claude.ai/code/session_x" });
+  assert.equal(calls[0].url, "https://api.anthropic.com/v1/claude_code/routines/trig_abc/fire");
+  assert.equal((calls[0].init.headers as Record<string, string>).authorization, "Bearer tok");
+  assert.match(String(calls[0].init.body), /new-essay/);
+});
+
+test("fireClusterRoutine does nothing without configuration and never throws", async () => {
+  const unconfigured = await fireClusterRoutine(["a"], {});
+  assert.equal(unconfigured.fired, false);
+  const failing = (async () => new Response("no", { status: 401 })) as unknown as typeof fetch;
+  const rejected = await fireClusterRoutine(["a"], { CLAUDE_CLUSTER_ROUTINE_ID: "trig_x", CLAUDE_CLUSTER_ROUTINE_TOKEN: "t" }, failing);
+  assert.deepEqual(rejected, { fired: false, reason: "the fire endpoint answered 401" });
+  const throwing = (async () => { throw new Error("offline"); }) as unknown as typeof fetch;
+  const errored = await fireClusterRoutine(["a"], { CLAUDE_CLUSTER_ROUTINE_ID: "trig_x", CLAUDE_CLUSTER_ROUTINE_TOKEN: "t" }, throwing);
+  assert.equal(errored.fired, false);
 });
