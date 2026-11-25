@@ -21,6 +21,8 @@ export const postSummarySchema = z.object({
   mark: z.string().default(""),
   /** Id of the cluster the essay sits in. */
   cluster: z.string().default(""),
+  /** Topics the essay shares with others; two essays with a common topic are linked. */
+  topics: z.array(z.string()).default([]),
 });
 
 export const postSchema = postSummarySchema.extend({

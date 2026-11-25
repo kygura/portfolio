@@ -137,7 +137,7 @@ export function buildPostFromMarkdown(
         : estimateReadTime(body);
 
     return {
-      summary: { slug, title, excerpt, readTime, mark: "", cluster: "" },
+      summary: { slug, title, excerpt, readTime, mark: "", cluster: "", topics: [] },
       content: body,
     };
   } catch {

@@ -1,5 +1,5 @@
 {
-  "hash": "75022335a4982d02",
+  "hash": "ae63a92737e9d5f3",
   "source": "reconciled",
   "clusters": [
     {
@@ -56,5 +56,118 @@
         "corposlop"
       ]
     }
-  ]
+  ],
+  "topics": {
+    "to-seek-higher-things": [
+      "ambition",
+      "meaning",
+      "freedom"
+    ],
+    "on-the-movements-of-the-world": [
+      "history",
+      "power",
+      "resistance"
+    ],
+    "the-last-sovereign-act": [
+      "the state",
+      "social contract",
+      "power"
+    ],
+    "the-language-game": [
+      "language models",
+      "language",
+      "authorship"
+    ],
+    "always-against": [
+      "freedom",
+      "institutions",
+      "resistance",
+      "history"
+    ],
+    "nothing-behind-the-words": [
+      "power",
+      "language",
+      "the state",
+      "ideology"
+    ],
+    "conditioned-by-freedom": [
+      "freedom",
+      "the self",
+      "free will"
+    ],
+    "the-religious-problem": [
+      "religion",
+      "meaning",
+      "institutions"
+    ],
+    "thaumazein": [
+      "freedom",
+      "meaning",
+      "ambition"
+    ],
+    "outsourced-spirituality": [
+      "religion",
+      "institutions",
+      "mysticism"
+    ],
+    "corposlop": [
+      "authorship",
+      "institutions"
+    ],
+    "the-soul-as-a-system-prompt": [
+      "language models",
+      "the self",
+      "authorship"
+    ],
+    "intellectual-opium": [
+      "religion",
+      "ideology",
+      "institutions"
+    ],
+    "the-perpetual-i": [
+      "the self",
+      "free will",
+      "freedom"
+    ],
+    "quantum-history": [
+      "history",
+      "the self",
+      "meaning"
+    ],
+    "static-intelligence": [
+      "language models",
+      "language"
+    ],
+    "an-empty-mind": [
+      "mysticism",
+      "the self",
+      "ideology"
+    ],
+    "the-vessel": [
+      "language",
+      "meaning",
+      "the self"
+    ],
+    "on-the-ego": [
+      "freedom",
+      "ideology",
+      "the self"
+    ],
+    "the-price-of-progress": [
+      "social contract",
+      "freedom",
+      "progress"
+    ],
+    "the-game-of-democracy": [
+      "the state",
+      "institutions",
+      "freedom",
+      "ideology"
+    ],
+    "on-the-state-of-things": [
+      "progress",
+      "history",
+      "meaning"
+    ]
+  }
 }
