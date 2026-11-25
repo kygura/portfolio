@@ -105,10 +105,6 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
     setPinned((current) => (JSON.stringify(current) === JSON.stringify(next) ? null : next));
   const isPinned = (candidate: Exclude<Focus, null>) => JSON.stringify(pinned) === JSON.stringify(candidate);
 
-  const active = focus?.kind === "post" ? bySlug.get(focus.slug) ?? null : null;
-  const neighbours = active ? neighboursOf(active.slug, edges) : [];
-  const activeTopic = focus?.kind === "topic" ? topics.find((topic) => topic.name === focus.name) ?? null : null;
-  const activeCluster = focus?.kind === "cluster" ? clusters.find((cluster) => cluster.id === focus.id) ?? null : null;
 
   return (
     <section className="mmap" aria-label="Map of the writings">
@@ -259,53 +255,6 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
             );
           })}
         </svg>
-      </div>
-
-      <div className="mmap__panel" aria-live="polite">
-        {/* Keyed by focus, so every change of focus fades the panel in afresh. */}
-        <div className="mmap__panel-body" key={focus ? JSON.stringify(focus) : "rest"}>
-          {active && (
-            <>
-              <p className="mmap__panel-kicker">{active.mark} · {active.readTime} min · {labelsOf(active).join(", ")}</p>
-              <h2 className="mmap__panel-title">{active.title}</h2>
-              {neighbours.length > 0 ? (
-                <ul className="mmap__links">
-                  {neighbours.slice(0, 6).map((neighbour) => (
-                    <li key={neighbour.slug}>
-                      <span className="mmap__links-title">{bySlug.get(neighbour.slug)?.title}</span>
-                      <span className="mmap__links-why">{neighbour.topics.join(", ")}</span>
-                    </li>
-                  ))}
-                  {neighbours.length > 6 && <li className="mmap__links-more">and {neighbours.length - 6} more</li>}
-                </ul>
-              ) : (
-                <p className="mmap__panel-text">No shared topics with another essay yet.</p>
-              )}
-            </>
-          )}
-          {activeTopic && (
-            <>
-              <p className="mmap__panel-kicker">Topic · {activeTopic.slugs.length} essays</p>
-              <h2 className="mmap__panel-title">{activeTopic.name}</h2>
-              <p className="mmap__panel-text">{activeTopic.slugs.map((slug) => bySlug.get(slug)?.title).join(" · ")}</p>
-            </>
-          )}
-          {activeCluster && (
-            <>
-              <p className="mmap__panel-kicker">Cluster {activeCluster.numeral} · {activeCluster.slugs.length} essays</p>
-              <h2 className="mmap__panel-title">{activeCluster.name}</h2>
-              {activeCluster.thesis && <p className="mmap__panel-text mmap__panel-text--thesis">{activeCluster.thesis}</p>}
-            </>
-          )}
-          {!focus && (
-            <p className="mmap__panel-hint">
-              Each cluster is drawn around its index, the essay chosen to represent it, shown with a larger
-              point. The clusters join through the central one, and a thicker line means more shared
-              topics. Point at an essay to see every essay it
-              shares a topic with, or pick a cluster or a topic above. Select an essay to read it.
-            </p>
-          )}
-        </div>
       </div>
     </section>
   );
