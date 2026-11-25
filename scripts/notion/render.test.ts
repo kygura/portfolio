@@ -317,6 +317,21 @@ test("unknown block type without children is skipped", () => {
   assert.equal(result, "");
 });
 
+test("a skipped block type is reported to onSkip", () => {
+  const unknown = {
+    id: "u3",
+    type: "unsupported_type",
+    has_children: false,
+    children: [],
+    unsupported_type: {},
+  } as unknown as NotionBlock;
+  const paragraph = block("paragraph", { rich_text: [richText("kept")] });
+  const skipped: string[] = [];
+  const result = renderBlocksToMarkdown([paragraph, unknown], (type) => skipped.push(type));
+  assert.equal(result, "kept");
+  assert.deepEqual(skipped, ["unsupported_type"]);
+});
+
 test("empty block array returns empty string", () => {
   assert.equal(renderBlocksToMarkdown([]), "");
 });

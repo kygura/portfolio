@@ -4327,6 +4327,16 @@ kbd {
   color: var(--ink-2);
 }
 .ledger__group + .ledger__group { margin-top: 3.25rem; }
+/* Says who made the structure: the clusters are a model's, the essays are not. */
+.ledger__note {
+  margin: 0 0 2rem;
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  line-height: 1.7;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
 
 .post-head__cluster { color: inherit; text-decoration: none; transition: color 0.2s; }
 .post-head__cluster:hover, .post-head__cluster:focus-visible { color: var(--accent); }
