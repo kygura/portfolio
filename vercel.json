@@ -131,6 +131,26 @@
       "source": "/writings/what-cant-be-counted.md",
       "destination": "/writings",
       "permanent": false
+    },
+    {
+      "source": "/writings/ai-has-no-place-in-the-arts",
+      "destination": "/writings/add-what-is-specifically-your-own",
+      "permanent": false
+    },
+    {
+      "source": "/writings/ai-has-no-place-in-the-arts.md",
+      "destination": "/writings/add-what-is-specifically-your-own.md",
+      "permanent": false
+    },
+    {
+      "source": "/writings/the-people-have-rightfully-rejected-ai",
+      "destination": "/writings/the-ai-larp",
+      "permanent": false
+    },
+    {
+      "source": "/writings/the-people-have-rightfully-rejected-ai.md",
+      "destination": "/writings/the-ai-larp.md",
+      "permanent": false
     }
   ],
   "rewrites": [
