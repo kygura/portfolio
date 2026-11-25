@@ -4502,6 +4502,11 @@ kbd {
 .mmap__node:focus-visible .mmap__title { text-decoration: underline; }
 
 .mmap__panel { min-height: 9.5rem; padding-top: 1.25rem; }
+/* The panel's text fades and rises in with the map, kicker first. */
+.mmap__panel-body > * { animation: mmap-panel-in 420ms cubic-bezier(0.22, 0.61, 0.36, 1) backwards; }
+.mmap__panel-body > :nth-child(2) { animation-delay: 60ms; }
+.mmap__panel-body > :nth-child(n + 3) { animation-delay: 120ms; }
+@keyframes mmap-panel-in { from { opacity: 0; transform: translateY(4px); } }
 .mmap__panel-kicker,
 .mmap__panel-hint {
   margin: 0;
@@ -4532,7 +4537,8 @@ kbd {
   .mmap__svg[data-focused] .mmap__node[data-lit]:not([data-source]) .mmap__dot,
   .mmap__svg[data-focused] .mmap__node[data-lit]:not([data-source]) .mmap__title { transition: none; transform: none; }
   .mmap__skeleton, .mmap__node,
-  .mmap__svg[data-focused] .mmap__node[data-lit]:not([data-source]) { animation: none; }
+  .mmap__svg[data-focused] .mmap__node[data-lit]:not([data-source]),
+  .mmap__panel-body > * { animation: none; }
   .mmap__edge, .mmap__edge[data-lit] { stroke-dashoffset: 0; transition: opacity 120ms linear; }
 }
 
