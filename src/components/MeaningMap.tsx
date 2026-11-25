@@ -92,7 +92,13 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
     };
     const litEdges = edges.filter(edgeLit).sort((x, y) => length(x) - length(y));
     const rank = new Map(litEdges.map((edge, index) => [edge, index]));
-    return edges.map((edge) => ({ edge, rank: rank.get(edge) ?? -1 }));
+    // An essay lights up when the first line to reach it arrives.
+    const nodeRank = new Map<string, number>();
+    litEdges.forEach((edge, index) => {
+      if (!nodeRank.has(edge.a)) nodeRank.set(edge.a, index);
+      if (!nodeRank.has(edge.b)) nodeRank.set(edge.b, index);
+    });
+    return { lines: edges.map((edge) => ({ edge, rank: rank.get(edge) ?? -1 })), nodeRank };
   })();
 
   const toggle = (next: Exclude<Focus, null>) =>
@@ -193,7 +199,7 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
           {/* On focus: every topic link of what is focused. All are drawn, hidden at rest,
               so they can fade and grow out of the focused essay, and fade away again. */}
           <g className="mmap__edges" aria-hidden="true">
-            {edgeOrder.map(({ edge, rank }) => {
+            {edgeOrder.lines.map(({ edge, rank }) => {
               let from = points.get(edge.a);
               let to = points.get(edge.b);
               if (!from || !to) return null;
@@ -228,6 +234,7 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
                 to={`/writings/${post.slug}`}
                 className="mmap__node"
                 data-lit={lit?.has(post.slug) ? "" : undefined}
+                style={lit?.has(post.slug) ? ({ "--i": edgeOrder.nodeRank.get(post.slug) ?? 0 } as CSSProperties) : undefined}
                 data-source={focus?.kind === "post" && focus.slug === post.slug ? "" : undefined}
                 data-hub={isHub ? "" : undefined}
                 data-centre={isCentre ? "" : undefined}
