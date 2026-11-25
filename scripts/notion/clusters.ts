@@ -12,7 +12,10 @@
  *
  * Without a model (no key, offline, or a failed call) the previous clustering
  * is reconciled instead: removed posts drop out, new ones wait in a final
- * "Unsorted" cluster until the next build that can reach the model.
+ * "Unsorted" cluster until the next build that can reach the model. A
+ * production build in that state can fire a Claude Code scheduled task, which
+ * clusters the corpus with the same prompt and commits clusters.json
+ * (scripts/cluster-by-claude.ts).
  */
 import { createHash } from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
@@ -119,7 +122,7 @@ export function corpusHash(posts: CorpusPost[]): string {
 }
 
 /** Numerals, ids and empty-cluster removal; assumes slugs are already valid. */
-function finish(raw: { name: string; thesis: string; slugs: string[] }[]): Cluster[] {
+export function finish(raw: { name: string; thesis: string; slugs: string[] }[]): Cluster[] {
   const used = new Set<string>();
   return raw
     .filter((cluster) => cluster.slugs.length > 0)
@@ -390,4 +393,54 @@ export async function blobClusterCache(env: NodeJS.ProcessEnv = process.env): Pr
       });
     },
   };
+}
+
+// ---- Claude fallback ------------------------------------------------------------
+
+/**
+ * Essays a reconciled clustering could not place: those waiting in the
+ * trailing "Unsorted" cluster (or "Writings", when there was no previous
+ * clustering) and those without topics. Empty for a clustering from the model.
+ */
+export function pendingSlugs(clustering: Clustering, slugs: string[]): string[] {
+  if (clustering.source === "model") return [];
+  const waiting = new Set(
+    clustering.clusters.filter((cluster) => cluster.id === "unsorted" || cluster.id === "writings").flatMap((cluster) => cluster.slugs),
+  );
+  return slugs.filter((slug) => waiting.has(slug) || !clustering.topics[slug]?.length);
+}
+
+export type RoutineFire = { fired: true; sessionUrl: string | null } | { fired: false; reason: string };
+
+/**
+ * Ask a Claude Code scheduled task (its API trigger) to cluster the corpus.
+ * Configured by CLAUDE_CLUSTER_ROUTINE_ID (trig_...) and
+ * CLAUDE_CLUSTER_ROUTINE_TOKEN. Never throws: a failed fire only leaves the
+ * reconciled clustering in place until the next build.
+ */
+export async function fireClusterRoutine(
+  slugs: string[],
+  env: NodeJS.ProcessEnv = process.env,
+  fetchImpl: typeof fetch = fetch,
+): Promise<RoutineFire> {
+  const id = env.CLAUDE_CLUSTER_ROUTINE_ID?.trim();
+  const token = env.CLAUDE_CLUSTER_ROUTINE_TOKEN?.trim();
+  if (!id || !token) return { fired: false, reason: "CLAUDE_CLUSTER_ROUTINE_ID or CLAUDE_CLUSTER_ROUTINE_TOKEN is not set" };
+  try {
+    const response = await fetchImpl(`https://api.anthropic.com/v1/claude_code/routines/${encodeURIComponent(id)}/fire`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${token}`,
+        "anthropic-version": "2023-06-01",
+        "anthropic-beta": "experimental-cc-routine-2026-04-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({ text: `Essays without a cluster or topics: ${slugs.join(", ")}` }),
+    });
+    if (!response.ok) return { fired: false, reason: `the fire endpoint answered ${response.status}` };
+    const body = (await response.json().catch(() => null)) as { claude_code_session_url?: string } | null;
+    return { fired: true, sessionUrl: body?.claude_code_session_url ?? null };
+  } catch (error) {
+    return { fired: false, reason: `the fire request failed: ${error}` };
+  }
 }

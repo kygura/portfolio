@@ -43,7 +43,9 @@ import Anthropic from "@anthropic-ai/sdk";
 import {
   blobClusterCache,
   clusterCorpus,
+  fireClusterRoutine,
   markFor,
+  pendingSlugs,
   orderedSlugs,
   type Cluster,
   type Clustering,
@@ -244,6 +246,14 @@ async function clusterPosts(corpus: CorpusPost[]): Promise<Clustering> {
   console.log(`[writings] topics: ${vocabulary.size} across ${corpus.length - untagged.length} of ${corpus.length} posts`);
   if (untagged.length > 0) {
     console.warn(`[writings]   no tags or topics yet for: ${untagged.join(", ")}. They get topics on the next build that reaches the model.`);
+  }
+  // Fallback when Haiku is unavailable: a production build hands the
+  // clustering to a Claude Code scheduled task, which commits clusters.json.
+  const pending = pendingSlugs(clustering, corpus.map((post) => post.slug));
+  if (pending.length > 0 && !offline && process.env.VERCEL_ENV === "production") {
+    const fire = await fireClusterRoutine(pending);
+    if (fire.fired) console.log(`[writings] asked Claude to cluster ${pending.length} essay(s): ${fire.sessionUrl ?? "session started"}`);
+    else console.warn(`[writings]   could not ask Claude to cluster: ${fire.reason}`);
   }
   return clustering;
 }
