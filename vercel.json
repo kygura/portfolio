@@ -101,6 +101,36 @@
       "source": "/writings/intellectual-opium.md",
       "destination": "/writings/the-inversion.md",
       "permanent": true
+    },
+    {
+      "source": "/writings/the-perpetual-i",
+      "destination": "/writings/the-illusion-of-freedom",
+      "permanent": false
+    },
+    {
+      "source": "/writings/the-perpetual-i.md",
+      "destination": "/writings/the-illusion-of-freedom.md",
+      "permanent": false
+    },
+    {
+      "source": "/writings/monk-mode",
+      "destination": "/writings/to-seek-higher-things",
+      "permanent": false
+    },
+    {
+      "source": "/writings/monk-mode.md",
+      "destination": "/writings/to-seek-higher-things.md",
+      "permanent": false
+    },
+    {
+      "source": "/writings/what-cant-be-counted",
+      "destination": "/writings",
+      "permanent": false
+    },
+    {
+      "source": "/writings/what-cant-be-counted.md",
+      "destination": "/writings",
+      "permanent": false
     }
   ],
   "rewrites": [
