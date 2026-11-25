@@ -4561,18 +4561,6 @@ kbd {
 .mmap__node:focus-visible .mmap__title { text-decoration: underline; }
 
 
-@media (max-width: 640px) {
-  /* Phones: the panel becomes a strip on top, each list one scrolling row. */
-  .mmap { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
-  .mmap__rail { gap: 0.35rem; padding: 0.75rem 0.9rem 0.8rem; border-right: 0; border-bottom: 1px solid var(--rule); overflow: visible; }
-  .mmap__head { padding-bottom: 0.6rem; margin-bottom: 0; }
-  .mmap__rail-label { margin-top: 0.25rem; }
-  .mmap__chips, .mmap__chips--clusters { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -0.9rem; padding-inline: 0.9rem; }
-  .mmap__chips--clusters .mmap__chip { width: auto; }
-  .mmap__chip { white-space: nowrap; }
-  .mmap__close kbd { display: none; }
-  .mmap__title { font-size: 12.5px; }
-}
 @media (prefers-reduced-motion: reduce) {
   .mmap__spoke, .mmap__bridge, .mmap__node, .mmap__dot, .mmap__title,
   .mmap__svg[data-focused] .mmap__node[data-lit]:not([data-source]) .mmap__dot,

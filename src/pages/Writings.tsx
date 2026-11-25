@@ -4,6 +4,7 @@ import { ArrowRight, X } from "lucide-react";
 import PageHead from "../components/PageHead";
 import MeaningMap from "../components/MeaningMap";
 import { useMarkdownPosts } from "../hooks/useMarkdownPosts";
+import { useIsMobile } from "../hooks/use-mobile";
 
 // The map opens over the page at /writings#map, so Back closes it and the link can be shared.
 const MAP_HASH = "#map";
@@ -27,7 +28,9 @@ const Writings = () => {
     if (location.key !== "default") navigate(-1);
     else navigate({ hash: "" }, { replace: true });
   };
-  const linked = posts.some((post) => post.topics.length > 0 || post.tags.length > 0);
+  // Phones get the list only: the map needs more room than a phone has.
+  const isMobile = useIsMobile();
+  const linked = !isMobile && posts.some((post) => post.topics.length > 0 || post.tags.length > 0);
 
   let row = 0;
 
