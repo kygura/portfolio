@@ -10,6 +10,8 @@ export const notionPostMetadataSchema = z.object({
   published: z.boolean(),
   createdTime: z.string().trim().min(1),
   lastEditedTime: z.string().trim().min(1),
+  /** Keywords set on the Notion page, as opposed to `topics`, which the model assigns. */
+  tags: z.array(z.string()).default([]),
 });
 
 export const postSummarySchema = z.object({
@@ -23,6 +25,8 @@ export const postSummarySchema = z.object({
   cluster: z.string().default(""),
   /** Topics the essay shares with others; two essays with a common topic are linked. */
   topics: z.array(z.string()).default([]),
+  /** Keywords set on the Notion page, as opposed to `topics`, which the model assigns. */
+  tags: z.array(z.string()).default([]),
 });
 
 export const postSchema = postSummarySchema.extend({

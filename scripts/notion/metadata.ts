@@ -67,6 +67,23 @@ function readCheckboxProperty(props: NotionProps, ...keys: string[]): boolean {
   return false;
 }
 
+/** Option names of a multi_select property: trimmed, lowercased, deduplicated. */
+function readMultiSelectProperty(props: NotionProps, ...keys: string[]): string[] {
+  const seen = new Set<string>();
+  for (const key of keys) {
+    const prop = props[key];
+    if (!prop || prop.type !== "multi_select") continue;
+    const items: NotionTextItem[] = Array.isArray(prop.multi_select) ? prop.multi_select : [];
+    for (const item of items) {
+      const name = typeof (item as { name?: unknown } | null)?.name === "string"
+        ? ((item as { name: string }).name).trim().toLowerCase()
+        : "";
+      if (name) seen.add(name);
+    }
+  }
+  return [...seen];
+}
+
 // ---------------------------------------------------------------------------
 // Exported functions
 // ---------------------------------------------------------------------------
@@ -88,6 +105,9 @@ export function extractPostMetadata(page: NotionPage): NotionPostMetadata {
   // excerpt
   const excerpt = readRichTextProperty(props, "Description", "description");
 
+  // tags: the author's keywords
+  const tags = readMultiSelectProperty(props, "Keywords", "keywords", "Tags", "tags");
+
   // createdTime / lastEditedTime
   const createdTime =
     page.created_time?.trim() ||
@@ -107,6 +127,7 @@ export function extractPostMetadata(page: NotionPage): NotionPostMetadata {
     published,
     createdTime,
     lastEditedTime,
+    tags,
   });
 }
 

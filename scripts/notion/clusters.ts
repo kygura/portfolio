@@ -36,6 +36,8 @@ export interface CorpusPost {
   title: string;
   /** Markdown body, without frontmatter. */
   body: string;
+  /** Keywords the author set in Notion. */
+  tags?: string[];
 }
 
 export interface Cluster {
@@ -98,11 +100,20 @@ function opening(body: string): string {
   return body.replace(/\s+/g, " ").trim().slice(0, OPENING_CHARS);
 }
 
+/** Author keywords: trimmed, lowercased, deduplicated and sorted. */
+function cleanTags(tags: string[] | undefined): string[] {
+  return [...new Set((tags ?? []).map((tag) => tag.trim().toLowerCase()).filter(Boolean))].sort();
+}
+
 /** Hash of exactly what the model reads; a change here means re-cluster. */
 export function corpusHash(posts: CorpusPost[]): string {
   const hash = createHash("sha256").update(CLUSTER_VERSION);
   for (const post of [...posts].sort((a, b) => a.slug.localeCompare(b.slug))) {
     hash.update(`\0${post.slug}\0${post.title}\0${opening(post.body)}`);
+    // Tags are sorted so their order does not matter. No tags adds nothing, so
+    // an untagged corpus keeps the hash it had before tags existed.
+    const tags = cleanTags(post.tags);
+    if (tags.length > 0) hash.update(`\0tags\0${tags.join("\0")}`);
   }
   return hash.digest("hex").slice(0, 16);
 }
@@ -233,6 +244,8 @@ export function clusterPrompt(
     "is about, so that two essays in different clusters can still be linked by an idea they share.",
     "Draw the topics from one small shared vocabulary that you define for the whole corpus, roughly as many topics as there are essays.",
     `A topic is a lowercase noun or noun phrase of one to ${MAX_TOPIC_WORDS} words, such as "free will", "the state", "language", "institutions".`,
+    "Some essays carry a keywords attribute. The author set those keywords. Build your shared vocabulary from them first,",
+    "and reuse a keyword as a topic wherever it truly applies.",
     "Reuse a topic wherever it truly applies. A topic that only one essay carries links nothing, so prefer topics that at least two essays share.",
     "Do not use a cluster title as a topic, and do not use a topic so broad that every essay would carry it.",
     "",
@@ -250,7 +263,11 @@ export function clusterPrompt(
     .join("\n");
 
   const essays = posts
-    .map((post) => `<essay slug="${post.slug}" title="${post.title.replace(/"/g, "'")}">\n${opening(post.body)}\n</essay>`)
+    .map((post) => {
+      const tags = cleanTags(post.tags);
+      const keywords = tags.length ? ` keywords="${tags.join(", ").replace(/"/g, "'")}"` : "";
+      return `<essay slug="${post.slug}" title="${post.title.replace(/"/g, "'")}"${keywords}>\n${opening(post.body)}\n</essay>`;
+    })
     .join("\n\n");
   const prior = previous
     ? `<previous_clustering>\n${JSON.stringify({

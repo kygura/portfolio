@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   buildEdges,
+  labelsOf,
   layoutMap,
   linkingTopics,
   mapHeight,
@@ -58,7 +59,7 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
   // Which essays the current focus lights up, and which of them is the source.
   const lit = useMemo(() => {
     if (!focus) return null;
-    if (focus.kind === "topic") return new Set(posts.filter((post) => post.topics.includes(focus.name)).map((post) => post.slug));
+    if (focus.kind === "topic") return new Set(posts.filter((post) => labelsOf(post).includes(focus.name)).map((post) => post.slug));
     if (focus.kind === "cluster") return new Set(posts.filter((post) => post.cluster === focus.id).map((post) => post.slug));
     return new Set([focus.slug, ...neighboursOf(focus.slug, edges).map((neighbour) => neighbour.slug)]);
   }, [focus, posts, edges]);
@@ -194,7 +195,7 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
       <div className="mmap__panel" aria-live="polite">
         {active && (
           <>
-            <p className="mmap__panel-kicker">{active.mark} · {active.readTime} min · {active.topics.join(", ")}</p>
+            <p className="mmap__panel-kicker">{active.mark} · {active.readTime} min · {labelsOf(active).join(", ")}</p>
             <h2 className="mmap__panel-title">{active.title}</h2>
             {neighbours.length > 0 ? (
               <ul className="mmap__links">

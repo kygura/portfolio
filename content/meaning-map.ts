@@ -8,6 +8,9 @@ export interface MapPost {
   slug: string;
   title: string;
   cluster: string;
+  /** Keywords the author set in Notion. */
+  tags: string[];
+  /** Topics the model assigned. */
   topics: string[];
 }
 
@@ -39,18 +42,31 @@ export interface Size {
 export function toMapPosts(posts: Partial<MapPost>[]): MapPost[] {
   return posts.flatMap((post) =>
     post.slug
-      ? [{ slug: post.slug, title: post.title ?? post.slug, cluster: post.cluster ?? "", topics: post.topics ?? [] }]
+      ? [{
+          slug: post.slug,
+          title: post.title ?? post.slug,
+          cluster: post.cluster ?? "",
+          tags: post.tags ?? [],
+          topics: post.topics ?? [],
+        }]
       : [],
   );
 }
 
-/** One edge per pair of essays that share at least one topic. */
+/** What an essay carries: its tags and topics together, lowercase, no repeats. */
+export function labelsOf(post: Partial<Pick<MapPost, "tags" | "topics">>): string[] {
+  const all = [...(post.tags ?? []), ...(post.topics ?? [])].map((label) => label.trim().toLowerCase());
+  return [...new Set(all.filter(Boolean))];
+}
+
+/** One edge per pair of essays that share at least one tag or topic. */
 export function buildEdges(posts: MapPost[]): MapEdge[] {
   const edges: MapEdge[] = [];
+  const labels = posts.map(labelsOf);
   for (let i = 0; i < posts.length; i++) {
-    const own = new Set(posts[i].topics);
+    const own = new Set(labels[i]);
     for (let j = i + 1; j < posts.length; j++) {
-      const shared = posts[j].topics.filter((topic) => own.has(topic));
+      const shared = labels[j].filter((topic) => own.has(topic));
       if (shared.length > 0) edges.push({ a: posts[i].slug, b: posts[j].slug, topics: shared });
     }
   }
@@ -61,7 +77,7 @@ export function buildEdges(posts: MapPost[]): MapEdge[] {
 export function linkingTopics(posts: MapPost[]): MapTopic[] {
   const bySlugs = new Map<string, string[]>();
   for (const post of posts) {
-    for (const topic of new Set(post.topics)) {
+    for (const topic of labelsOf(post)) {
       bySlugs.set(topic, [...(bySlugs.get(topic) ?? []), post.slug]);
     }
   }

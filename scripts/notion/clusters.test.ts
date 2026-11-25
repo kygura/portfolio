@@ -3,6 +3,7 @@ import test from "node:test";
 import type Anthropic from "@anthropic-ai/sdk";
 import {
   clusterCorpus,
+  clusterPrompt,
   corpusHash,
   markFor,
   orderedSlugs,
@@ -152,4 +153,19 @@ test("without a client, removed posts drop out of the previous clustering", asyn
   const previous = reconcile(null, CORPUS, "old").clusters;
   const clustering = await clusterCorpus(CORPUS.slice(1), { client: null, previous });
   assert.deepEqual(orderedSlugs(clustering.clusters), ["b", "c", "d"]);
+});
+
+test("corpusHash changes when tags change, not when their order does", () => {
+  const tagged = (tags: string[]) => [{ ...post("a"), tags }, ...CORPUS.slice(1)];
+  assert.notEqual(corpusHash(CORPUS), corpusHash(tagged(["agency"])));
+  assert.notEqual(corpusHash(tagged(["agency"])), corpusHash(tagged(["agency", "craft"])));
+  assert.equal(corpusHash(tagged(["agency", "craft"])), corpusHash(tagged(["craft", "agency"])));
+  assert.equal(corpusHash(CORPUS), corpusHash(tagged([])));
+});
+
+test("the prompt carries an essay's tags as a keywords attribute", () => {
+  const { system, user } = clusterPrompt([{ ...post("a"), tags: ["craft", "agency"] }, post("b")], null);
+  assert.match(user, /<essay slug="a" title="A" keywords="agency, craft">/);
+  assert.match(user, /<essay slug="b" title="B">/);
+  assert.match(system, /keywords/);
 });

@@ -1,8 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildEdges, labelWidth, layoutMap, linkingTopics, mapHeight, neighboursOf, type MapPost } from "./meaning-map.ts";
+import { buildEdges, labelsOf, labelWidth, layoutMap, linkingTopics, mapHeight, neighboursOf, type MapPost } from "./meaning-map.ts";
 
-const post = (slug: string, cluster: string, topics: string[]): MapPost => ({ slug, title: `Essay ${slug}`, cluster, topics });
+const post = (slug: string, cluster: string, topics: string[], tags: string[] = []): MapPost => ({
+  slug,
+  title: `Essay ${slug}`,
+  cluster,
+  tags,
+  topics,
+});
 const POSTS = [
   post("a", "one", ["freedom", "the self"]),
   post("b", "one", ["freedom", "the self", "history"]),
@@ -63,4 +69,19 @@ test("the layout is deterministic, inside the box and free of label overlaps", (
 
 test("an empty corpus lays out to nothing", () => {
   assert.equal(layoutMap([], [], { width: 800, height: 600 }).size, 0);
+});
+
+test("two essays are linked through a tag alone", () => {
+  const posts = [post("x", "one", [], ["agency"]), post("y", "two", [], ["Agency "]), post("z", "two", [], ["craft"])];
+  assert.deepEqual(buildEdges(posts), [{ a: "x", b: "y", topics: ["agency"] }]);
+  assert.deepEqual(linkingTopics(posts).map((topic) => topic.name), ["agency"]);
+});
+
+test("a tag on one essay links to the same word as a topic on another", () => {
+  const posts = [post("x", "one", ["history"], ["agency"]), post("y", "two", ["agency"]), post("z", "two", ["history"])];
+  assert.deepEqual(buildEdges(posts), [
+    { a: "x", b: "y", topics: ["agency"] },
+    { a: "x", b: "z", topics: ["history"] },
+  ]);
+  assert.deepEqual(labelsOf(post("w", "one", ["agency", "craft"], ["Agency", "craft"])), ["agency", "craft"]);
 });
