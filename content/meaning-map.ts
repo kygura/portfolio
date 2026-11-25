@@ -187,44 +187,6 @@ export function buildSkeleton(posts: MapPost[], edges: MapEdge[], indexes: Map<s
   return { hubs, centre, links };
 }
 
-/**
- * The outline of a cluster's region: the convex hull of its essays' label
- * boxes, as a closed SVG path. Drawn with a wide round stroke, the hull reads
- * as a padded region with rounded corners.
- */
-export function clusterRegion(points: Point[], widths: number[]): string {
-  const corners: Point[] = [];
-  points.forEach((point, i) => {
-    const half = (widths[i] ?? 48) / 2;
-    const top = point.y - 12;
-    const bottom = point.y + LABEL_HEIGHT - 4;
-    corners.push(
-      { x: point.x - half, y: top }, { x: point.x + half, y: top },
-      { x: point.x - half, y: bottom }, { x: point.x + half, y: bottom },
-    );
-  });
-  const hull = convexHull(corners);
-  if (hull.length === 0) return "";
-  return `M${hull.map((p) => `${Math.round(p.x)},${Math.round(p.y)}`).join("L")}Z`;
-}
-
-/** Andrew's monotone chain. Collinear points are dropped. */
-export function convexHull(input: Point[]): Point[] {
-  const pts = [...input].sort((a, b) => a.x - b.x || a.y - b.y);
-  if (pts.length < 3) return pts;
-  const cross = (o: Point, a: Point, b: Point) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
-  const half = (list: Point[]) => {
-    const out: Point[] = [];
-    for (const p of list) {
-      while (out.length >= 2 && cross(out[out.length - 2], out[out.length - 1], p) <= 0) out.pop();
-      out.push(p);
-    }
-    out.pop();
-    return out;
-  };
-  return [...half(pts), ...half([...pts].reverse())];
-}
-
 /** Width a label needs, in px. An estimate: the map never measures text. */
 export function labelWidth(title: string, charWidth = 7.4): number {
   return Math.max(48, title.length * charWidth);

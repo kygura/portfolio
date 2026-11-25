@@ -4422,22 +4422,10 @@ kbd {
   text-transform: uppercase;
   color: var(--accent);
 }
-.mmap__region {
-  /* Fill and stroke in one solid colour; the element's opacity tints it once, so the padding band does not show. */
-  fill: hsl(var(--field-hue) 60% 55%);
-  stroke: hsl(var(--field-hue) 60% 55%);
-  stroke-width: 36;
-  stroke-linejoin: round;
-  opacity: 0.1;
-  transition: opacity 0.2s;
-}
-.mmap__svg[data-focused] .mmap__region { opacity: 0.05; }
-.mmap__svg[data-focused] .mmap__region[data-lit] { opacity: 0.2; }
-.mmap__chip--cluster { border-left: 3px solid hsl(var(--field-hue) 60% 55%); }
 .mmap__node { text-decoration: none; cursor: pointer; outline: none; transition: opacity 0.2s; }
 .mmap__hit { fill: transparent; }
-.mmap__node:hover .mmap__hit { fill: hsl(var(--field-hue) 60% 55% / 0.08); }
-.mmap__dot { fill: hsl(var(--field-hue) 45% 45%); stroke: var(--bg); stroke-width: 2.5; transition: fill 0.2s; }
+.mmap__node:hover .mmap__hit { fill: var(--rule); opacity: 0.35; }
+.mmap__dot { fill: var(--ink-2); stroke: var(--bg); stroke-width: 2.5; transition: fill 0.2s; }
 .mmap__mark { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: 0.12em; fill: var(--ink-3); }
 .mmap__title {
   font-family: var(--f-body);
@@ -4450,7 +4438,7 @@ kbd {
   stroke-linejoin: round;
   transition: fill 0.2s;
 }
-.mmap__node[data-hub] .mmap__dot { fill: hsl(var(--field-hue) 55% 38%); stroke-width: 3; }
+.mmap__node[data-hub] .mmap__dot { fill: var(--ink); stroke-width: 3; }
 .mmap__node[data-hub] .mmap__title { font-size: 15px; }
 .mmap__node[data-centre] .mmap__dot { fill: var(--accent); }
 .mmap__svg[data-focused] .mmap__node { opacity: 0.28; }

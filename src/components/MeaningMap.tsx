@@ -1,9 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   buildEdges,
   buildSkeleton,
-  clusterRegion,
   labelsOf,
   labelWidth,
   layoutMap,
@@ -25,9 +24,6 @@ type Focus =
   | { kind: "topic"; name: string }
   | { kind: "cluster"; id: string }
   | null;
-
-/** A hue per cluster, spread evenly around the colour wheel. */
-const fieldHue = (i: number, n: number) => Math.round(20 + (i * 360) / Math.max(n, 1)) % 360;
 
 /**
  * The writings as a map: every essay is a point, and a line joins two essays
@@ -67,17 +63,6 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
   );
   const skeleton = useMemo(() => buildSkeleton(nodes, edges, indexes), [nodes, edges, indexes]);
   const points = useMemo(() => layoutMap(nodes, skeleton.links, { width, height }), [nodes, skeleton, width, height]);
-  // One coloured region per cluster, enclosing its essays.
-  const regions = useMemo(
-    () =>
-      clusters.map((cluster, i) => {
-        const members = nodes.filter((node) => node.cluster === cluster.id);
-        const at = members.flatMap((node) => points.get(node.slug) ?? []);
-        return { id: cluster.id, hue: fieldHue(i, clusters.length), path: clusterRegion(at, members.map((node) => labelWidth(node.title))) };
-      }),
-    [clusters, nodes, points],
-  );
-  const hueOf = useMemo(() => new Map(regions.map((region) => [region.id, region.hue])), [regions]);
   const hubSlugs = useMemo(() => new Set(skeleton.hubs.values()), [skeleton]);
   const centreHub = skeleton.hubs.get(skeleton.centre);
   const maxBridge = Math.max(1, ...skeleton.links.filter((link) => link.kind === "bridge").map((link) => link.weight));
@@ -119,7 +104,6 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
                 <button
                   type="button"
                   className="mmap__chip mmap__chip--cluster"
-                  style={{ "--field-hue": hueOf.get(cluster.id) } as CSSProperties}
                   aria-pressed={isPinned(self)}
                   onClick={() => toggle(self)}
                   onMouseEnter={() => setHover(self)}
@@ -174,21 +158,6 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
           role="group"
           aria-label={`${posts.length} essays in ${skeleton.hubs.size} clusters`}
         >
-          {/* Each cluster as a coloured region around its essays. */}
-          <g className="mmap__regions" aria-hidden="true">
-            {regions.map((region) =>
-              region.path ? (
-                <path
-                  key={region.id}
-                  className="mmap__region"
-                  d={region.path}
-                  style={{ "--field-hue": region.hue } as CSSProperties}
-                  data-lit={focus?.kind === "cluster" && focus.id === region.id ? "" : undefined}
-                />
-              ) : null,
-            )}
-          </g>
-
           {/* At rest: one line per essay. Spokes to the hub of its cluster, bridges between hubs. */}
           <g className="mmap__skeleton" aria-hidden="true">
             {skeleton.links.map((link) => {
@@ -240,7 +209,6 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
                 key={post.slug}
                 to={`/writings/${post.slug}`}
                 className="mmap__node"
-                style={{ "--field-hue": hueOf.get(post.cluster) } as CSSProperties}
                 data-lit={lit?.has(post.slug) ? "" : undefined}
                 data-source={focus?.kind === "post" && focus.slug === post.slug ? "" : undefined}
                 data-hub={isHub ? "" : undefined}
@@ -304,8 +272,8 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
         )}
         {!focus && (
           <p className="mmap__panel-hint">
-            Each cluster is a coloured region drawn around its index, the essay chosen to represent it, shown
-            with a larger point. The clusters join through the central one, and a thicker line means more shared
+            Each cluster is drawn around its index, the essay chosen to represent it, shown with a larger
+            point. The clusters join through the central one, and a thicker line means more shared
             topics. Point at an essay to see every essay it
             shares a topic with, or pick a cluster or a topic above. Select an essay to read it.
           </p>
