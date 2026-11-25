@@ -1,173 +1,216 @@
 {
-  "hash": "ae63a92737e9d5f3",
-  "source": "reconciled",
+  "hash": "5ac1add1062063d6",
+  "source": "model",
   "clusters": [
     {
       "id": "the-sovereign-self",
       "numeral": "I",
       "name": "The Sovereign Self",
-      "thesis": "You can be free from anything except the thing doing the freeing.",
+      "thesis": "The self cannot step outside its own design, so every exit from a system is conditioned by the self that makes it, and knowing that design is the only real edge.",
       "slugs": [
-        "conditioned-by-freedom",
+        "the-illusion-of-freedom",
         "the-perpetual-i",
         "on-the-ego",
-        "always-against",
-        "the-price-of-progress",
         "quantum-history",
-        "thaumazein"
-      ]
-    },
-    {
-      "id": "of-the-state",
-      "numeral": "II",
-      "name": "Of the State",
-      "thesis": "The state keeps re-forming, and its contract is written by whoever holds the leverage.",
-      "slugs": [
-        "the-last-sovereign-act",
-        "the-game-of-democracy",
-        "nothing-behind-the-words",
-        "on-the-state-of-things",
-        "on-the-movements-of-the-world"
+        "thaumazein",
+        "outsmarting-the-collective-greed-of-humanity"
       ]
     },
     {
       "id": "faith-without-altars",
-      "numeral": "III",
+      "numeral": "II",
       "name": "Faith Without Altars",
-      "thesis": "Meaning cannot be handed to an institution and still be yours.",
+      "thesis": "Religion and ideology answer the problem of death with claims no one can check, so the meaning they offer is handed down rather than found, and the seeker must clear the mind to find it alone.",
       "slugs": [
         "the-religious-problem",
         "outsourced-spirituality",
-        "intellectual-opium",
+        "the-inversion",
+        "monk-mode",
         "an-empty-mind",
-        "the-vessel",
         "to-seek-higher-things"
       ]
     },
     {
-      "id": "of-machines",
+      "id": "of-the-state",
+      "numeral": "III",
+      "name": "Of the State",
+      "thesis": "The state recurs whatever is done to tear it down, its terms are set by whoever holds force and leverage, and the freedom it promises has never been a birthright.",
+      "slugs": [
+        "the-last-sovereign-act",
+        "nothing-behind-the-words",
+        "on-the-movements-of-the-world",
+        "perpetua-libertas",
+        "the-design-question",
+        "the-price-of-progress",
+        "on-the-state-of-things"
+      ]
+    },
+    {
+      "id": "of-authorship",
       "numeral": "IV",
+      "name": "Of Authorship",
+      "thesis": "A borrowed idea leaves the reader with no worldview of their own, while a work carries weight only when one author has lived through it and chosen what to keep.",
+      "slugs": [
+        "on-reading",
+        "the-vessel",
+        "add-what-is-specifically-your-own",
+        "a-mind-you-can-locate"
+      ]
+    },
+    {
+      "id": "of-machines",
+      "numeral": "V",
       "name": "Of Machines",
-      "thesis": "What is sold as intelligence or culture is often an average with the author removed.",
+      "thesis": "Language models are stateless maps of human text with no inner life, and the industry's claims of agency, memory and selfhood borrow the look of mind without its substance.",
       "slugs": [
         "static-intelligence",
-        "the-soul-as-a-system-prompt",
         "the-language-game",
-        "corposlop"
+        "the-soul-as-a-system-prompt",
+        "black-magic",
+        "notion-as-a-backend"
       ]
     }
   ],
   "topics": {
     "to-seek-higher-things": [
-      "ambition",
+      "leverage",
       "meaning",
-      "freedom"
+      "desire"
     ],
     "on-the-movements-of-the-world": [
       "history",
-      "power",
-      "resistance"
+      "government",
+      "ideology"
     ],
-    "the-last-sovereign-act": [
-      "the state",
-      "social contract",
-      "power"
-    ],
-    "the-language-game": [
-      "language models",
-      "language",
+    "a-mind-you-can-locate": [
+      "taste",
+      "markets",
       "authorship"
     ],
-    "always-against": [
-      "freedom",
-      "institutions",
-      "resistance",
-      "history"
+    "the-design-question": [
+      "history",
+      "government",
+      "liberty"
+    ],
+    "the-last-sovereign-act": [
+      "government",
+      "power",
+      "liberty"
+    ],
+    "the-language-game": [
+      "language",
+      "llms",
+      "philosophy of mind"
+    ],
+    "monk-mode": [
+      "desire",
+      "renunciation",
+      "religion"
     ],
     "nothing-behind-the-words": [
       "power",
-      "language",
-      "the state",
-      "ideology"
+      "equality",
+      "government"
     ],
-    "conditioned-by-freedom": [
-      "freedom",
-      "the self",
-      "free will"
+    "notion-as-a-backend": [
+      "llms",
+      "publishing",
+      "engineering"
     ],
     "the-religious-problem": [
       "religion",
       "meaning",
-      "institutions"
+      "metaphysics"
     ],
     "thaumazein": [
-      "freedom",
-      "meaning",
-      "ambition"
+      "free will",
+      "history",
+      "meaning"
     ],
     "outsourced-spirituality": [
       "religion",
-      "institutions",
-      "mysticism"
-    ],
-    "corposlop": [
-      "authorship",
-      "institutions"
-    ],
-    "the-soul-as-a-system-prompt": [
-      "language models",
-      "the self",
-      "authorship"
-    ],
-    "intellectual-opium": [
-      "religion",
       "ideology",
       "institutions"
     ],
+    "perpetua-libertas": [
+      "history",
+      "government",
+      "liberty"
+    ],
+    "the-soul-as-a-system-prompt": [
+      "llms",
+      "engineering",
+      "philosophy of mind"
+    ],
     "the-perpetual-i": [
-      "the self",
       "free will",
-      "freedom"
+      "identity",
+      "philosophy of mind"
     ],
     "quantum-history": [
       "history",
-      "the self",
-      "meaning"
+      "free will",
+      "identity"
+    ],
+    "on-reading": [
+      "taste",
+      "authorship",
+      "knowledge"
+    ],
+    "the-inversion": [
+      "religion",
+      "ideology",
+      "history"
+    ],
+    "add-what-is-specifically-your-own": [
+      "taste",
+      "authorship",
+      "desire"
+    ],
+    "black-magic": [
+      "language",
+      "llms",
+      "speculation"
+    ],
+    "outsmarting-the-collective-greed-of-humanity": [
+      "markets",
+      "leverage",
+      "speculation"
     ],
     "static-intelligence": [
-      "language models",
-      "language"
+      "llms",
+      "philosophy of mind",
+      "metaphysics"
     ],
     "an-empty-mind": [
-      "mysticism",
-      "the self",
-      "ideology"
+      "knowledge",
+      "philosophy of mind",
+      "religion"
     ],
     "the-vessel": [
       "language",
-      "meaning",
-      "the self"
+      "authorship",
+      "llms"
     ],
     "on-the-ego": [
-      "freedom",
       "ideology",
-      "the self"
+      "government",
+      "free will"
     ],
     "the-price-of-progress": [
-      "social contract",
-      "freedom",
-      "progress"
-    ],
-    "the-game-of-democracy": [
-      "the state",
-      "institutions",
-      "freedom",
-      "ideology"
+      "government",
+      "liberty",
+      "markets"
     ],
     "on-the-state-of-things": [
-      "progress",
-      "history",
-      "meaning"
+      "government",
+      "meaning",
+      "ideology"
+    ],
+    "the-illusion-of-freedom": [
+      "free will",
+      "liberty",
+      "identity"
     ]
   }
 }
