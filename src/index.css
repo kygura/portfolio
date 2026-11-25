@@ -4402,10 +4402,14 @@ kbd {
 .mmap__frame { margin-top: 1.5rem; border-block: 1px solid var(--rule); overflow: hidden; }
 .mmap__svg { display: block; max-width: 100%; }
 
-.mmap__edge { stroke: var(--rule-2); stroke-width: 1; opacity: 0.22; transition: opacity 0.2s, stroke 0.2s; }
-.mmap__edge[data-strong] { opacity: 0.9; }
-.mmap__svg[data-focused] .mmap__edge { opacity: 0.08; }
-.mmap__svg[data-focused] .mmap__edge[data-lit] { stroke: var(--accent); opacity: 0.75; }
+/* The skeleton, always drawn: spokes inside a cluster, bridges between hubs. */
+.mmap__spoke { stroke: var(--rule-2); opacity: 0.8; transition: opacity 0.2s; }
+.mmap__bridge { stroke: var(--ink-3); stroke-linecap: round; opacity: 0.75; transition: opacity 0.2s; }
+.mmap__svg[data-focused] .mmap__spoke,
+.mmap__svg[data-focused] .mmap__bridge { opacity: 0.18; }
+/* Topic links, drawn only for what is focused. */
+.mmap__edge { stroke: var(--accent); stroke-width: 1; opacity: 0.5; }
+.mmap__edge[data-strong] { stroke-width: 1.6; opacity: 0.85; }
 
 .mmap__node { text-decoration: none; cursor: pointer; outline: none; transition: opacity 0.2s; }
 .mmap__dot { fill: var(--ink-2); stroke: var(--bg); stroke-width: 2; transition: fill 0.2s; }
@@ -4421,6 +4425,9 @@ kbd {
   stroke-linejoin: round;
   transition: fill 0.2s;
 }
+.mmap__node[data-hub] .mmap__dot { fill: var(--ink); }
+.mmap__node[data-hub] .mmap__title { font-size: 15px; }
+.mmap__node[data-centre] .mmap__dot { fill: var(--accent); }
 .mmap__svg[data-focused] .mmap__node { opacity: 0.28; }
 .mmap__svg[data-focused] .mmap__node[data-lit] { opacity: 1; }
 .mmap__node[data-source] .mmap__dot,
@@ -4456,7 +4463,7 @@ kbd {
   .mmap__title { font-size: 12.5px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .mmap__edge, .mmap__node, .mmap__dot, .mmap__title { transition: none; }
+  .mmap__spoke, .mmap__bridge, .mmap__node, .mmap__dot, .mmap__title { transition: none; }
 }
 
 /* Under a post: the essays it shares a topic with. */

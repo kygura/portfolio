@@ -100,6 +100,87 @@ export function neighboursOf(slug: string, edges: MapEdge[]): Neighbour[] {
     .sort((a, b) => b.topics.length - a.topics.length);
 }
 
+/** A link with a strength, as the layout takes it. */
+export interface WeightedLink {
+  a: string;
+  b: string;
+  weight: number;
+}
+
+export interface SkeletonLink extends WeightedLink {
+  /** A spoke joins an essay to the hub of its cluster. A bridge joins two hubs. */
+  kind: "spoke" | "bridge";
+}
+
+export interface Skeleton {
+  /** Cluster id to the slug of its hub: the essay that shares the most with its cluster. */
+  hubs: Map<string, string>;
+  /** The cluster that shares the most with the others. The rest join through it. */
+  centre: string;
+  links: SkeletonLink[];
+}
+
+/**
+ * The strict shape of the map. Topic links alone give a tangle: with a few
+ * common topics almost every pair of essays is joined. The skeleton keeps one
+ * line per essay instead:
+ *   - each cluster has a hub, its most representative essay;
+ *   - every other essay of the cluster hangs off that hub (a spoke);
+ *   - one cluster is central, and its hub joins the hub of every other
+ *     cluster (a bridge), weighted by the topics the two clusters share.
+ * Ties go to the earlier essay or cluster, so the result is deterministic.
+ */
+export function buildSkeleton(posts: MapPost[], edges: MapEdge[]): Skeleton {
+  const clusterOf = new Map(posts.map((post) => [post.slug, post.cluster]));
+  const clusterIds = [...new Set(posts.map((post) => post.cluster))];
+
+  // How much each essay shares inside its cluster, and each cluster outside it.
+  const inside = new Map<string, number>(posts.map((post) => [post.slug, 0]));
+  const outside = new Map<string, number>(clusterIds.map((id) => [id, 0]));
+  for (const edge of edges) {
+    const ca = clusterOf.get(edge.a);
+    const cb = clusterOf.get(edge.b);
+    if (ca === undefined || cb === undefined) continue;
+    if (ca === cb) {
+      inside.set(edge.a, (inside.get(edge.a) ?? 0) + edge.topics.length);
+      inside.set(edge.b, (inside.get(edge.b) ?? 0) + edge.topics.length);
+    } else {
+      outside.set(ca, (outside.get(ca) ?? 0) + edge.topics.length);
+      outside.set(cb, (outside.get(cb) ?? 0) + edge.topics.length);
+    }
+  }
+
+  const hubs = new Map<string, string>();
+  for (const id of clusterIds) {
+    const members = posts.filter((post) => post.cluster === id);
+    const hub = members.reduce((best, post) => ((inside.get(post.slug) ?? 0) > (inside.get(best.slug) ?? 0) ? post : best));
+    hubs.set(id, hub.slug);
+  }
+  const centre = clusterIds.reduce(
+    (best, id) => ((outside.get(id) ?? 0) > (outside.get(best) ?? 0) ? id : best),
+    clusterIds[0] ?? "",
+  );
+
+  const links: SkeletonLink[] = [];
+  const shared = new Map(edges.map((edge) => [`${edge.a}|${edge.b}`, edge.topics.length]));
+  for (const post of posts) {
+    const hub = hubs.get(post.cluster);
+    if (!hub || hub === post.slug) continue;
+    const weight = shared.get(`${post.slug}|${hub}`) ?? shared.get(`${hub}|${post.slug}`) ?? 0;
+    links.push({ a: post.slug, b: hub, kind: "spoke", weight: Math.max(1, weight) });
+  }
+  const labelsOfCluster = (id: string) => new Set(posts.filter((post) => post.cluster === id).flatMap(labelsOf));
+  const centreHub = hubs.get(centre);
+  const centreLabels = labelsOfCluster(centre);
+  for (const id of clusterIds) {
+    const hub = hubs.get(id);
+    if (id === centre || !hub || !centreHub) continue;
+    const common = [...labelsOfCluster(id)].filter((label) => centreLabels.has(label)).length;
+    links.push({ a: centreHub, b: hub, kind: "bridge", weight: Math.max(1, common) });
+  }
+  return { hubs, centre, links };
+}
+
 /** Width a label needs, in px. An estimate: the map never measures text. */
 export function labelWidth(title: string, charWidth = 7.4): number {
   return Math.max(48, title.length * charWidth);
@@ -116,11 +197,11 @@ const PAD = 14;
 
 /**
  * Place the essays. A small force simulation: every pair repels, linked pairs
- * attract in proportion to the topics they share, and each essay leans toward
+ * attract in proportion to the weight of their link, and each essay leans toward
  * the middle of its cluster. Then the label boxes are pushed apart until none
  * overlap. Deterministic: the same corpus and size give the same map.
  */
-export function layoutMap(posts: MapPost[], edges: MapEdge[], size: Size): Map<string, Point> {
+export function layoutMap(posts: MapPost[], links: WeightedLink[], size: Size): Map<string, Point> {
   const n = posts.length;
   const out = new Map<string, Point>();
   if (n === 0) return out;
@@ -143,8 +224,8 @@ export function layoutMap(posts: MapPost[], edges: MapEdge[], size: Size): Map<s
     ys[i] = Math.sin(ca) * 1.2 + Math.sin(a) * 0.35;
   });
 
-  const links = edges
-    .map((edge) => ({ i: index.get(edge.a), j: index.get(edge.b), w: edge.topics.length }))
+  const springs = links
+    .map((link) => ({ i: index.get(link.a), j: index.get(link.b), w: link.weight }))
     .filter((link): link is { i: number; j: number; w: number } => link.i !== undefined && link.j !== undefined);
 
   const ITERATIONS = 320;
@@ -165,7 +246,7 @@ export function layoutMap(posts: MapPost[], edges: MapEdge[], size: Size): Map<s
         fx[j] -= (dx / d) * push; fy[j] -= (dy / d) * push;
       }
     }
-    for (const { i, j, w } of links) {
+    for (const { i, j, w } of springs) {
       const dx = xs[j] - xs[i];
       const dy = ys[j] - ys[i];
       const pull = 0.16 * w;

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   buildEdges,
+  buildSkeleton,
   labelsOf,
   layoutMap,
   linkingTopics,
@@ -53,7 +54,12 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
   const edges = useMemo(() => buildEdges(nodes), [nodes]);
   const topics = useMemo(() => linkingTopics(nodes), [nodes]);
   const height = useMemo(() => mapHeight(nodes, width), [nodes, width]);
-  const points = useMemo(() => layoutMap(nodes, edges, { width, height }), [nodes, edges, width, height]);
+  // The skeleton is what is drawn at rest, and what shapes the layout.
+  const skeleton = useMemo(() => buildSkeleton(nodes, edges), [nodes, edges]);
+  const points = useMemo(() => layoutMap(nodes, skeleton.links, { width, height }), [nodes, skeleton, width, height]);
+  const hubSlugs = useMemo(() => new Set(skeleton.hubs.values()), [skeleton]);
+  const centreHub = skeleton.hubs.get(skeleton.centre);
+  const maxBridge = Math.max(1, ...skeleton.links.filter((link) => link.kind === "bridge").map((link) => link.weight));
   const bySlug = useMemo(() => new Map(posts.map((post) => [post.slug, post])), [posts]);
 
   // Which essays the current focus lights up, and which of them is the source.
@@ -144,10 +150,31 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
           height={height}
           data-focused={focus ? "" : undefined}
           role="group"
-          aria-label={`${posts.length} essays, ${edges.length} links`}
+          aria-label={`${posts.length} essays in ${skeleton.hubs.size} clusters`}
         >
+          {/* At rest: one line per essay. Spokes to the hub of its cluster, bridges between hubs. */}
+          <g className="mmap__skeleton" aria-hidden="true">
+            {skeleton.links.map((link) => {
+              const from = points.get(link.a);
+              const to = points.get(link.b);
+              if (!from || !to) return null;
+              return (
+                <line
+                  key={`${link.a}|${link.b}`}
+                  className={link.kind === "bridge" ? "mmap__bridge" : "mmap__spoke"}
+                  strokeWidth={link.kind === "bridge" ? 1.25 + (link.weight / maxBridge) * 2.25 : 1}
+                  x1={from.x}
+                  y1={from.y}
+                  x2={to.x}
+                  y2={to.y}
+                />
+              );
+            })}
+          </g>
+
+          {/* On focus: every topic link of what is focused. */}
           <g className="mmap__edges" aria-hidden="true">
-            {edges.map((edge) => {
+            {edges.filter(edgeLit).map((edge) => {
               const from = points.get(edge.a);
               const to = points.get(edge.b);
               if (!from || !to) return null;
@@ -155,7 +182,6 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
                 <line
                   key={`${edge.a}|${edge.b}`}
                   className="mmap__edge"
-                  data-lit={edgeLit(edge) ? "" : undefined}
                   data-strong={edge.topics.length > 1 ? "" : undefined}
                   x1={from.x}
                   y1={from.y}
@@ -170,7 +196,8 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
             const point = points.get(post.slug);
             if (!point) return null;
             const self = { kind: "post", slug: post.slug } as const;
-            const degree = neighboursOf(post.slug, edges).length;
+            const isHub = hubSlugs.has(post.slug);
+            const isCentre = post.slug === centreHub;
             return (
               <Link
                 key={post.slug}
@@ -178,12 +205,14 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
                 className="mmap__node"
                 data-lit={lit?.has(post.slug) ? "" : undefined}
                 data-source={focus?.kind === "post" && focus.slug === post.slug ? "" : undefined}
+                data-hub={isHub ? "" : undefined}
+                data-centre={isCentre ? "" : undefined}
                 onMouseEnter={() => setHover(self)}
                 onMouseLeave={() => setHover(null)}
                 onFocus={() => setHover(self)}
                 onBlur={() => setHover(null)}
               >
-                <circle className="mmap__dot" cx={point.x} cy={point.y} r={3.5 + Math.min(degree, 10) * 0.35} />
+                <circle className="mmap__dot" cx={point.x} cy={point.y} r={isCentre ? 8 : isHub ? 6 : 3.5} />
                 <text className="mmap__mark" x={point.x} y={point.y + 20} textAnchor="middle">{post.mark}</text>
                 <text className="mmap__title" x={point.x} y={point.y + 37} textAnchor="middle">{post.title}</text>
               </Link>
@@ -228,8 +257,9 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
         )}
         {!focus && (
           <p className="mmap__panel-hint">
-            A line joins two essays that share a topic. Point at an essay to see what it is linked to, or pick a
-            cluster or a topic above. Select an essay to read it.
+            Each cluster is drawn around the essay that shares the most with it. The clusters join through the
+            central one, and a thicker line means more shared topics. Point at an essay to see every essay it
+            shares a topic with, or pick a cluster or a topic above. Select an essay to read it.
           </p>
         )}
       </div>

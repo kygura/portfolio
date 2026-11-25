@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildEdges, labelsOf, labelWidth, layoutMap, linkingTopics, mapHeight, neighboursOf, type MapPost } from "./meaning-map.ts";
+import { buildEdges, buildSkeleton, labelsOf, labelWidth, layoutMap, linkingTopics, mapHeight, neighboursOf, type MapPost } from "./meaning-map.ts";
 
 const post = (slug: string, cluster: string, topics: string[], tags: string[] = []): MapPost => ({
   slug,
@@ -48,8 +48,9 @@ test("the layout is deterministic, inside the box and free of label overlaps", (
   const width = 1000;
   const size = { width, height: mapHeight(many, width) };
   const edges = buildEdges(many);
-  const first = layoutMap(many, edges, size);
-  assert.deepEqual([...first], [...layoutMap(many, edges, size)]);
+  const links = buildSkeleton(many, edges).links;
+  const first = layoutMap(many, links, size);
+  assert.deepEqual([...first], [...layoutMap(many, links, size)]);
   assert.equal(first.size, many.length);
 
   for (const [, point] of first) {
@@ -84,4 +85,33 @@ test("a tag on one essay links to the same word as a topic on another", () => {
     { a: "x", b: "z", topics: ["history"] },
   ]);
   assert.deepEqual(labelsOf(post("w", "one", ["agency", "craft"], ["Agency", "craft"])), ["agency", "craft"]);
+});
+
+test("the skeleton gives each cluster a hub and joins the clusters through one centre", () => {
+  const mk = (slug: string, cluster: string, topics: string[]): MapPost => ({ slug, title: slug, cluster, tags: [], topics });
+  const posts = [
+    // Cluster "self": s2 shares with both others, so it is the hub.
+    mk("s1", "self", ["will"]),
+    mk("s2", "self", ["will", "ego", "state"]),
+    mk("s3", "self", ["ego"]),
+    // Cluster "state": no essay shares more than another, so the first one is the hub.
+    mk("p1", "state", ["state", "power"]),
+    mk("p2", "state", ["power"]),
+    // Cluster "alone": one essay, linked to nothing.
+    mk("x1", "alone", ["nothing else"]),
+  ];
+  const skeleton = buildSkeleton(posts, buildEdges(posts));
+  assert.deepEqual([...skeleton.hubs], [["self", "s2"], ["state", "p1"], ["alone", "x1"]]);
+  // "self" and "state" share equally with the outside; the earlier one is the centre.
+  assert.equal(skeleton.centre, "self");
+  assert.deepEqual(skeleton.links, [
+    { a: "s1", b: "s2", kind: "spoke", weight: 1 },
+    { a: "s3", b: "s2", kind: "spoke", weight: 1 },
+    { a: "p2", b: "p1", kind: "spoke", weight: 1 },
+    { a: "s2", b: "p1", kind: "bridge", weight: 1 },
+    { a: "s2", b: "x1", kind: "bridge", weight: 1 },
+  ]);
+  // One line per essay, less one: a tree.
+  assert.equal(skeleton.links.length, posts.length - 1);
+  assert.equal(buildSkeleton([], []).links.length, 0);
 });
