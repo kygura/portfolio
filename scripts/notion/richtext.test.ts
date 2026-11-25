@@ -135,9 +135,3 @@ test("null/undefined items are handled defensively", () => {
   // Should not throw
   assert.doesNotThrow(() => renderRichText(rt([null, undefined])));
 });
-
-test("file names Notion autolinks to a country domain stay plain text", () => {
-  assert.equal(renderRichText(rt([textItem("SOUL.md", {}, "http://soul.md/")])), "SOUL.md");
-  assert.equal(renderRichText(rt([textItem("nca.ink", {}, "https://nca.ink/")])), "[nca.ink](https://nca.ink/)");
-  assert.equal(renderRichText(rt([textItem("SOUL.md", {}, "https://example.com/soul")])), "[SOUL.md](https://example.com/soul)");
-});

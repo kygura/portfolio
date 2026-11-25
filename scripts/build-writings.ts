@@ -226,7 +226,9 @@ async function clusterPosts(corpus: { slug: string; title: string; body: string 
  * Published in Notion but kept off the index, the clusters, writings.json and
  * llms.txt. Each still opens at its own /writings/<slug> address.
  */
-const UNLISTED = new Set(["the-last-sovereign-act", "the-soul-as-a-system-prompt"]);
+// Off the index and the corpus, still reachable by URL. Each attacks employment
+// or names and insults a real person, which reads badly to a recruiter.
+const UNLISTED = new Set(["the-last-sovereign-act", "the-soul-as-a-system-prompt", "the-language-game"]);
 
 async function emit(): Promise<PostSummary[]> {
   await fs.mkdir(CONTENT_DIR, { recursive: true });

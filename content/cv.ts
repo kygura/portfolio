@@ -50,7 +50,7 @@ export interface Cv {
 export const cv: Cv = {
   contact: {
     name: "Nicolás Cerrato Antón",
-    headline: "Software Engineer · Technical Solutions · Spanish, German, English",
+    headline: "Software Engineer · Agentic Systems · Markets · ES / DE / EN",
     location: "Málaga, Spain · EU citizen",
     email: "nicolascerrato17@gmail.com",
     website: "nca.ink",
@@ -59,7 +59,7 @@ export const cv: Cv = {
 
   // The PDF carries the formal summary; here it is written as a short, plainer intro.
   summary:
-    "Software engineer who builds and ships products end to end, and works with people in Spanish, German and English. I build software where LLMs, markets, and on-chain systems meet, and care most about the boundary between what a model proposes and what a system is willing to execute. Trained in Computer Engineering across Spain and Germany; working day to day in TypeScript, Python, and Solidity.",
+    "Generalist software engineer who ships products end to end. Native Spanish and German, C2 English and spoken Japanese, and at ease working directly with people in any of them. I build software where LLMs, markets, and on-chain systems meet, and care most about the boundary between what a model proposes and what a system is willing to execute. Trained in Computer Engineering across Spain and Germany; working day to day in TypeScript, Python, and Solidity.",
 
   experience: [
     {
@@ -67,9 +67,9 @@ export const cv: Cv = {
       place: "Remote",
       period: "2024 – Present",
       points: [
-        "Designed, built and deployed web products end to end, from data layer to live site: a travel map (Meridian), an editorial app (Lexis), agent tooling and market dashboards. Most are live and linked from nca.ink.",
-        "Built the data and alerting tools I use to trade crypto majors and perpetuals on my own account.",
-        "Work daily with AI coding agents since 2023: prompt and tool design, review of generated code, deployment on Vercel and Fly.",
+        "Designed, built and deployed products end to end: a travel planner on a world map (Meridian), an AI prose-rewriting app (Lexis), a terminal coding agent (Vessel) and crypto market dashboards. Most are live and linked from nca.ink.",
+        "Trade crypto majors and perpetuals on my own account, mostly weekly to monthly swings, using data and alerting tools I built for it.",
+        "Use generative AI since March 2023 and build with AI coding agents daily, deploying on Vercel and Fly.",
       ],
     },
   ],
