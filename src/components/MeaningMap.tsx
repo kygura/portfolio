@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import {
   buildEdges,
@@ -82,6 +82,18 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
     if (focus.kind === "topic") return edge.topics.includes(focus.name);
     return bySlug.get(edge.a)?.cluster === focus.id && bySlug.get(edge.b)?.cluster === focus.id;
   };
+
+  // Lit edges are ranked shortest first, so the nearest links draw before the far ones.
+  const edgeOrder = (() => {
+    const length = (edge: (typeof edges)[number]) => {
+      const from = points.get(edge.a);
+      const to = points.get(edge.b);
+      return from && to ? Math.hypot(to.x - from.x, to.y - from.y) : 0;
+    };
+    const litEdges = edges.filter(edgeLit).sort((x, y) => length(x) - length(y));
+    const rank = new Map(litEdges.map((edge, index) => [edge, index]));
+    return edges.map((edge) => ({ edge, rank: rank.get(edge) ?? -1 }));
+  })();
 
   const toggle = (next: Exclude<Focus, null>) =>
     setPinned((current) => (JSON.stringify(current) === JSON.stringify(next) ? null : next));
@@ -178,17 +190,23 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
             })}
           </g>
 
-          {/* On focus: every topic link of what is focused. */}
+          {/* On focus: every topic link of what is focused. All are drawn, hidden at rest,
+              so they can fade and grow out of the focused essay, and fade away again. */}
           <g className="mmap__edges" aria-hidden="true">
-            {edges.filter(edgeLit).map((edge) => {
-              const from = points.get(edge.a);
-              const to = points.get(edge.b);
+            {edgeOrder.map(({ edge, rank }) => {
+              let from = points.get(edge.a);
+              let to = points.get(edge.b);
               if (!from || !to) return null;
+              // Draw from the focused essay outwards.
+              if (focus?.kind === "post" && edge.b === focus.slug) [from, to] = [to, from];
               return (
                 <line
                   key={`${edge.a}|${edge.b}`}
                   className="mmap__edge"
                   data-strong={edge.topics.length > 1 ? "" : undefined}
+                  data-lit={rank >= 0 ? "" : undefined}
+                  style={rank >= 0 ? ({ "--i": rank } as CSSProperties) : undefined}
+                  pathLength={1}
                   x1={from.x}
                   y1={from.y}
                   x2={to.x}
