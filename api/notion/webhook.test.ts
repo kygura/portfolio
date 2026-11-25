@@ -144,7 +144,8 @@ test("a page event in the Publications database triggers the deploy hook", async
     const response = await POST(makeRequest(body, { "x-notion-signature": sign(body) }));
     const json = (await response.json()) as { rebuild?: string };
 
-    assert.equal(response.status, 202);
+    assert.equal(response.status, 200);
+    await new Promise((resolve) => setImmediate(resolve));
     assert.equal(json.rebuild, "queued");
     assert.deepEqual(calls, [HOOK_URL]);
   });
@@ -155,7 +156,8 @@ test("a page event without parent info still triggers the deploy hook", async ()
     const body = JSON.stringify({ type: "page.properties_updated", entity: { id: "page-1" } });
     const response = await POST(makeRequest(body, { "x-notion-signature": sign(body) }));
 
-    assert.equal(response.status, 202);
+    assert.equal(response.status, 200);
+    await new Promise((resolve) => setImmediate(resolve));
     assert.equal(calls.length, 1);
   });
 });

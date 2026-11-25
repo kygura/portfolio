@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { waitUntil } from "@vercel/functions";
 import { z } from "zod";
 
 // Self-contained on purpose: Vercel compiles each function but keeps import
@@ -238,23 +239,24 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
-  try {
-    const result = await triggerRebuild();
-    if (!result.triggered) {
-      console.error("Notion webhook could not trigger a rebuild:", result.reason);
-      return Response.json({ error: result.reason, eventType: type, eventId }, { status: 500 });
-    }
-    console.info("Notion webhook queued a rebuild", { eventType: type, eventId });
-    return Response.json({ ok: true, rebuild: "queued", eventType: type, eventId }, { status: 202 });
-  } catch (error) {
-    console.error("Failed to trigger rebuild from Notion webhook", error);
+  // Answer Notion at once and call the deploy hook in the background. The
+  // hook takes several seconds; a slow answer made Notion redeliver each
+  // event, and every delivery queued another build. A missing hook URL still
+  // fails loudly, so Notion retries once it is configured.
+  if (!firstConfigured(["VERCEL_DEPLOY_HOOK_URL"])) {
+    console.error("Notion webhook could not trigger a rebuild: VERCEL_DEPLOY_HOOK_URL is not configured");
     return Response.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to trigger rebuild",
-        eventType: type,
-        eventId,
-      },
+      { error: "VERCEL_DEPLOY_HOOK_URL is not configured", eventType: type, eventId },
       { status: 500 },
     );
   }
+  waitUntil(
+    triggerRebuild()
+      .then((result) => {
+        if (result.triggered) console.info("Notion webhook queued a rebuild", { eventType: type, eventId });
+        else console.error("Notion webhook could not trigger a rebuild:", result.reason);
+      })
+      .catch((error) => console.error("Failed to trigger rebuild from Notion webhook", error)),
+  );
+  return Response.json({ ok: true, rebuild: "queued", eventType: type, eventId });
 }
