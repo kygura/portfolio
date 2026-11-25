@@ -3,6 +3,7 @@ slug: "on-the-movements-of-the-world"
 title: "On the movements of the world"
 excerpt: "The Thread of History The nature of the world and its people is such that it moves between cycles. Most are accepting of the pressure of the times (Zeitgeist), their attitudes, behaviors and desires molded by the current..."
 readTime: 9
+tags: ["ideology","markets","llms","agency"]
 published: true
 notionPageId: "3f4143f2-8260-81d0-8d01-e23e21c36e9f"
 ---

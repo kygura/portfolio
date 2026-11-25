@@ -3,6 +3,7 @@ slug: "quantum-history"
 title: "Quantum History"
 excerpt: "A history unknown. An experience not lived. The path unwalked. Visions from another life. It's not uncommon for the soul of melancholic disposition to look back on his life and wonder whether the cumulative experiences o..."
 readTime: 4
+tags: ["speculation","agency"]
 published: true
 notionPageId: "3f4143f2-8260-8139-a96e-f290ca966f73"
 ---

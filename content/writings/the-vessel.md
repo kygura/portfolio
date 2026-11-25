@@ -3,6 +3,7 @@ slug: "the-vessel"
 title: "The Vessel"
 excerpt: "Whatever a person lives, they live from the inside. None of it reaches anyone else directly. What crosses over is a signal: words, gestures, a lossy encoding sent out of a room nobody else can enter. Meaning is whatever..."
 readTime: 5
+tags: ["philosophy of mind","ontology","language","creativity"]
 published: true
 notionPageId: "40d143f2-8260-8104-9715-dbf48035b0ea"
 ---
@@ -15,7 +16,7 @@ A language model now sends the same signal. Its sentences cross the same gap and
 
 But signals are cheap. Ideas are abundant and mostly old. There is nothing new under the sun, and what passes for a new thought is usually an old one recombined. An idea can be used by everyone without being used up, and nobody owns it. That is why it carries so little weight on its own. The model only made the price visible. A competent paragraph now costs almost nothing, and the world's supply of ideas was always larger than anyone's use for them.
 
-The vessel works the other way. It is one body, one span of years, one sequence of things it happened to go through and survive. The same idea passed through two vessels comes out as two different things, the way a single note sounds one way in a cathedral and another in a tiled bathroom. The difference comes from the room.
+The vessel works the other way. It is one body, one span of years, one sequence of things it happened to go through and survive. The same idea passed through two vessels comes out as two different things, the way a single note sounds one way in a cathedral and another in a tiled bathroom.
 
 Ask the model for that note and it comes back from every room at once, the average acoustic of everything ever recorded. Nothing happened to it on the way out. The model has no span of years and nothing to survive. Between queries it waits for nothing, and whatever it says, the stakes sit with someone else.
 

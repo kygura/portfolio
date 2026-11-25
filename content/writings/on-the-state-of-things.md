@@ -3,6 +3,7 @@ slug: "on-the-state-of-things"
 title: "On The State of Things"
 excerpt: "There's a kind of person who comes to understand, usually through some combination of luck and suffering, that the game being played on the surface conceals the actual game. That life as it is currently being presented i..."
 readTime: 5
+tags: ["political realism","agency","ideology"]
 published: true
 notionPageId: "3f4143f2-8260-81fa-9bb4-c22f3fb47526"
 ---
@@ -20,7 +21,7 @@ There was this old ideal that history must have a direction, that progress compo
 
 Every political tribe has failed you, in sequence, with conviction. The left and the right are both administrative problems. What's broken goes deeper than policy. It's in the texture of daily life. The atomization. The screen-mediated loneliness. The feeling of being a node in a network that doesn't care whether you're there. What I've started calling the interfaced flesh: the human being who can only encounter the world through an interface that is also surveilling him, selling him back to himself, slowly replacing his inner life with a curated performance of it.
 
-> You cannot vote your way out of this. You cannot hustle your way out of it either: the hustle is part of the same machine, repackaged as resistance. Three side incomes and a growth mindset amount to participation with extra steps, optimized for the platform that profits from your exhaustion.
+> You cannot vote your way out of this. You cannot hustle your way out of it either: the hustle is part of the same machine, repackaged as resistance. Three side incomes and a growth mindset are still participation, and the platform profits from your exhaustion.
 
 So where does that leave a person?
 

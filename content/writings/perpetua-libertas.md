@@ -1,8 +1,9 @@
 ---
-slug: "always-against"
-title: "Always Against"
+slug: "perpetua-libertas"
+title: "Perpetua Libertas"
 excerpt: "Also: Perpetua Libertas Core Idea Every system built to free people from the previous system becomes, through its own success and institutionalization, the next system people need freeing from. The Mechanism Resistance p..."
 readTime: 5
+tags: ["agency","ideology","political realism"]
 published: true
 notionPageId: "313143f2-8260-81ab-99b0-e14e38665690"
 ---

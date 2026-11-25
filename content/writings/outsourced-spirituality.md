@@ -3,6 +3,7 @@ slug: "outsourced-spirituality"
 title: "Outsourced Spirituality"
 excerpt: "Thesis Humanity has handed off its most personal responsibility, the confrontation with existence, to institutions built on the corpse of original insight. Religion is spirituality's institutional residue, managed by oth..."
 readTime: 4
+tags: ["perennial philosophy","ideology","agency"]
 published: true
 notionPageId: "31c143f2-8260-8158-b90e-d7e52a69fa8b"
 ---
@@ -31,7 +32,7 @@ The most zealous adherents are zealots because modernity is psychically unbearab
 
 The emptiness made them fundamentalists. Doctrine is just the vessel for a terror that was already there.
 
-Their life mission collapses into one of two moves: impose the faith on others, or annihilate the opposition. Both are the same wound. An identity so fragile it survives only by eliminating difference.
+Their life mission collapses into one of two moves: impose the faith on others, or annihilate the opposition. Both come from the same wound: an identity so fragile it survives only by eliminating difference.
 
 ---
 
@@ -41,7 +42,7 @@ The institution functions as a prosthetic soul. You inherit a map drawn by peopl
 
 Ritual is anesthesia. Chanting and repetition produce neurological states that feel like contact with the sacred, but mostly they just suppress the signal. The anxiety gets managed. You have to come back next week.
 
-People delegate the existential to their pastors, their rabbis, their priests. They confront the void collectively, through ceremony and song, anything to avoid facing it alone. That's not the way.
+People delegate the existential to their pastors, their rabbis, their priests. They confront the void collectively, through ceremony and song, anything to avoid facing it alone.
 
 ---
 
@@ -61,8 +62,8 @@ This was probably functional by design. Full understanding takes a particular ki
 
 The mystic went back to the source. The institution can't allow that, because the source has no need for the institution.
 
-So the exoteric, forgetting it was ever just the shell, turns on the esoteric. Heretics burned. Sufis persecuted. Gnostics suppressed.
+So the exoteric, forgetting it was ever just the shell, turns on the esoteric. Heretics were burned, Sufis persecuted, Gnostics suppressed.
 
 Surpassing the spirits of the old is harder than atheism, harder than rejecting religion. It's taking full ownership of the existential weight religion was invented to spread across a crowd.
 
-It's lonely. Unscripted. No community waiting to applaud you for it, and that's the price of actual freedom.
+It is lonely and unscripted, with no community waiting to applaud you for it, and that is the price of actual freedom.

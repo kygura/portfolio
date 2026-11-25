@@ -1,15 +1,16 @@
 ---
 slug: "on-the-ego"
 title: "On the Ego"
-excerpt: "We do not talk of freedom if there is no real choice to be made. And there is no real choice within a system that defines the available options. Freedom without the option to exit is a managed range. A pasture with an in..."
+excerpt: "We do not talk of freedom if there is no real choice to be made. And there is no real choice within a system that defines the available options. Freedom without the option to exit is a managed range, a pasture with an in..."
 readTime: 2
+tags: ["agency","ideology","mastery"]
 published: true
 notionPageId: "369143f2-8260-812a-94de-e22db713154d"
 ---
 
 We do not talk of freedom if there is no real choice to be made. And there is no real choice within a system that defines the available options.
 
-Freedom without the option to exit is a managed range. A pasture with an invisible fence. The deepest unfreedom is when you can no longer conceive of the outside. That reaches past governance into ontology.
+Freedom without the option to exit is a managed range, a pasture with an invisible fence. The deepest unfreedom is when you can no longer conceive of the outside. That reaches past governance into ontology.
 
 Every ideology (God, State, Humanity, Progress) is a spook. A fixed idea you have been convinced to subordinate yourself to. Strip it all, and what remains is the Unique One: irreducible, owing nothing to any abstraction. The cause serves the ego.
 
@@ -21,6 +22,6 @@ The intellectual class, for all its sophistication, remains morally compromised 
 
 Schopenhauer said you cannot choose what you want: the will wills itself. Perhaps. But the answer is to ride it. Own the want, even if you did not choose it. The lamp cannot light itself, but it is a lamp. It moves. It burns.
 
-The ones who arrive at this through instinct tend to hold it cleaner. The body knew before the mind named it. Ideology is just domestication with better branding. Full awake means dangerous to every system that requires your unconscious participation to function.
+The ones who arrive at this through instinct tend to hold it cleaner. The body knew before the mind named it. Ideology is domestication by other means. Full awake means dangerous to every system that requires your unconscious participation to function.
 
 The sovereign self inherits the spirit and dies wealthy and fulfilled, because the will was never surrendered.
