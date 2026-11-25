@@ -2,7 +2,7 @@
 slug: "add-what-is-specifically-your-own"
 title: "Add What Is Specifically Your Own"
 excerpt: "\"Absorb what is useful, discard what is useless, add what is specifically your own.\" Bruce Lee Ninety percent of everything is crap. Theodore Sturgeon said it about science fiction, and it holds just as well for music, f..."
-readTime: 3
+readTime: 4
 tags: ["agency","creativity","mastery"]
 published: true
 notionPageId: "41a143f2-8260-81b4-8f3d-ef61fbfea3ec"
@@ -28,3 +28,11 @@ You can absorb and discard forever and still end up a collage of other people, w
 The same ratio holds for your own life. Most of what you do leads nowhere. Most days are spent going through the motions, with work that doesn't compound, conversations you forget and plans that never come to anything. Maybe eighty percent of it, maybe ninety. A small slice of what you do and live through will change you, and those are the moments you'll remember: the book, the person, the trip, the decision that turned everything. You can't skip straight to them, and you can't predict which ones they'll be. You can only stay sharp enough to recognize them and keep enough room in your life to take them in.
 
 Those moments don't come out of nowhere. Most of life runs in compression, the ninety percent: long stretches where you grind, nothing seems to move, and the work feels pointless while you're doing it. Then something gives, and in the expansion everything happens at once and almost without effort.
+
+## AI has no place in the Arts
+
+AI has no place in the arts. The creative process, the journey, is the point. An end-product with no process behind it is self-evidently vapid and hollow.
+
+The arts can be done autotelically, for their own sake. Even the work that stays unrefined or unfinished is perfect in its pursuit, in its state of exploration.
+
+Creative work is not owed finality if you don't wish it. The process makes as much of a compelling story as the one the final product inspires, perhaps more.

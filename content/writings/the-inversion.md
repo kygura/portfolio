@@ -16,8 +16,6 @@ Communism is the opium of the intellectuals.
 
 ---
 
-## The Same Drug, Different Packaging
-
 The masses were offered heaven. The intellectuals were offered History.
 
 Both are eschatologies. Both promise present suffering is meaningful, going somewhere, that the arc bends toward resolution. Both require faith in a destination that lies beyond empirical verification. And both produce the same psychological effect: the convert becomes certain, with the kind of certainty that insulates itself against contradiction by absorbing every counterexample into the framework.
@@ -25,8 +23,6 @@ Both are eschatologies. Both promise present suffering is meaningful, going some
 Where sedation dulls, this produces a totalizing hallucination that feels, from the inside, like extraordinary clarity.
 
 ---
-
-## The Hegelian Inheritance
 
 The structure comes from Hegel. History has a telos. The Geist moves through time with purpose, accumulating toward a destination. Contradictions drive the system. Every thesis produces its antithesis. Every oppression generates its liberation. The dialectic can't be stopped because it's the logic of reality itself.
 
@@ -36,15 +32,11 @@ That's a religious idea wearing the clothes of science.
 
 ---
 
-## Why It Seduces the Rigorous
-
 It seduces the rigorous, and there lies the danger. It hands a brilliant, pattern-hungry mind a complete explanatory framework. Every historical event becomes legible. Every social phenomenon has a cause, a mechanism, a place in the structure. The intellectual who encounters this framework feels like they've finally seen clearly.
 
 Lenin is the cautionary archetype: brilliant, disciplined, effective, and completely certain about where History was going. That certainty sharpened his execution and made it lethal. The guillotine and the gulag are the ideology's logical conclusions, downstream of the moment someone knew the destination and decided the path justified whatever it required.
 
 ---
-
-## The Tell
 
 The tell is always the same: certainty about historical destination.
 
@@ -53,8 +45,6 @@ The moment a framework produces certainty about where things are going (somethin
 This goes beyond Marxism. Any total system that explains everything, absorbs all contradiction, promises an endpoint, is running the same psychological operation, whether the endpoint is political, spiritual, or technological.
 
 ---
-
-## The Inversion
 
 Turning Marx's tool back on Marx leaves his diagnosis standing. His read on religion was largely correct. The mistake was assuming immunity.
 

@@ -16,7 +16,7 @@ Any given time will have conflict. Such is the nature of man. A necessity of the
 
 The pendulum swings. Most ideologies that are adopted won't save their followers. They won't bring salvation or truth. The truth always lies within. For the world as is must be understood from the lens of the observer, as he is. Most chase ideologies for peace of mind. This illusion tends to fade with time, once the feverish haze is dissipated, our fervor and devotion, in the pursuit of many gods (Wealth, Status, Hope).
 
-### The Illusion of Progress
+## The Illusion of Progress
 
 Not long before I was born, a Grand Revolution took place. The second great liberation of information (the invention of the press being the first). After the Information Revolution, humanity had the potential to be exposed to all the ideas that have shaped history, the well of knowledge, wisdom and the discoveries that have and will enable us to shape what comes next.
 
@@ -33,7 +33,7 @@ This cannot be said about history or even our personal history. Many bright futu
 
 In this context, Large Language Models becoming this interface that overlays the knowledge of humanity is a futile attempt at compression. An attempt to compress our history so we can diminish the responsibility of acting with agency. They will diminish the resolution of understanding, thus making their users reliant on them and in turn, ignorant and subject to the will of a machine. Its codified agenda and propaganda can then be enforced with subtlety, and those who deviate can then be reported. Having lost our faith (in destiny, ourselves or whatever fancy word comes to mind) we are expected to submit to these unliving things to steer our future for us.
 
-### The Economic Trap
+## The Economic Trap
 
 No one chooses where they are born. Nor the age they are thrown into. We are thrown into this world with no recourse. Labor is only allowed and rewarded if it is productive, and is only regarded as productive so far as it is economically useful, either for the enrichment of others or one's own.
 
@@ -43,7 +43,7 @@ While the concept of money, as a reserve of value & energy, a storage where ener
 
 The people of my age have made an effective inversion of the values that came before. The people of my age are of a materialistic and greedy nature. We are incentivized and perhaps forced into all sorts of consumption. Our economic activity and economic leverage/mobility must be the highest in all of history, yet we are severely lacking in wisdom, contentment and life purpose.
 
-### Finding Meaning in Flux
+## Finding Meaning in Flux
 
 Having drifted throughout this world, just killing the time for the sake of it, one learns there is no such thing as wasted effort. Even punching a brick wall with bare knuckles for hours at a time is bound to yield some lesson, even if it's not apparent to others or not a profound lesson at all in hindsight. It comes back to the intuitive idea that all interactions, exchanges of energy are transmuted into a new form. The way suffering is transmuted into insight and strength is also embodied in the vessel who experienced it. Now you have a new man, who is changed. Made and unmade by the experience. He now knows better and has paid a hefty price for it.
 
@@ -51,7 +51,7 @@ For us, personal failure in the endeavor of liberating oneself from the oppressi
 
 For something like a life purpose can hardly be set in stone. It must be ever-changing and relentless like life itself. In a state of flux, unknown to the bearer yet it is the thread that will move and pull him across time. We tend to confuse ambitions or cultural wounds on the psyche with a life purpose.
 
-### The Lost Dream
+## The Lost Dream
 
 It's clear how the idealist among us and within ourselves fell short in ambitions of liberating humanity. A grand endeavor, bound to fail, but of profound importance to those who lost much in its pursuit, and had little left to lose. They dreamt of a world where one could pursue higher callings, meaningful labor, explore places of beauty, establish connections with your fellow men.
 

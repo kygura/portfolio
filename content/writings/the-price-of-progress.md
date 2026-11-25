@@ -1,14 +1,12 @@
 ---
 slug: "the-price-of-progress"
 title: "The Price of Progress"
-excerpt: "The Core Premise Freedom is a currency. Citizens generate it, circulate it, and invest it in the collective project of civilization. Society, in exchange, offers comfort and stability: the conditions for a meaningful lif..."
+excerpt: "Freedom is a currency. Citizens generate it, circulate it, and invest it in the collective project of civilization. Society, in exchange, offers comfort and stability: the conditions for a meaningful life. But the contra..."
 readTime: 4
 tags: ["political realism","nihilism","ideology"]
 published: true
 notionPageId: "313143f2-8260-816d-abdc-f1acbfe36d81"
 ---
-
-## The Core Premise
 
 Freedom is a currency. Citizens generate it, circulate it, and invest it in the collective project of civilization. Society, in exchange, offers comfort and stability: the conditions for a meaningful life.
 

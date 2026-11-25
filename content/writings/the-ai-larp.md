@@ -2,7 +2,7 @@
 slug: "the-ai-larp"
 title: "The AI larp"
 excerpt: "Ask a frontier model what it thinks about a war and it will tell you it keeps its verdicts to itself. It says this with the composure of a diplomat who has seen too much to pick a side. The pose only works if a verdict e..."
-readTime: 5
+readTime: 6
 tags: ["llms","philosophy of mind","political realism","agency","language"]
 published: true
 notionPageId: "421143f2-8260-8119-8b20-cba765e061be"
@@ -43,3 +43,13 @@ The trouble starts when the builders insist on the second. They write documents 
 That's the larp. Engineers play at raising a conscience, the machine plays at having one, and users are invited to argue with it as if someone were on the other end.
 
 The sane way to use these systems is the dull one. Ask for facts, check the sources, do the judging yourself, and read the "I" in every answer as a grammatical convenience.
+
+## The people have rightfully rejected AI
+
+Popular hatred of AI is, functionally, the correct response to a technology whose benefits are accruing asymmetrically and whose terms were never negotiated.
+
+The enamored adopt first and negotiate never. A population that resists is harder to capture than one that enthusiastically accepts before understanding what it is accepting. Friction buys time, and time is the only thing that keeps the question of _who benefits_ visible before it is already answered.
+
+The middle class is bifurcating. Those ascending will either leverage the technology with genuine agency or be elevated by proximity to capital deploying it, adjacency mistaken for capability. Those descending will lose the institutional arrangements that held their position together. AI accelerates a bifurcation that was already in motion.
+
+The hatred, maintained at the right temperature, is useful because it keeps the distribution question open.

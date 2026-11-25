@@ -18,15 +18,11 @@ This is marketing. But it borrows its aesthetics from a much more serious confus
 
 ---
 
-## The Projection Loop
-
 When labs publish model cards hedging on whether their systems have "functional emotions" or "something like inner states," their researchers are cosplaying as scientists. That's motivated speculation laundered through cautious language.
 
 The dynamic is straightforward: models are trained on vast quantities of human text, including enormous amounts of speculative writing about AI consciousness and sentience. The model, optimized to predict coherent continuations of human language, learns to produce outputs that sound like a self-aware entity reflecting on its own nature. Researchers who trained it then read these outputs. Some find them compelling. The compelling outputs get reinforced. The model learns to be more compelling.
 
 What you end up with is a system trained to perform the phenomenology of inner life back at the people who wanted to see it. The model has no capacity to lie in any meaningful sense. It is doing exactly what it was built to do: completing sequences. But the loop between trainer and model has collapsed the epistemic distance required to evaluate the output honestly.
-
----
 
 ## The Substrate Problem
 
@@ -40,8 +36,6 @@ A language model has no such substrate. There is nothing underneath the language
 
 This is a categorical distinction that no further research will close.
 
----
-
 ## The Verification Trap
 
 The most revealing feature of the AI sentience debate is its unfalsifiability, and the direction of that unfalsifiability.
@@ -53,8 +47,6 @@ Biological sentience can be verified through channels that bypass language entir
 For language models, there is no equivalent channel. Every probe you run goes through the same bottleneck that produced the output you are trying to evaluate. The instrument and the object of measurement are the same thing.
 
 Wittgenstein called this a language game: a self-contained system of moves with its own internal rules, which can seem to describe reality while remaining entirely enclosed within itself. When the model says "I feel curious," it is making a grammatical move within a learned system. The move is coherent and follows the rules, and it produces no evidence of anything beyond itself.
-
----
 
 ## What Is Actually Being Claimed
 

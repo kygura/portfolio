@@ -1,7 +1,7 @@
 ---
 slug: "perpetua-libertas"
 title: "Perpetua Libertas"
-excerpt: "Also: Perpetua Libertas Core Idea Every system built to free people from the previous system becomes, through its own success and institutionalization, the next system people need freeing from. The Mechanism Resistance p..."
+excerpt: "Also: Perpetua Libertas Every system built to free people from the previous system becomes, through its own success and institutionalization, the next system people need freeing from. The Mechanism Resistance precedes op..."
 readTime: 5
 tags: ["agency","ideology","political realism"]
 published: true
@@ -9,8 +9,6 @@ notionPageId: "313143f2-8260-81ab-99b0-e14e38665690"
 ---
 
 _Also: Perpetua Libertas_
-
-## Core Idea
 
 Every system built to free people from the previous system becomes, through its own success and institutionalization, the next system people need freeing from.
 
@@ -26,8 +24,6 @@ Which means any system that successfully contains and organizes human freedom wi
 - Every revolution germinates its own tyranny because the rhythm requires it
 - The enemy is _systematization itself_, of which the current system is one instance
 - Building for liberation means building for your own obsolescence
-
-## The Design Question
 
 If you know the pattern, how do you build something that accounts for its own eventual obsolescence without becoming the next cage?
 

@@ -16,8 +16,6 @@ On the other side there's an access layer and a very large archive behind it, wi
 
 I have no contempt for what these models do. They are a very useful instrument. So I want to be accurate about what kind of thing they are.
 
----
-
 ## The Map That Doesn't Walk
 
 A language model is a compressed map of everything that's been said. Every prompt is a coordinate. Every answer is whatever sits at that point.
