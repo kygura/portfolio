@@ -115,3 +115,16 @@ test("the skeleton gives each cluster a hub and joins the clusters through one c
   assert.equal(skeleton.links.length, posts.length - 1);
   assert.equal(buildSkeleton([], []).links.length, 0);
 });
+
+test("the skeleton uses a cluster's chosen index as its hub", () => {
+  const posts: MapPost[] = [
+    { slug: "a", title: "A", cluster: "one", tags: [], topics: ["x", "y"] },
+    { slug: "b", title: "B", cluster: "one", tags: [], topics: ["x", "y"] },
+    { slug: "c", title: "C", cluster: "one", tags: [], topics: ["x"] },
+  ];
+  const edges = buildEdges(posts);
+  assert.equal(buildSkeleton(posts, edges).hubs.get("one"), "a");
+  assert.equal(buildSkeleton(posts, edges, new Map([["one", "c"]])).hubs.get("one"), "c");
+  // An index outside the cluster is ignored.
+  assert.equal(buildSkeleton(posts, edges, new Map([["one", "zzz"]])).hubs.get("one"), "a");
+});

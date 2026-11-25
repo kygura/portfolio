@@ -4,6 +4,7 @@ import {
   buildEdges,
   buildSkeleton,
   labelsOf,
+  labelWidth,
   layoutMap,
   linkingTopics,
   mapHeight,
@@ -55,7 +56,12 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
   const topics = useMemo(() => linkingTopics(nodes), [nodes]);
   const height = useMemo(() => mapHeight(nodes, width), [nodes, width]);
   // The skeleton is what is drawn at rest, and what shapes the layout.
-  const skeleton = useMemo(() => buildSkeleton(nodes, edges), [nodes, edges]);
+  // Each cluster's index essay, chosen by the clustering, is the hub it is drawn around.
+  const indexes = useMemo(
+    () => new Map(clusters.flatMap((cluster) => (cluster.index ? [[cluster.id, cluster.index] as const] : []))),
+    [clusters],
+  );
+  const skeleton = useMemo(() => buildSkeleton(nodes, edges, indexes), [nodes, edges, indexes]);
   const points = useMemo(() => layoutMap(nodes, skeleton.links, { width, height }), [nodes, skeleton, width, height]);
   const hubSlugs = useMemo(() => new Set(skeleton.hubs.values()), [skeleton]);
   const centreHub = skeleton.hubs.get(skeleton.centre);
@@ -212,9 +218,18 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
                 onFocus={() => setHover(self)}
                 onBlur={() => setHover(null)}
               >
-                <circle className="mmap__dot" cx={point.x} cy={point.y} r={isCentre ? 8 : isHub ? 6 : 3.5} />
-                <text className="mmap__mark" x={point.x} y={point.y + 20} textAnchor="middle">{post.mark}</text>
-                <text className="mmap__title" x={point.x} y={point.y + 37} textAnchor="middle">{post.title}</text>
+                {/* The target covers the dot and the label, so the whole entry is easy to hit. */}
+                <rect
+                  className="mmap__hit"
+                  x={point.x - Math.max(44, labelWidth(post.title) / 2)}
+                  y={point.y - 22}
+                  width={Math.max(88, labelWidth(post.title))}
+                  height={70}
+                  rx={10}
+                />
+                <circle className="mmap__dot" cx={point.x} cy={point.y} r={isCentre ? 12 : isHub ? 10 : 7} />
+                <text className="mmap__mark" x={point.x} y={point.y + 25} textAnchor="middle">{post.mark}</text>
+                <text className="mmap__title" x={point.x} y={point.y + 42} textAnchor="middle">{post.title}</text>
               </Link>
             );
           })}
@@ -257,8 +272,9 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
         )}
         {!focus && (
           <p className="mmap__panel-hint">
-            Each cluster is drawn around the essay that shares the most with it. The clusters join through the
-            central one, and a thicker line means more shared topics. Point at an essay to see every essay it
+            Each cluster is drawn around its index, the essay chosen to represent it, shown with a larger
+            point. The clusters join through the central one, and a thicker line means more shared
+            topics. Point at an essay to see every essay it
             shares a topic with, or pick a cluster or a topic above. Select an essay to read it.
           </p>
         )}

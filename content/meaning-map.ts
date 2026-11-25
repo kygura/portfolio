@@ -113,7 +113,7 @@ export interface SkeletonLink extends WeightedLink {
 }
 
 export interface Skeleton {
-  /** Cluster id to the slug of its hub: the essay that shares the most with its cluster. */
+  /** Cluster id to the slug of its hub: the cluster's index essay, else the essay that shares the most with its cluster. */
   hubs: Map<string, string>;
   /** The cluster that shares the most with the others. The rest join through it. */
   centre: string;
@@ -124,13 +124,14 @@ export interface Skeleton {
  * The strict shape of the map. Topic links alone give a tangle: with a few
  * common topics almost every pair of essays is joined. The skeleton keeps one
  * line per essay instead:
- *   - each cluster has a hub, its most representative essay;
+ *   - each cluster has a hub: its index essay, chosen by the clustering, or
+ *     failing that the essay that shares the most topics inside the cluster;
  *   - every other essay of the cluster hangs off that hub (a spoke);
  *   - one cluster is central, and its hub joins the hub of every other
  *     cluster (a bridge), weighted by the topics the two clusters share.
  * Ties go to the earlier essay or cluster, so the result is deterministic.
  */
-export function buildSkeleton(posts: MapPost[], edges: MapEdge[]): Skeleton {
+export function buildSkeleton(posts: MapPost[], edges: MapEdge[], indexes: Map<string, string> = new Map()): Skeleton {
   const clusterOf = new Map(posts.map((post) => [post.slug, post.cluster]));
   const clusterIds = [...new Set(posts.map((post) => post.cluster))];
 
@@ -153,6 +154,11 @@ export function buildSkeleton(posts: MapPost[], edges: MapEdge[]): Skeleton {
   const hubs = new Map<string, string>();
   for (const id of clusterIds) {
     const members = posts.filter((post) => post.cluster === id);
+    const chosen = indexes.get(id);
+    if (chosen && members.some((post) => post.slug === chosen)) {
+      hubs.set(id, chosen);
+      continue;
+    }
     const hub = members.reduce((best, post) => ((inside.get(post.slug) ?? 0) > (inside.get(best.slug) ?? 0) ? post : best));
     hubs.set(id, hub.slug);
   }
@@ -192,7 +198,7 @@ export function mapHeight(posts: MapPost[], width: number): number {
   return Math.round(Math.max(420, Math.min(2600, (area * 1.45) / Math.max(width, 240))));
 }
 
-const LABEL_HEIGHT = 46;
+const LABEL_HEIGHT = 52;
 const PAD = 14;
 
 /**

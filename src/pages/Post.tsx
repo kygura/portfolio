@@ -138,7 +138,14 @@ const Post = () => {
           <span>{post.readTime} min read</span>
         </p>
 
-        <h1 className="post-head__title" lang={contentLang} dir={dir}>{title}</h1>
+        <h1
+          className="post-head__title"
+          data-length={title.length > 40 ? "long" : title.length > 24 ? "medium" : undefined}
+          lang={contentLang}
+          dir={dir}
+        >
+          {title}
+        </h1>
 
         {lang && translation.status !== "idle" && (
           <p className={`post-translate__status${translation.status === "error" ? " is-error" : ""}`} role="status">
