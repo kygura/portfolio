@@ -1,5 +1,5 @@
 {
-  "hash": "5ac1add1062063d6",
+  "hash": "7f649115e86d243b",
   "source": "model",
   "clusters": [
     {
@@ -13,7 +13,8 @@
         "on-the-ego",
         "quantum-history",
         "thaumazein",
-        "outsmarting-the-collective-greed-of-humanity"
+        "outsmarting-the-collective-greed-of-humanity",
+        "mediterranean-hunger"
       ]
     },
     {
@@ -27,7 +28,8 @@
         "the-inversion",
         "monk-mode",
         "an-empty-mind",
-        "to-seek-higher-things"
+        "to-seek-higher-things",
+        "a-toss-up"
       ]
     },
     {
@@ -42,7 +44,9 @@
         "perpetua-libertas",
         "the-design-question",
         "the-price-of-progress",
-        "on-the-state-of-things"
+        "on-the-state-of-things",
+        "what-cant-be-counted",
+        "the-remainder"
       ]
     },
     {
@@ -54,7 +58,9 @@
         "on-reading",
         "the-vessel",
         "add-what-is-specifically-your-own",
-        "a-mind-you-can-locate"
+        "a-mind-you-can-locate",
+        "ideological-parasites",
+        "ai-has-no-place-in-the-arts"
       ]
     },
     {
@@ -67,40 +73,52 @@
         "the-projection-loop",
         "the-wrapper-and-the-soul",
         "black-magic",
-        "notion-as-a-backend"
+        "notion-as-a-backend",
+        "the-ai-larp",
+        "the-people-have-rightfully-rejected-ai"
       ]
     }
   ],
   "topics": {
-    "to-seek-higher-things": [
-      "leverage",
-      "meaning",
-      "desire"
-    ],
-    "on-the-movements-of-the-world": [
-      "history",
-      "government",
-      "ideology"
-    ],
     "a-mind-you-can-locate": [
       "taste",
       "markets",
       "authorship"
     ],
-    "the-design-question": [
-      "history",
-      "government",
-      "liberty"
+    "a-toss-up": [
+      "ideology",
+      "identity",
+      "history"
     ],
-    "the-unsigned-contract": [
-      "government",
-      "power",
-      "liberty"
+    "add-what-is-specifically-your-own": [
+      "taste",
+      "authorship",
+      "desire"
     ],
-    "the-projection-loop": [
+    "ai-has-no-place-in-the-arts": [
+      "authorship",
+      "taste",
+      "llms"
+    ],
+    "an-empty-mind": [
+      "knowledge",
+      "philosophy of mind",
+      "religion"
+    ],
+    "black-magic": [
       "language",
       "llms",
-      "philosophy of mind"
+      "speculation"
+    ],
+    "ideological-parasites": [
+      "ideology",
+      "knowledge",
+      "authorship"
+    ],
+    "mediterranean-hunger": [
+      "identity",
+      "history",
+      "meaning"
     ],
     "monk-mode": [
       "desire",
@@ -117,15 +135,30 @@
       "publishing",
       "engineering"
     ],
-    "the-religious-problem": [
-      "religion",
-      "meaning",
-      "metaphysics"
+    "on-reading": [
+      "taste",
+      "authorship",
+      "knowledge"
     ],
-    "thaumazein": [
-      "free will",
+    "on-the-ego": [
+      "ideology",
+      "government",
+      "free will"
+    ],
+    "on-the-movements-of-the-world": [
       "history",
-      "meaning"
+      "government",
+      "ideology"
+    ],
+    "on-the-state-of-things": [
+      "government",
+      "meaning",
+      "ideology"
+    ],
+    "outsmarting-the-collective-greed-of-humanity": [
+      "markets",
+      "leverage",
+      "speculation"
     ],
     "outsourced-spirituality": [
       "religion",
@@ -137,80 +170,95 @@
       "government",
       "liberty"
     ],
-    "the-wrapper-and-the-soul": [
-      "llms",
-      "engineering",
-      "philosophy of mind"
-    ],
-    "the-perpetual-i": [
-      "free will",
-      "identity",
-      "philosophy of mind"
-    ],
     "quantum-history": [
       "history",
       "free will",
       "identity"
-    ],
-    "on-reading": [
-      "taste",
-      "authorship",
-      "knowledge"
-    ],
-    "the-inversion": [
-      "religion",
-      "ideology",
-      "history"
-    ],
-    "add-what-is-specifically-your-own": [
-      "taste",
-      "authorship",
-      "desire"
-    ],
-    "black-magic": [
-      "language",
-      "llms",
-      "speculation"
-    ],
-    "outsmarting-the-collective-greed-of-humanity": [
-      "markets",
-      "leverage",
-      "speculation"
     ],
     "static-intelligence": [
       "llms",
       "philosophy of mind",
       "metaphysics"
     ],
-    "an-empty-mind": [
-      "knowledge",
+    "thaumazein": [
+      "free will",
+      "history",
+      "meaning"
+    ],
+    "the-ai-larp": [
+      "llms",
       "philosophy of mind",
-      "religion"
+      "language"
     ],
-    "the-vessel": [
-      "language",
-      "authorship",
-      "llms"
-    ],
-    "on-the-ego": [
-      "ideology",
+    "the-design-question": [
+      "history",
       "government",
-      "free will"
+      "liberty"
+    ],
+    "the-illusion-of-freedom": [
+      "free will",
+      "liberty",
+      "identity"
+    ],
+    "the-inversion": [
+      "religion",
+      "ideology",
+      "history"
+    ],
+    "the-people-have-rightfully-rejected-ai": [
+      "llms",
+      "power",
+      "markets"
+    ],
+    "the-perpetual-i": [
+      "free will",
+      "identity",
+      "philosophy of mind"
     ],
     "the-price-of-progress": [
       "government",
       "liberty",
       "markets"
     ],
-    "on-the-state-of-things": [
-      "government",
-      "meaning",
-      "ideology"
+    "the-projection-loop": [
+      "language",
+      "llms",
+      "philosophy of mind"
     ],
-    "the-illusion-of-freedom": [
-      "free will",
+    "the-religious-problem": [
+      "religion",
+      "meaning",
+      "metaphysics"
+    ],
+    "the-remainder": [
       "liberty",
-      "identity"
+      "institutions",
+      "free will"
+    ],
+    "the-unsigned-contract": [
+      "government",
+      "power",
+      "liberty"
+    ],
+    "the-vessel": [
+      "language",
+      "authorship",
+      "llms"
+    ],
+    "the-wrapper-and-the-soul": [
+      "llms",
+      "engineering",
+      "philosophy of mind"
+    ],
+    "to-seek-higher-things": [
+      "leverage",
+      "meaning",
+      "desire"
+    ],
+    "what-cant-be-counted": [
+      "power",
+      "leverage",
+      "liberty"
     ]
   }
 }
