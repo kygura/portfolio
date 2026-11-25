@@ -69,6 +69,9 @@ test("collectMirrorFiles reads the real content directory", async () => {
   const manifest = JSON.parse(await fs.readFile(path.join(content, "writings", "manifest.json"), "utf-8")) as { slug: string }[];
   const files = await collectMirrorFiles(content, manifest.map((post) => post.slug));
   const posts = files.filter((file) => file.path.startsWith("posts/"));
-  assert.equal(posts.length, manifest.length);
+  // Every post file is mirrored, unlisted ones (kept off the manifest) too.
+  const postFiles = (await fs.readdir(path.join(content, "writings"))).filter((file) => file.endsWith(".md"));
+  assert.equal(posts.length, postFiles.length);
+  assert.ok(posts.length >= manifest.length);
   assert.ok(files.some((file) => file.path.startsWith("translations/es/")));
 });

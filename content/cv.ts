@@ -17,6 +17,13 @@ export interface CvProject {
   description: string;
 }
 
+export interface CvExperience {
+  role: string;
+  place: string;
+  period: string;
+  points: string[];
+}
+
 export interface CvLanguage {
   name: string;
   proficiency: string;
@@ -32,6 +39,7 @@ export interface Cv {
     github: string;
   };
   summary: string;
+  experience: CvExperience[];
   projects: CvProject[];
   education: CvEducation[];
   skills: Record<string, string[]>;
@@ -42,16 +50,29 @@ export interface Cv {
 export const cv: Cv = {
   contact: {
     name: "Nicolás Cerrato Antón",
-    headline: "Software Engineer · Agentic Systems · Markets",
-    location: "Europe",
-    email: "ncerratoanton@gmail.com",
+    headline: "Software Engineer · Agentic Systems · Markets · ES / DE / EN",
+    location: "Las Palmas, Spain · EU citizen",
+    email: "nicolascerrato17@gmail.com",
     website: "nca.ink",
     github: "github.com/kygura",
   },
 
   // The PDF carries the formal summary; here it is written as a short, plainer intro.
   summary:
-    "I build software where LLMs, markets, and on-chain systems meet, and care most about the boundary between what a model proposes and what a system is willing to execute. Trained in Computer Engineering across Spain and Germany; working day to day in TypeScript, Python, and Solidity.",
+    "Generalist software engineer who ships products end to end. Native Spanish and German, C2 English, and at ease working directly with people in any of them. I build software where LLMs, markets, and on-chain systems meet, and care most about the boundary between what a model proposes and what a system is willing to execute. Trained in Computer Engineering across Spain and Germany; working day to day in TypeScript, Python, and Solidity.",
+
+  experience: [
+    {
+      role: "Independent Software Engineer & Trader",
+      place: "Remote",
+      period: "2024 – Present",
+      points: [
+        "Designed, built and deployed products end to end: a travel planner on a world map (Meridian), an AI prose-rewriting app (Lexis), a terminal coding agent (Vessel) and crypto market dashboards. Most are live and linked from nca.ink.",
+        "Trade crypto majors and perpetuals on my own account, mostly weekly to monthly swings, using data and alerting tools I built for it.",
+        "Use generative AI since March 2023 and build with AI coding agents daily, deploying on Vercel and Fly.",
+      ],
+    },
+  ],
 
   // Descriptions complement the PDF's bullet points rather than repeating them.
   projects: [

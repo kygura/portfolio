@@ -20,7 +20,7 @@ const Section = ({ no, label, children }: { no: string; label: string; children:
 );
 
 const CV = () => {
-  const { contact, summary, education, projects, languages, skills } = cv;
+  const { contact, summary, experience, education, projects, languages, skills } = cv;
 
   return (
     <div className="page-shell page-shell--wide animate-fade-in">
@@ -56,7 +56,22 @@ const CV = () => {
         <p className="cv-summary">{summary}</p>
       </Section>
 
-      <Section no="02" label="Projects">
+      <Section no="02" label="Experience">
+        {experience.map((job) => (
+          <article key={job.role} className="cv-item cv-item--dated">
+            <h3 className="cv-item__title">{job.role}</h3>
+            <p className="cv-item__when">{job.period}</p>
+            <p className="cv-item__text">{job.place}</p>
+            {job.points.map((point) => (
+              <p key={point} className="cv-item__aside">
+                {point}
+              </p>
+            ))}
+          </article>
+        ))}
+      </Section>
+
+      <Section no="03" label="Projects">
         {projects.map((project) => (
           <article key={project.title} className="cv-item">
             <h3 className="cv-item__title">{project.title}</h3>
@@ -66,7 +81,7 @@ const CV = () => {
         ))}
       </Section>
 
-      <Section no="03" label="Education">
+      <Section no="04" label="Education">
         {education.map((edu) => (
           <article key={edu.degree} className="cv-item cv-item--dated">
             <h3 className="cv-item__title">{edu.degree}</h3>
@@ -77,7 +92,7 @@ const CV = () => {
         ))}
       </Section>
 
-      <Section no="04" label="Skills">
+      <Section no="05" label="Skills">
         <dl className="cv-skills">
           {Object.entries(skills).map(([category, items]) => (
             <div key={category}>
@@ -92,7 +107,7 @@ const CV = () => {
         </dl>
       </Section>
 
-      <Section no="05" label="Languages">
+      <Section no="06" label="Languages">
         <dl className="cv-langs">
           {languages.map((lang) => (
             <div key={lang.name}>

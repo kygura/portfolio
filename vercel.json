@@ -30,6 +30,46 @@
       "source": "/writings/a-philosophy-of-pragmatic-sovereignity",
       "destination": "/writings/the-last-sovereign-act",
       "permanent": true
+    },
+    {
+      "source": "/writings/the-game-of-democracy",
+      "destination": "/writings/the-design-question",
+      "permanent": true
+    },
+    {
+      "source": "/writings/the-game-of-democracy.md",
+      "destination": "/writings/the-design-question.md",
+      "permanent": true
+    },
+    {
+      "source": "/writings/always-against",
+      "destination": "/writings/perpetua-libertas",
+      "permanent": true
+    },
+    {
+      "source": "/writings/always-against.md",
+      "destination": "/writings/perpetua-libertas.md",
+      "permanent": true
+    },
+    {
+      "source": "/writings/corposlop",
+      "destination": "/writings/a-mind-you-can-locate",
+      "permanent": true
+    },
+    {
+      "source": "/writings/corposlop.md",
+      "destination": "/writings/a-mind-you-can-locate.md",
+      "permanent": true
+    },
+    {
+      "source": "/writings/intellectual-opium",
+      "destination": "/writings/the-inversion",
+      "permanent": true
+    },
+    {
+      "source": "/writings/intellectual-opium.md",
+      "destination": "/writings/the-inversion.md",
+      "permanent": true
     }
   ],
   "rewrites": [

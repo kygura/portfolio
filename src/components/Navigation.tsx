@@ -276,8 +276,6 @@ const Navigation = () => {
         <div className="nav-micro flex items-baseline gap-1.5 sm:gap-2.5 font-mono tracking-[0.16em] font-medium whitespace-nowrap">
           <span className="wordmark text-foreground">
             <b>nca.ink</b>
-            <i aria-hidden="true">//</i>
-            <em>Ventures</em>
           </span>
         </div>
 

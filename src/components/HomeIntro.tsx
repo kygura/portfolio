@@ -24,7 +24,10 @@ const HomeIntro = () => (
           Things I build and <em>things I think about</em>.
         </h2>
 
-        <p className="intro__text">That's all this site is. Start with whichever you came for.</p>
+        <p className="intro__text">
+          I'm Nicolás. I build software, trade markets and write essays, in Spanish, German and English.
+          Start with whichever you came for.
+        </p>
 
         <nav className="intro__routes" aria-label="Start here">
           {ROUTES.map((r) => (
