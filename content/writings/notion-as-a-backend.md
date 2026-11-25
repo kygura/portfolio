@@ -2,7 +2,7 @@
 slug: "notion-as-a-backend"
 title: "Notion as a Backend"
 excerpt: "This site has no admin panel and no database of its own. Every essay lives as a page in one Notion database called Publications. A checkbox on that page decides whether the essay is on the site. I rarely tick it by hand...."
-readTime: 11
+readTime: 13
 tags: ["engineering","publishing","llms","internet"]
 published: true
 notionPageId: "423143f2-8260-8106-9c9f-dfb69b665f06"
@@ -38,7 +38,7 @@ Publications has four properties.
 
 The build also honours two optional text properties, `Slug` and `Description`, if I ever add them. Without them the slug comes from the title and the excerpt is the first 220 characters of the body.
 
-At the time of writing the database holds 61 pages. 28 are published. The other 33 are drafts, abandoned pieces and earlier versions, and none of them reach the site. Of the 28, 25 are listed on the index. Three are published but left off it and stay reachable by their URL.
+At the time of writing the database holds 60 pages. 34 are published, and every published page is on the index. The other 26 are drafts, abandoned pieces and earlier versions, and none of them reach the site.
 
 ## What Claude does
 
@@ -58,15 +58,31 @@ New pages start unpublished. Publishing is a separate, explicit step.
 
 ![One publish, start to finish.](/media/writings/notion-as-a-backend/ec3c258778d23077.jpg)
 
-Notion sends a webhook for every page event. The function at `/api/notion` handles six of them: created, properties updated, content updated, deleted, undeleted and moved. It does three checks before acting:
+Notion sends a webhook for every page event, drafts included. The function at `/api/notion/webhook` handles six of them: created, properties updated, content updated, deleted, undeleted and moved.
+
+The subscription is set up once. Notion posts a body that holds only a verification token, and the function logs it and echoes it. I paste the token back into Notion to activate the subscription, and the same token becomes the key for checking signatures. The first version of this step only accepted an unsigned handshake. Notion sent a signed one, so the token was never logged and the subscription stayed unverified. The function now treats any body with a token and no event type as the handshake.
+
+For every other request it does three checks before acting:
 
 1. It verifies the `X-Notion-Signature` header, an HMAC-SHA256 of the raw body, with a timing-safe comparison.
 2. It ignores event types it does not handle.
 3. It ignores pages whose parent is some other database.
 
-Then it posts to a Vercel deploy hook and answers `202`. It does not read the page or write any content. It only says that something changed.
+Then it answers `200` at once and posts to a Vercel deploy hook in the background. It does not read the page or write any content. It only says that something changed.
+
+The order matters. The first version waited for the deploy hook, about eight seconds, and then answered `202`. Notion treated that as a failed delivery and sent each event two or three more times. Four published essays produced nine deliveries and queued nine builds.
 
 That is the main design decision. An earlier version synced one page per event into a blob store and served posts through an API. It had more states than I could keep correct. Now every event causes a full rebuild from Notion. One rebuild covers any number of edits, and a missed event is repaired by the next one. A daily cron at 05:00 UTC calls the same rebuild in case Notion drops a delivery.
+
+## Fewer builds
+
+A full rebuild per event is simple, but Notion sends many events: a redelivery, an edit to a draft, five quick edits to the same page. Two mechanisms keep that from turning into one build per event.
+
+**Vercel's queue.** When a new production build is queued for the same commit, Vercel cancels the older one that has not started. A burst of events therefore costs at most two builds: the one already running and one more that starts after it and reads Notion again.
+
+**A build stamp.** Each production build that reads Notion publishes `/build-stamp.json`. It records the commit, a fingerprint of the published pages (each page's id and last edit time) and the moment the sync started. Before Vercel installs anything, an ignore step compares the stamp with Notion. It skips the build only when three things hold: the commit is the same, the published pages are the same, and no published page was edited in or after the minute the live build read Notion. Notion reports edit times to the minute, so the last condition stops a skip when an edit lands in the same minute as a sync.
+
+An edit to a draft does not change the fingerprint, so it costs nothing. A redelivered event finds nothing new, so it costs nothing. Any error in the check, a new commit or a preview build means the build runs. A wrong skip would only delay a change until the next event or the daily rebuild.
 
 ## The build
 
@@ -112,8 +128,6 @@ A recent snapshot looked like this:
 | III. Of the State | 7 | The state recurs whatever is done to tear it down, and its terms are set by whoever holds force and leverage. |
 | IV. Of Authorship | 4 | A borrowed idea leaves the reader with no worldview of their own. |
 | V. Of Machines | 5 | Language models are stateless maps of human text, and claims of agency or selfhood borrow the look of mind without its substance. |
-
-These counts include the three essays that are off the index.
 
 Every essay carries a mark from this structure, such as II.3 for the third essay of the second cluster. Publishing one essay can renumber its neighbours.
 
