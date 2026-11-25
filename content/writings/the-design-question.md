@@ -1,14 +1,12 @@
 ---
 slug: "the-design-question"
 title: "The Design Question"
-excerpt: "Starting Point Every system built to liberate becomes the next cage. History moves in the rhythm of containment, pressure, rupture, new container. The design question: how do you build something that accounts for its own..."
+excerpt: "Every system built to liberate becomes the next cage. History moves in the rhythm of containment, pressure, rupture, new container. The design question: how do you build something that accounts for its own obsolescence?..."
 readTime: 4
 tags: ["leverage","political realism","agency","ideology"]
 published: true
 notionPageId: "314143f2-8260-81e7-b6d0-f76413bcad63"
 ---
-
-## Starting Point
 
 Every system built to liberate becomes the next cage. History moves in the rhythm of containment, pressure, rupture, new container. The design question: how do you build something that accounts for its own obsolescence?
 

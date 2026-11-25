@@ -12,8 +12,6 @@ The state exists, and it will keep re-emerging however often it's torn down. Nob
 
 ---
 
-# Part One: The Nature of Power
-
 Before asking what the state owes anyone, it helps to see what it is: a recurring product of human scale, held together by force, run by people the system selects for indifference.
 
 ## I. The State Acts as if Inevitable
@@ -50,8 +48,6 @@ Vigilance against capture has to be permanent, because the pull toward it never 
 
 ---
 
-# Part Two: The Two Ledgers
-
 Every society runs two moral ledgers. One is written down: taught in schools, preached from pulpits, broadcast at scale. The other never gets written down. It's the operating code of the people closest to the machinery, and it reads very differently.
 
 ## V. Morality Is the Shadow Cast Downward
@@ -79,8 +75,6 @@ Most people live their whole lives inside the symbol and call it justice. The pu
 The insiders rarely experience this as hypocrisy. Many believe the symbol in public and act on the map in private without ever noticing the seam, and that lack of friction is part of why the arrangement lasts. Strauss argued that philosophers have long written on two levels, one for the few and one for the many. Rulers have always lived that way.
 
 ---
-
-# Part Three: The Terms of Legitimacy
 
 If the state is inevitable and the contract coercive, the useful question is what a coerced party is owed. The answer sets the only standard a state can be judged by.
 
@@ -110,8 +104,6 @@ Constitutions are full of promises that never reach the street. The Soviet const
 
 ---
 
-# Part Four: The Sources of Leverage
-
 The individual is where power gets exercised or surrendered, every day. Against an inevitable state and a captured class, an individual's position depends on what can't easily be taken from them: means, knowledge, and the ability to leave.
 
 ## XII. Economic Sovereignty Is the Foundation of All Other Freedoms
@@ -140,8 +132,6 @@ Exit works even when it's never used. A second passport, a portable skill, savin
 
 ---
 
-# Part Five: The Practice of Sovereignty
-
 Seeing clearly is the first half. The second is a way of living that follows from it: building outside captured systems, refusing the guilt they issue, and keeping the whole thing maintained.
 
 ## XV. Parallel Construction Over Reform
@@ -169,8 +159,6 @@ The capture rarely announces itself. A comfortable salary makes the side project
 The collectivist critique has this backwards. The sovereign individual is the precondition for social cohesion. People who think, sustain, and build for themselves produce more genuine value than people who are merely administered. A civilization of sovereign individuals is harder to capture, manipulate, or collapse than one of dependents. Empowering the individual is the social good's highest expression. The idea that everyone must stay preoccupied with collective affairs beyond their control is impossible, and worse, a sickness that subordinates people to ideals that will eventually break them. We base our affairs on nothing.
 
 ---
-
-# Part Six: Against the Available Arenas
 
 Where this stands relative to the existing positions, and why it declines all of them.
 
@@ -208,9 +196,7 @@ The operative response is exit and parallel infrastructure. Build systems that r
 
 Naive free-market libertarianism doesn't fit either. Markets are neither meritocratic nor just. The closest label is post-institutional: having seen the available arenas, declining to play in any of them on their terms. In practice that means treating a vote, when it's cast at all, as a minor tactical act with no faith attached, and spending the real effort elsewhere: on leverage, on exits, on the parallel systems that will matter when the current ones fail.
 
----
-
-# Declaration
+## Declaration
 
 The state will keep re-emerging. Power will keep concentrating. The people at the top will keep running one code for themselves and handing another to everyone else. Waiting for that to change is how a life gets spent.
 

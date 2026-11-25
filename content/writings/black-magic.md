@@ -14,8 +14,6 @@ The Pyrrhonists held the same position. They suspended judgment on everything, i
 
 Speculation runs on the same principle. A price is collective belief. Without a belief of your own, you can read everyone else's without being bound by any of them.
 
-## The spellbook
-
 AI is the closest thing to black magic I have seen.
 
 Magic is action on appearances without access to mechanism. That is how everyone works with language models, their builders included. Interpretability research tries to read the spell after it has been cast.
@@ -23,8 +21,6 @@ Magic is action on appearances without access to mechanism. That is how everyone
 Grimoires demanded exact wording, the correct names in the correct order, because a wrong phrase summoned the wrong thing. Prompting demands the same. A skill file is a written spell: instructions in plain language that make an entity act for you, slightly differently each time.
 
 Every magical tradition held that words act directly on the world. For most of history this was superstition. Today a sentence ships code, sends email and moves money, whether or not I believe in it.
-
-## Pending facts
 
 Quantum mechanics is the closest we have come to understanding the nature of reality. It implies that uncertainty belongs to reality itself, beyond any limit of human knowledge.
 

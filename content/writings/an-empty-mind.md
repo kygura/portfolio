@@ -16,8 +16,6 @@ The observation is older than Stoicism, Buddhism, or any school since absorbed b
 
 A mind that accumulates without clearing is hoarding.
 
----
-
 ## Near Neighbours
 
 Stoic detachment comes close, but Stoicism has been domesticated: repackaged as productivity advice, sold as resilience training, adopted by the same corporations that produce the conditions the Stoics were trying to survive. Whatever Marcus Aurelius meant has little to do with the LinkedIn post that invokes him, and the word doesn't come clean anymore.
@@ -25,8 +23,6 @@ Stoic detachment comes close, but Stoicism has been domesticated: repackaged as 
 Buddhist non-attachment carries metaphysical commitments, rebirth, the nature of suffering, the path, that add up to a belief system. Adopting it means following, and this doesn't follow, whatever the merits of those traditions, because following is exactly the motion that prevents clearing.
 
 Cynicism deserves respect. It clears pretension and confusion, and it comes out of comedy, out of laughing at the absurdity of men. But the cynic clears by negating, tears down without remainder. What's left after negation is still a position: the position of the one who negates, which is inverted accumulation. Cynicism makes a good first sweep and leaves the clearing unfinished.
-
----
 
 ## What Clearing Is
 
@@ -37,8 +33,6 @@ Clearing means noticing the shape and loosening the grip.
 Loosening leaves knowledge in place. The cleared mind becomes unattached to its conclusions. It holds its maps as maps. It acts without needing the action cosmically justified. It thinks without needing the thought to land somewhere final.
 
 This is harder than accumulation, which gets rewarded socially and professionally. Someone with a complete worldview gets taken seriously. Someone who says _I've cleared the worldview_ gets suspected of having nothing.
-
----
 
 ## The Idolatry of Influence
 
@@ -52,15 +46,11 @@ No thinker, however acclaimed, earns the right to occupy another mind permanentl
 
 If they don't get out of the way, you remove them yourself.
 
----
-
 ## Emptiness as Capacity
 
 The cleared mind has more available space.
 
 Every fixed conclusion is occupied territory, and it can't be rethought because it's already decided. The accumulating mind fills that territory bit by bit until there's nowhere left to think that hasn't already been thought. It becomes a museum of its own prior conclusions.
-
----
 
 ## Innate Intuition
 
@@ -71,8 +61,6 @@ Call it innate intuition: the integrated signal the organism produces when perce
 The mind generates interpretation continuously (context, comparison, judgment, memory, projection) because raw perception without those buffers is uncomfortable. It offers no identity, no tribe, no story about who you are in relation to what you're experiencing. Silencing the mind through discipline or ritual is still effort, still a technique imposed from the outside. The reduction happens naturally when you stop feeding the system: when you stop rewarding the conclusions, and sit with not knowing long enough that the need to know begins to relax on its own.
 
 So I do not make claims about reality. I observe it, as directly as I can manage, with as little interpretive interference as I can sustain in the moment. I act from what I perceive. When the perception changes, I do not defend the previous one.
-
----
 
 ## The Only Commitment
 
