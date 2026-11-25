@@ -138,6 +138,27 @@ describe("getPageDataSourceId", () => {
   });
 });
 
+describe("extractPostMetadata keywords", () => {
+  const withKeywords = (key: string, names: unknown[]) => {
+    const page = makeFullPage();
+    page.properties[key] = { type: "multi_select", multi_select: names };
+    return page;
+  };
+
+  it("reads Keywords, trimmed, lowercased and deduplicated", () => {
+    const page = withKeywords("Keywords", [{ name: " Agency " }, { name: "craft" }, { name: "AGENCY" }, { name: "  " }, {}]);
+    assert.deepEqual(extractPostMetadata(page).tags, ["agency", "craft"]);
+  });
+
+  it("also accepts Tags", () => {
+    assert.deepEqual(extractPostMetadata(withKeywords("Tags", [{ name: "craft" }])).tags, ["craft"]);
+  });
+
+  it("gives an empty list when the property is absent", () => {
+    assert.deepEqual(extractPostMetadata(makeFullPage()).tags, []);
+  });
+});
+
 describe("dedupeBySlug", () => {
   const entry = (pageId: string, slug: string, lastEditedTime: string) => ({
     meta: {
@@ -148,6 +169,7 @@ describe("dedupeBySlug", () => {
       published: true,
       createdTime: lastEditedTime,
       lastEditedTime,
+      tags: [],
     },
   });
 

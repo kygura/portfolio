@@ -1,7 +1,21 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import PageHead from "../components/PageHead";
+import MeaningMap from "../components/MeaningMap";
 import { useMarkdownPosts } from "../hooks/useMarkdownPosts";
+
+type View = "map" | "index";
+const VIEW_KEY = "writings-view";
+
+// The map is the default. A reader who picks the index keeps it.
+function storedView(): View {
+  try {
+    return window.localStorage.getItem(VIEW_KEY) === "index" ? "index" : "map";
+  } catch {
+    return "map";
+  }
+}
 
 const MAX_TICKS = 12;
 
@@ -12,6 +26,17 @@ const Writings = () => {
   const { posts, clusters, loading, error } = useMarkdownPosts();
   const bySlug = new Map(posts.map((post) => [post.slug, post]));
   const totalMinutes = posts.reduce((sum, post) => sum + post.readTime, 0);
+
+  const [view, setView] = useState<View>(storedView);
+  const choose = (next: View) => {
+    setView(next);
+    try {
+      window.localStorage.setItem(VIEW_KEY, next);
+    } catch {
+      // Private mode: the choice lasts for this visit only.
+    }
+  };
+  const linked = posts.some((post) => post.topics.length > 0 || post.tags.length > 0);
 
   let row = 0;
 
@@ -39,7 +64,23 @@ const Writings = () => {
         </div>
       )}
 
-      <div className="ledger">
+      {clusters.length > 0 && (
+        <div className="ledger__bar">
+          <p className="ledger__note">
+            Clusters and topics are assigned by a language model. Keywords set on an essay in Notion count as topics too. The essays are written by the author.
+          </p>
+          {linked && (
+            <div className="ledger__views" role="group" aria-label="View">
+              <button type="button" aria-pressed={view === "map"} onClick={() => choose("map")}>Map</button>
+              <button type="button" aria-pressed={view === "index"} onClick={() => choose("index")}>Index</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {linked && view === "map" && <MeaningMap posts={posts} clusters={clusters} />}
+
+      <div className="ledger" hidden={linked && view === "map"}>
         {clusters.map((cluster) => {
           const entries = cluster.slugs.flatMap((slug) => bySlug.get(slug) ?? []);
           const minutes = entries.reduce((sum, post) => sum + post.readTime, 0);

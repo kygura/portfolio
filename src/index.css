@@ -4327,6 +4327,184 @@ kbd {
   color: var(--ink-2);
 }
 .ledger__group + .ledger__group { margin-top: 3.25rem; }
+/* Says who made the structure, next to the switch between map and index. */
+.ledger__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem 2rem;
+  margin: 0 0 2rem;
+}
+.ledger__note {
+  flex: 1 1 24rem;
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  line-height: 1.7;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.ledger__views { display: flex; border: 1px solid var(--rule-2); }
+.ledger__views button {
+  padding: 0.45rem 0.95rem;
+  background: none;
+  border: 0;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+.ledger__views button + button { border-left: 1px solid var(--rule-2); }
+.ledger__views button:hover,
+.ledger__views button:focus-visible { color: var(--ink); }
+.ledger__views button[aria-pressed="true"] { background: var(--sheet); color: var(--accent); }
+
+/* ─────────────────────────────────────────────
+   MAP — the writings as points. A line joins two essays that share a
+   topic; clusters and topics above light up their essays.
+   ───────────────────────────────────────────── */
+.mmap__rail { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.7rem 1.25rem; align-items: baseline; }
+.mmap__rail-label {
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmap__chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
+.mmap__chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.3rem 0.65rem;
+  background: none;
+  border: 1px solid var(--rule);
+  font-family: var(--f-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.mmap__chip:hover,
+.mmap__chip:focus-visible { border-color: var(--ink-3); color: var(--ink); }
+.mmap__chip[aria-pressed="true"] { border-color: var(--accent); background: var(--sheet); color: var(--accent); }
+.mmap__chip-count { font-size: 10px; color: var(--ink-3); }
+.mmap__chip-mark { color: var(--accent); }
+.mmap__chip--cluster { letter-spacing: 0.1em; text-transform: uppercase; font-size: 11px; }
+
+.mmap__frame { margin-top: 1.5rem; border-block: 1px solid var(--rule); overflow: hidden; }
+.mmap__svg { display: block; max-width: 100%; }
+
+/* The skeleton, always drawn: spokes inside a cluster, bridges between hubs. */
+.mmap__spoke { stroke: var(--rule-2); opacity: 0.8; transition: opacity 0.2s; }
+.mmap__bridge { stroke: var(--ink-3); stroke-linecap: round; opacity: 0.75; transition: opacity 0.2s; }
+.mmap__svg[data-focused] .mmap__spoke,
+.mmap__svg[data-focused] .mmap__bridge { opacity: 0.18; }
+/* Topic links, drawn only for what is focused. */
+.mmap__edge { stroke: var(--accent); stroke-width: 1; opacity: 0.5; }
+.mmap__edge[data-strong] { stroke-width: 1.6; opacity: 0.85; }
+
+.mmap__node { text-decoration: none; cursor: pointer; outline: none; transition: opacity 0.2s; }
+.mmap__dot { fill: var(--ink-2); stroke: var(--bg); stroke-width: 2; transition: fill 0.2s; }
+.mmap__mark { font-family: var(--f-mono); font-size: 9.5px; letter-spacing: 0.12em; fill: var(--ink-3); }
+.mmap__title {
+  font-family: var(--f-body);
+  font-size: 13.5px;
+  fill: var(--ink);
+  /* A halo in the page colour keeps a title readable over a line. */
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+  transition: fill 0.2s;
+}
+.mmap__node[data-hub] .mmap__dot { fill: var(--ink); }
+.mmap__node[data-hub] .mmap__title { font-size: 15px; }
+.mmap__node[data-centre] .mmap__dot { fill: var(--accent); }
+.mmap__svg[data-focused] .mmap__node { opacity: 0.28; }
+.mmap__svg[data-focused] .mmap__node[data-lit] { opacity: 1; }
+.mmap__node[data-source] .mmap__dot,
+.mmap__node:focus-visible .mmap__dot { fill: var(--accent); }
+.mmap__node[data-source] .mmap__title,
+.mmap__node:focus-visible .mmap__title { fill: var(--accent); }
+.mmap__node:focus-visible .mmap__title { text-decoration: underline; }
+
+.mmap__panel { min-height: 9.5rem; padding-top: 1.25rem; }
+.mmap__panel-kicker,
+.mmap__panel-hint {
+  margin: 0;
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  line-height: 1.7;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmap__panel-hint { max-width: 46rem; }
+.mmap__panel-title { margin: 0.35rem 0 0.6rem; font-family: var(--f-body); font-size: 1.35rem; font-weight: 400; color: var(--ink); }
+.mmap__panel-text { margin: 0; max-width: 70ch; font-family: var(--f-body); font-size: 0.98rem; line-height: 1.55; color: var(--ink-2); }
+.mmap__panel-text--thesis { font-style: italic; }
+.mmap__links { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 0.35rem 2rem; margin: 0; padding: 0; list-style: none; }
+.mmap__links li { display: flex; flex-direction: column; }
+.mmap__links-title { font-family: var(--f-body); font-size: 0.98rem; color: var(--ink); }
+.mmap__links-why,
+.mmap__links-more { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.08em; color: var(--ink-3); }
+
+@media (max-width: 640px) {
+  .mmap__rail { grid-template-columns: minmax(0, 1fr); gap: 0.4rem; }
+  .mmap__rail-label:not(:first-child) { margin-top: 0.6rem; }
+  .mmap__title { font-size: 12.5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mmap__spoke, .mmap__bridge, .mmap__node, .mmap__dot, .mmap__title { transition: none; }
+}
+
+/* Under a post: the essays it shares a topic with. */
+.post-links { margin-top: 4rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); }
+.post-links__title {
+  margin: 0;
+  font-family: var(--f-pixel);
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.post-links__note {
+  margin: 0.5rem 0 1rem;
+  font-family: var(--f-mono);
+  font-size: 10.5px;
+  line-height: 1.7;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.post-links__list { margin: 0; padding: 0; list-style: none; }
+.post-links__link {
+  display: grid;
+  grid-template-columns: 3.2rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.2rem 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px dashed var(--rule);
+  text-decoration: none;
+}
+.post-links__mark { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.12em; color: var(--accent); }
+.post-links__name { font-family: var(--f-body); font-size: 1.1rem; color: var(--ink); transition: color 0.2s; }
+.post-links__why { font-family: var(--f-mono); font-size: 10.5px; letter-spacing: 0.08em; color: var(--ink-3); text-align: right; }
+.post-links__link:hover .post-links__name,
+.post-links__link:focus-visible .post-links__name { color: var(--accent); }
+@media (max-width: 640px) {
+  .post-links__link { grid-template-columns: 3.2rem minmax(0, 1fr); }
+  .post-links__why { grid-column: 2; text-align: left; }
+}
 
 .post-head__cluster { color: inherit; text-decoration: none; transition: color 0.2s; }
 .post-head__cluster:hover, .post-head__cluster:focus-visible { color: var(--accent); }
