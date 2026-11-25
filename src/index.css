@@ -4504,6 +4504,19 @@ kbd {
   text-transform: uppercase;
   color: var(--accent);
 }
+
+/* Phones get no map, and the list is titles only, grouped by cluster. */
+@media (max-width: 767px) {
+  .ledger__excerpt,
+  .ledger__meta,
+  .ledger__index,
+  .ledger__cluster-thesis,
+  .ledger__arrow { display: none; }
+  .ledger__cluster { --cluster-size: 16px; padding-bottom: 0.6rem; }
+  .ledger__link { grid-template-columns: minmax(0, 1fr); padding: 0.85rem 0.5rem 0.85rem 0.75rem; }
+  .ledger__title { font-size: 1.2rem; line-height: 1.25; }
+  .ledger__group + .ledger__group { margin-top: 2.25rem; }
+}
 .mmap__node {
   text-decoration: none;
   cursor: pointer;
