@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   buildEdges,
@@ -17,6 +17,8 @@ import type { Cluster } from "../hooks/useMarkdownPosts";
 interface MeaningMapProps {
   posts: PostSummary[];
   clusters: Cluster[];
+  /** Shown at the top of the side panel, above the clusters. */
+  header?: ReactNode;
 }
 
 type Focus =
@@ -27,12 +29,13 @@ type Focus =
 
 /**
  * The writings as a map: every essay is a point, and a line joins two essays
- * that share a topic. Clusters and topics above the map light up their
+ * that share a topic. Clusters and topics in the side panel light up their
  * essays. Pointing at an essay shows what it is linked to, and why.
  */
-const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
+const MeaningMap = ({ posts, clusters, header }: MeaningMapProps) => {
   const frame = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(880);
+  const [frameHeight, setFrameHeight] = useState(0);
   const [hover, setHover] = useState<Focus>(null);
   const [pinned, setPinned] = useState<Focus>(null);
   const focus = hover ?? pinned;
@@ -41,10 +44,16 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
   useEffect(() => {
     const node = frame.current;
     if (!node) return;
-    const measure = () => setWidth((current) => {
-      const next = Math.max(280, Math.round(node.clientWidth / 20) * 20);
-      return next === current ? current : next;
-    });
+    const measure = () => {
+      setWidth((current) => {
+        const next = Math.max(280, Math.floor(node.clientWidth / 20) * 20);
+        return next === current ? current : next;
+      });
+      setFrameHeight((current) => {
+        const next = Math.floor(node.clientHeight / 20) * 20;
+        return next === current ? current : next;
+      });
+    };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(node);
@@ -54,7 +63,8 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
   const nodes = useMemo(() => toMapPosts(posts), [posts]);
   const edges = useMemo(() => buildEdges(nodes), [nodes]);
   const topics = useMemo(() => linkingTopics(nodes), [nodes]);
-  const height = useMemo(() => mapHeight(nodes, width), [nodes, width]);
+  // Fill the screen, and grow past it (scrolling) when the essays need more room.
+  const height = useMemo(() => Math.max(mapHeight(nodes, width), frameHeight), [nodes, width, frameHeight]);
   // The skeleton is what is drawn at rest, and what shapes the layout.
   // Each cluster's index essay, chosen by the clustering, is the hub it is drawn around.
   const indexes = useMemo(
@@ -109,8 +119,9 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
   return (
     <section className="mmap" aria-label="Map of the writings">
       <div className="mmap__rail">
+        {header}
         <p className="mmap__rail-label" id="mmap-clusters">Clusters</p>
-        <ul className="mmap__chips" aria-labelledby="mmap-clusters">
+        <ul className="mmap__chips mmap__chips--clusters" aria-labelledby="mmap-clusters">
           {clusters.map((cluster) => {
             const self = { kind: "cluster", id: cluster.id } as const;
             return (

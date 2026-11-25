@@ -4337,7 +4337,7 @@ kbd {
   align-items: center;
   justify-content: space-between;
   gap: 0.9rem 2rem;
-  margin: 0 0 2rem;
+  margin: 0 0 1.25rem;
 }
 .ledger__note {
   flex: 1 1 24rem;
@@ -4371,26 +4371,86 @@ kbd {
    MAP — the writings as points. A line joins two essays that share a
    topic; clusters and topics above light up their essays.
    ───────────────────────────────────────────── */
-.mmap__rail { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.7rem 1.25rem; align-items: baseline; }
-.mmap__rail-label {
+/* Full screen, over everything: the side panel on the left, the map filling the rest. */
+.mmap-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: var(--bg);
+  animation: themeFade 0.16s ease;
+}
+.mmap-dialog:focus { outline: none; }
+.mmap {
+  display: grid;
+  grid-template-columns: minmax(15rem, 19rem) minmax(0, 1fr);
+  height: 100%;
+}
+.mmap__rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1rem 1.1rem 1.5rem;
+  border-right: 1px solid var(--rule);
+}
+.mmap__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-bottom: 0.85rem;
+  margin-bottom: 0.35rem;
+  border-bottom: 1px solid var(--rule);
+}
+.mmap__heading {
   margin: 0;
   font-family: var(--f-mono);
-  font-size: 10.5px;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.mmap__close {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.45rem;
+  background: none;
+  border: 1px solid var(--rule-2);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.mmap__close svg { width: 14px; height: 14px; }
+.mmap__close kbd { font: inherit; letter-spacing: 0.08em; color: var(--ink-3); }
+.mmap__close:hover,
+.mmap__close:focus-visible { border-color: var(--accent); color: var(--ink); }
+.mmap__rail-label {
+  margin: 0.5rem 0 0;
+  font-family: var(--f-mono);
+  font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
-.mmap__chips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0; padding: 0; list-style: none; }
+.mmap__chips { display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+.mmap__chips > li { display: flex; }
+.mmap__chips--clusters { flex-direction: column; align-items: stretch; }
+.mmap__chips--clusters .mmap__chip { width: 100%; }
 .mmap__chip {
   display: inline-flex;
   align-items: baseline;
-  gap: 0.5rem;
-  padding: 0.3rem 0.65rem;
+  gap: 0.35rem;
+  padding: 0.12rem 0.45rem;
   background: none;
   border: 1px solid var(--rule);
   font-family: var(--f-mono);
-  font-size: 11.5px;
-  letter-spacing: 0.04em;
+  font-size: 11px;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
   color: var(--ink-2);
   cursor: pointer;
   transition: color 0.15s, border-color 0.15s, background 0.15s;
@@ -4398,11 +4458,10 @@ kbd {
 .mmap__chip:hover,
 .mmap__chip:focus-visible { border-color: var(--ink-3); color: var(--ink); }
 .mmap__chip[aria-pressed="true"] { border-color: var(--accent); background: var(--sheet); color: var(--accent); }
-.mmap__chip-count { font-size: 10px; color: var(--ink-3); }
+.mmap__chip-count { font-size: 9.5px; color: var(--ink-3); }
 .mmap__chip-mark { color: var(--accent); }
-.mmap__chip--cluster { letter-spacing: 0.1em; text-transform: uppercase; font-size: 11px; }
-
-.mmap__frame { margin-top: 1.5rem; border-block: 1px solid var(--rule); overflow: hidden; }
+.mmap__chip--cluster { letter-spacing: 0.08em; text-transform: uppercase; font-size: 10px; }
+.mmap__frame { min-width: 0; min-height: 0; overflow: auto; }
 .mmap__svg { display: block; max-width: 100%; }
 
 /* The skeleton, always drawn: spokes inside a cluster, bridges between hubs.
@@ -4444,6 +4503,19 @@ kbd {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--accent);
+}
+
+/* Phones get no map, and the list is titles only, grouped by cluster. */
+@media (max-width: 767px) {
+  .ledger__excerpt,
+  .ledger__meta,
+  .ledger__index,
+  .ledger__cluster-thesis,
+  .ledger__arrow { display: none; }
+  .ledger__cluster { --cluster-size: 16px; padding-bottom: 0.6rem; }
+  .ledger__link { grid-template-columns: minmax(0, 1fr); padding: 0.85rem 0.5rem 0.85rem 0.75rem; }
+  .ledger__title { font-size: 1.2rem; line-height: 1.25; }
+  .ledger__group + .ledger__group { margin-top: 2.25rem; }
 }
 .mmap__node {
   text-decoration: none;
@@ -4502,11 +4574,6 @@ kbd {
 .mmap__node:focus-visible .mmap__title { text-decoration: underline; }
 
 
-@media (max-width: 640px) {
-  .mmap__rail { grid-template-columns: minmax(0, 1fr); gap: 0.4rem; }
-  .mmap__rail-label:not(:first-child) { margin-top: 0.6rem; }
-  .mmap__title { font-size: 12.5px; }
-}
 @media (prefers-reduced-motion: reduce) {
   .mmap__spoke, .mmap__bridge, .mmap__node, .mmap__dot, .mmap__title,
   .mmap__svg[data-focused] .mmap__node[data-lit]:not([data-source]) .mmap__dot,

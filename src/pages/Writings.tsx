@@ -1,21 +1,13 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { ArrowRight, X } from "lucide-react";
 import PageHead from "../components/PageHead";
 import MeaningMap from "../components/MeaningMap";
 import { useMarkdownPosts } from "../hooks/useMarkdownPosts";
+import { useIsMobile } from "../hooks/use-mobile";
 
-type View = "map" | "index";
-const VIEW_KEY = "writings-view";
-
-// The map is the default. A reader who picks the index keeps it.
-function storedView(): View {
-  try {
-    return window.localStorage.getItem(VIEW_KEY) === "index" ? "index" : "map";
-  } catch {
-    return "map";
-  }
-}
+// The map opens over the page at /writings#map, so Back closes it and the link can be shared.
+const MAP_HASH = "#map";
 
 const MAX_TICKS = 12;
 
@@ -27,16 +19,18 @@ const Writings = () => {
   const bySlug = new Map(posts.map((post) => [post.slug, post]));
   const totalMinutes = posts.reduce((sum, post) => sum + post.readTime, 0);
 
-  const [view, setView] = useState<View>(storedView);
-  const choose = (next: View) => {
-    setView(next);
-    try {
-      window.localStorage.setItem(VIEW_KEY, next);
-    } catch {
-      // Private mode: the choice lasts for this visit only.
-    }
+  const location = useLocation();
+  const navigate = useNavigate();
+  const mapOpen = location.hash === MAP_HASH;
+  const openMap = () => navigate({ hash: MAP_HASH });
+  const closeMap = () => {
+    // Opened from this page: step back. Arrived on the link: drop the hash.
+    if (location.key !== "default") navigate(-1);
+    else navigate({ hash: "" }, { replace: true });
   };
-  const linked = posts.some((post) => post.topics.length > 0 || post.tags.length > 0);
+  // Phones get the list only: the map needs more room than a phone has.
+  const isMobile = useIsMobile();
+  const linked = !isMobile && posts.some((post) => post.topics.length > 0 || post.tags.length > 0);
 
   let row = 0;
 
@@ -70,17 +64,44 @@ const Writings = () => {
             Clusters and topics are assigned by a language model. Keywords set on an essay in Notion count as topics too. The essays are written by the author.
           </p>
           {linked && (
-            <div className="ledger__views" role="group" aria-label="View">
-              <button type="button" aria-pressed={view === "map"} onClick={() => choose("map")}>Map</button>
-              <button type="button" aria-pressed={view === "index"} onClick={() => choose("index")}>Index</button>
+            <div className="ledger__views">
+              <button type="button" aria-haspopup="dialog" onClick={openMap}>Open map</button>
             </div>
           )}
         </div>
       )}
 
-      {linked && view === "map" && <MeaningMap posts={posts} clusters={clusters} />}
+      {linked && (
+        <Dialog.Root open={mapOpen} onOpenChange={(open) => (open ? openMap() : closeMap())}>
+          <Dialog.Portal>
+            <Dialog.Content
+              className="mmap-dialog"
+              aria-describedby={undefined}
+              // Focus the dialog itself, not the close button, so nothing is ringed on open.
+              onOpenAutoFocus={(event) => {
+                event.preventDefault();
+                (event.currentTarget as HTMLElement).focus();
+              }}
+            >
+              <MeaningMap
+                posts={posts}
+                clusters={clusters}
+                header={
+                  <div className="mmap__head">
+                    <Dialog.Title className="mmap__heading">Map of the writings</Dialog.Title>
+                    <Dialog.Close className="mmap__close" aria-label="Close the map">
+                      <X aria-hidden="true" />
+                      <kbd>Esc</kbd>
+                    </Dialog.Close>
+                  </div>
+                }
+              />
+            </Dialog.Content>
+          </Dialog.Portal>
+        </Dialog.Root>
+      )}
 
-      <div className="ledger" hidden={linked && view === "map"}>
+      <div className="ledger">
         {clusters.map((cluster) => {
           const entries = cluster.slugs.flatMap((slug) => bySlug.get(slug) ?? []);
           const minutes = entries.reduce((sum, post) => sum + post.readTime, 0);
