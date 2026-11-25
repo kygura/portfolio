@@ -165,11 +165,14 @@ export async function POST(request: Request): Promise<Response> {
 
   const signature = request.headers.get("x-notion-signature");
 
-  // One-time subscription handshake: Notion posts the verification token with
-  // no signature. Echo it (and log it) so the operator can store it as
-  // NOTION_WEBHOOK_VERIFICATION_TOKEN.
+  // One-time subscription handshake: Notion posts a body with only the
+  // verification token. It may carry an X-Notion-Signature header the server
+  // cannot check yet, so the signature is ignored here. Echo the token and log
+  // it so the operator can store it as WEBHOOK_SECRET. Real events always have
+  // a type, and a handshake triggers nothing.
   const verification = verificationSchema.safeParse(parsedBody);
-  if (verification.success && !signature) {
+  const hasType = typeof (parsedBody as { type?: unknown } | null)?.type === "string";
+  if (verification.success && !hasType) {
     console.info(
       "Notion webhook verification token received:",
       verification.data.verification_token,

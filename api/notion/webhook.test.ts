@@ -75,6 +75,17 @@ test("echoes the verification token during the handshake (no signature)", async 
   assert.equal(json.verification_token, "handshake-abc");
 });
 
+test("echoes the verification token even when the handshake carries a signature", async () => {
+  const body = JSON.stringify({ verification_token: "handshake-signed" });
+  await withStrictMode(async () => {
+    const response = await POST(makeRequest(body, { "x-notion-signature": "sha256=not-checkable-yet" }));
+    const json = (await response.json()) as { ok: boolean; verification_token: string };
+
+    assert.equal(response.status, 200);
+    assert.equal(json.verification_token, "handshake-signed");
+  });
+});
+
 test("rejects invalid JSON with 400", async () => {
   const response = await POST(makeRequest("not json"));
   assert.equal(response.status, 400);
