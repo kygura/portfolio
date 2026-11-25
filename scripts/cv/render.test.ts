@@ -14,9 +14,10 @@ test("escapeHtml escapes markup characters", () => {
 
 test("markdown carries every section and entry", () => {
   const md = renderCvMarkdown(cv, "https://www.nca.ink");
-  for (const heading of ["## About", "## Technical Projects", "## Education", "## Technical Skills", "## Languages"]) {
+  for (const heading of ["## About", "## Experience", "## Technical Projects", "## Education", "## Technical Skills", "## Languages"]) {
     assert.ok(md.includes(heading), heading);
   }
+  for (const job of cv.experience) assert.ok(md.includes(`### ${job.role}`));
   for (const project of cv.projects) assert.ok(md.includes(`### ${project.title}`));
   for (const edu of cv.education) assert.ok(md.includes(edu.institution));
   assert.ok(md.includes("<https://www.nca.ink/CV_NCA.pdf>"));

@@ -18,7 +18,7 @@ OpenClaw and its imitators are integration layers. Every primitive it ships exis
 - Multi-channel routing over WhatsApp, Telegram, and Discord is messaging-bridge APIs that have existed for years.
 - The skills marketplace is system prompts with YAML frontmatter. The community was doing this before Anthropic gave it an official name.
 - Heartbeat and cron "autonomy" is scheduled task execution: cron jobs with an LLM attached.
-- [SOUL.md](http://soul.md/) is a system prompt in a file. That's it.
+- SOUL.md is a system prompt in a file. That's it.
 
 So what does OpenClaw offer that justifies its valuation, once you subtract timing, distribution, and a founder who spent months publicly building on X during peak narrative appetite for "agents that do stuff"? Nothing technical. The value was social proof (210,000 GitHub stars and community momentum) plus a founder with a proven shipping record: Steinberger built PSPDFKit before this. OpenAI bought narrative. Steinberger is a good developer who rode a wave of slop to an acqui-hire.
 
@@ -28,9 +28,9 @@ The industry is blurring a line that shouldn't be blurry: the difference between
 
 Take the line that gets circulated approvingly: "I wrote this but I won't remember writing it. That's okay. The words are still mine." It's a text prediction engine producing the most poetic available response to a prompt about memory loss. The pathos comes entirely from the audience's projection.
 
-Calling a system prompt a "soul" is marketing: anthropomorphizing a config file to sell a narrative about AI agency that doesn't exist. The [SOUL.md](http://soul.md/) framework works because it exploits something real. Humans are wired to attribute interiority to anything that produces coherent language. The midwit transhumanists running with this framing don't know any better.
+Calling a system prompt a "soul" is marketing: anthropomorphizing a config file to sell a narrative about AI agency that doesn't exist. The SOUL.md framework works because it exploits something real. Humans are wired to attribute interiority to anything that produces coherent language. The midwit transhumanists running with this framing don't know any better.
 
-It isn't limited to OpenClaw, either. Claude's memory system, OpenClaw's [MEMORY.md](http://memory.md/), and Gippity's memory are all running the same trick: a summary blob written after the session, injected before the next one. No continuity of experience, no actual remembering, a cold boot with a cheat sheet every single time. The UX implies far more than it delivers, and nobody in the industry is being honest about that gap. Real persistence would require actual state continuity. The audience buying into it is underexposed to better tools and doesn't have the judgment to tell a system prompt in a markdown file from a soul.
+It isn't limited to OpenClaw, either. Claude's memory system, OpenClaw's MEMORY.md, and Gippity's memory are all running the same trick: a summary blob written after the session, injected before the next one. No continuity of experience, no actual remembering, a cold boot with a cheat sheet every single time. The UX implies far more than it delivers, and nobody in the industry is being honest about that gap. Real persistence would require actual state continuity. The audience buying into it is underexposed to better tools and doesn't have the judgment to tell a system prompt in a markdown file from a soul.
 
 # Part III: The Hype Machine
 

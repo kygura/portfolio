@@ -1,5 +1,5 @@
 {
-  "hash": "75022335a4982d02",
+  "hash": "792ca001000550ac",
   "source": "reconciled",
   "clusters": [
     {
@@ -23,7 +23,6 @@
       "name": "Of the State",
       "thesis": "The state keeps re-forming, and its contract is written by whoever holds the leverage.",
       "slugs": [
-        "the-last-sovereign-act",
         "the-game-of-democracy",
         "nothing-behind-the-words",
         "on-the-state-of-things",
@@ -51,7 +50,6 @@
       "thesis": "What is sold as intelligence or culture is often an average with the author removed.",
       "slugs": [
         "static-intelligence",
-        "the-soul-as-a-system-prompt",
         "the-language-game",
         "corposlop"
       ]

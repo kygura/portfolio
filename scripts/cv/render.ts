@@ -34,9 +34,13 @@ export function renderCvMarkdown(cv: Cv, origin = ""): string {
     "",
     cv.summary,
     "",
-    "## Technical Projects",
+    "## Experience",
     "",
   ];
+  for (const job of cv.experience) {
+    lines.push(`### ${job.role}`, "", `${job.place} · ${job.period}`, "", ...job.points.map((point) => `- ${point}`), "");
+  }
+  lines.push("## Technical Projects", "");
   for (const project of cv.projects) {
     lines.push(`### ${project.title}`, "", `*${project.tech}*`, "", project.description, "");
   }
@@ -75,8 +79,16 @@ export function renderCvHtml(cv: Cv): string {
     `</ul>`,
     `</header>`,
     `<section><h2>About</h2><p itemprop="description">${e(cv.summary)}</p></section>`,
-    `<section><h2>Technical Projects</h2>`,
+    `<section><h2>Experience</h2>`,
   ];
+  for (const job of cv.experience) {
+    out.push(
+      `<h3>${e(job.role)}</h3>`,
+      `<p>${e(job.place)} · ${e(job.period)}</p>`,
+      `<ul>${job.points.map((point) => `<li>${e(point)}</li>`).join("")}</ul>`,
+    );
+  }
+  out.push(`</section>`, `<section><h2>Technical Projects</h2>`);
   for (const project of cv.projects) {
     out.push(
       `<h3>${e(project.title)}</h3>`,

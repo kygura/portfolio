@@ -19,19 +19,19 @@ const GITHUB_API = "https://api.github.com";
  * functions cannot import siblings); a test keeps the two in step.
  */
 export const SHOWCASE: readonly string[] = [
-  "hypertrade",
   "meridian",
-  "polytech",
   "lexis-editorial",
-  "vessel",
-  "provenance",
-  "hl-cycles",
   "iceberg",
+  "vessel",
   "atlas",
   "hyperion",
   "claude-mods",
   "voxflow",
   "tiny-cove",
+  "hypertrade",
+  "polytech",
+  "hl-cycles",
+  "provenance",
 ];
 
 /** Old bookkeeping topics some repos still carry; they say nothing to a visitor. */

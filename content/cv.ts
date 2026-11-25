@@ -17,6 +17,13 @@ export interface CvProject {
   description: string;
 }
 
+export interface CvExperience {
+  role: string;
+  place: string;
+  period: string;
+  points: string[];
+}
+
 export interface CvLanguage {
   name: string;
   proficiency: string;
@@ -32,6 +39,7 @@ export interface Cv {
     github: string;
   };
   summary: string;
+  experience: CvExperience[];
   projects: CvProject[];
   education: CvEducation[];
   skills: Record<string, string[]>;
@@ -42,16 +50,29 @@ export interface Cv {
 export const cv: Cv = {
   contact: {
     name: "Nicolás Cerrato Antón",
-    headline: "Software Engineer · Agentic Systems · Markets",
-    location: "Europe",
-    email: "ncerratoanton@gmail.com",
+    headline: "Software Engineer · Technical Solutions · Spanish, German, English",
+    location: "Málaga, Spain · EU citizen",
+    email: "nicolascerrato17@gmail.com",
     website: "nca.ink",
     github: "github.com/kygura",
   },
 
   // The PDF carries the formal summary; here it is written as a short, plainer intro.
   summary:
-    "I build software where LLMs, markets, and on-chain systems meet, and care most about the boundary between what a model proposes and what a system is willing to execute. Trained in Computer Engineering across Spain and Germany; working day to day in TypeScript, Python, and Solidity.",
+    "Software engineer who builds and ships products end to end, and works with people in Spanish, German and English. I build software where LLMs, markets, and on-chain systems meet, and care most about the boundary between what a model proposes and what a system is willing to execute. Trained in Computer Engineering across Spain and Germany; working day to day in TypeScript, Python, and Solidity.",
+
+  experience: [
+    {
+      role: "Independent Software Engineer & Trader",
+      place: "Remote",
+      period: "2024 – Present",
+      points: [
+        "Designed, built and deployed web products end to end, from data layer to live site: a travel map (Meridian), an editorial app (Lexis), agent tooling and market dashboards. Most are live and linked from nca.ink.",
+        "Built the data and alerting tools I use to trade crypto majors and perpetuals on my own account.",
+        "Work daily with AI coding agents since 2023: prompt and tool design, review of generated code, deployment on Vercel and Fly.",
+      ],
+    },
+  ],
 
   // Descriptions complement the PDF's bullet points rather than repeating them.
   projects: [
@@ -115,6 +136,7 @@ export const cv: Cv = {
     { name: "Spanish", proficiency: "Native" },
     { name: "German", proficiency: "Native / Bilingual" },
     { name: "English", proficiency: "C2 · Cambridge Certificate" },
+    { name: "Japanese", proficiency: "Spoken" },
   ],
 
   pdf: "/CV_NCA.pdf",

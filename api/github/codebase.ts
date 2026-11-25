@@ -20,19 +20,19 @@ const RAW_GITHUB = "https://raw.githubusercontent.com";
  * test keeps the two equal). Only these repos can be browsed or chatted with.
  */
 export const SHOWCASE: readonly string[] = [
-  "hypertrade",
   "meridian",
-  "polytech",
   "lexis-editorial",
-  "vessel",
-  "provenance",
-  "hl-cycles",
   "iceberg",
+  "vessel",
   "atlas",
   "hyperion",
   "claude-mods",
   "voxflow",
   "tiny-cove",
+  "hypertrade",
+  "polytech",
+  "hl-cycles",
+  "provenance",
 ];
 
 const isShowcased = (name: string, showcase: readonly string[]) =>

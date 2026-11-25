@@ -222,6 +222,12 @@ async function clusterPosts(corpus: { slug: string; title: string; body: string 
   return clustering;
 }
 
+/**
+ * Published in Notion but kept off the index, the clusters, writings.json and
+ * llms.txt. Each still opens at its own /writings/<slug> address.
+ */
+const UNLISTED = new Set(["the-last-sovereign-act", "the-soul-as-a-system-prompt"]);
+
 async function emit(): Promise<PostSummary[]> {
   await fs.mkdir(CONTENT_DIR, { recursive: true });
   const files = (await fs.readdir(CONTENT_DIR)).filter((file) => file.endsWith(".md"));
@@ -247,9 +253,10 @@ async function emit(): Promise<PostSummary[]> {
     if (dashes > 0) {
       console.warn(`[writings]   ${file}: ${dashes} em/en dash(es), fix them in Notion`);
     }
+    await fs.writeFile(path.join(PUBLIC_POSTS_DIR, file), raw, "utf-8");
+    if (UNLISTED.has(parsed.summary.slug)) continue;
     summaries.push(parsed.summary);
     corpus.push({ slug: parsed.summary.slug, title: parsed.summary.title, body: parsed.content });
-    await fs.writeFile(path.join(PUBLIC_POSTS_DIR, file), raw, "utf-8");
   }
 
   // No dates: the corpus orders itself into clusters, each a reading path.
@@ -312,7 +319,7 @@ if (offline || !getOptionalNotionToken() || (vercelEnv && vercelEnv !== "product
 } else {
   try {
     const { uploaded, deleted } = await mirrorToBlob(
-      await collectMirrorFiles(path.join(ROOT, "content"), posts.map((post) => post.slug)),
+      await collectMirrorFiles(path.join(ROOT, "content"), [...posts.map((post) => post.slug), ...UNLISTED]),
       mirrorStore,
     );
     console.log(`[writings] mirrored ${uploaded} files to Blob${deleted.length ? `, removed ${deleted.length}` : ""}`);

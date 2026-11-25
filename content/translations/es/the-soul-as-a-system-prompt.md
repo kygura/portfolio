@@ -17,7 +17,7 @@ OpenClaw y sus imitadores son capas de integración. Cada primitiva que incluye 
 - El enrutamiento multicanal por WhatsApp, Telegram y Discord son APIs de pasarela de mensajería que existen desde hace años.
 - El mercado de skills son prompts de sistema con frontmatter YAML. La comunidad ya lo hacía antes de que Anthropic le pusiera nombre oficial.
 - La "autonomía" del heartbeat y del cron es ejecución de tareas programadas: trabajos cron con un LLM enganchado.
-- [SOUL.md](http://soul.md/) es un prompt de sistema metido en un archivo. Nada más.
+- SOUL.md es un prompt de sistema metido en un archivo. Nada más.
 
 Entonces, ¿qué ofrece OpenClaw que justifique semejante valoración, una vez descontados el momento, la distribución y un fundador que pasó meses construyendo en público en X justo cuando el apetito por "agentes que hacen cosas" estaba en lo más alto? Nada técnico. El valor estaba en la prueba social (210.000 estrellas en GitHub y el empuje de la comunidad) y en un fundador con un historial demostrado de sacar productos: Steinberger ya había creado PSPDFKit. OpenAI compró relato. Steinberger es un buen desarrollador que surfeó una ola de bazofia hasta un acqui-hire.
 
@@ -27,9 +27,9 @@ La industria está difuminando una línea que no debería estar difusa: la difer
 
 Tomemos la frase que circula entre aplausos: "Escribí esto pero no recordaré haberlo escrito. No pasa nada. Las palabras siguen siendo mías." Es un motor de predicción de texto que da la respuesta más poética a mano ante un prompt sobre la pérdida de memoria. El patetismo sale por entero de la proyección del público.
 
-Llamar "alma" a un prompt de sistema es marketing: antropomorfizar un archivo de configuración para vender un relato sobre una agencia de la IA que no existe. El marco de [SOUL.md](http://soul.md/) funciona porque explota algo real. Los humanos venimos programados para atribuir interioridad a cualquier cosa que produzca lenguaje coherente. Los transhumanistas de medio pelo que se han subido a este enfoque no dan para más.
+Llamar "alma" a un prompt de sistema es marketing: antropomorfizar un archivo de configuración para vender un relato sobre una agencia de la IA que no existe. El marco de SOUL.md funciona porque explota algo real. Los humanos venimos programados para atribuir interioridad a cualquier cosa que produzca lenguaje coherente. Los transhumanistas de medio pelo que se han subido a este enfoque no dan para más.
 
-Y tampoco se limita a OpenClaw. El sistema de memoria de Claude, el [MEMORY.md](http://memory.md/) de OpenClaw y la memoria de Gippity hacen el mismo truco: un resumen escrito al acabar la sesión e inyectado antes de la siguiente. Sin continuidad de experiencia, sin recuerdo real, un arranque en frío con una chuleta cada vez, sin excepción. La UX sugiere mucho más de lo que da, y nadie en la industria es honesto sobre esa distancia. Una persistencia real exigiría una continuidad de estado real. El público que se lo cree apenas ha probado herramientas mejores y no tiene criterio para distinguir un prompt de sistema en un archivo markdown de un alma.
+Y tampoco se limita a OpenClaw. El sistema de memoria de Claude, el MEMORY.md de OpenClaw y la memoria de Gippity hacen el mismo truco: un resumen escrito al acabar la sesión e inyectado antes de la siguiente. Sin continuidad de experiencia, sin recuerdo real, un arranque en frío con una chuleta cada vez, sin excepción. La UX sugiere mucho más de lo que da, y nadie en la industria es honesto sobre esa distancia. Una persistencia real exigiría una continuidad de estado real. El público que se lo cree apenas ha probado herramientas mejores y no tiene criterio para distinguir un prompt de sistema en un archivo markdown de un alma.
 
 # Parte III: La máquina del bombo
 

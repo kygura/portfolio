@@ -59,9 +59,20 @@ function renderRichTextItem(item: RichTextItem): string {
 
   // Link wrapping
   const href = item.href;
-  if (href && typeof href === "string" && href.length > 0) {
+  if (href && typeof href === "string" && href.length > 0 && !isAutolinkedFileName(base, href)) {
     result = `[${result}](${href})`;
   }
 
   return result;
+}
+
+/**
+ * Notion turns file names whose extension is also a country domain
+ * ("SOUL.md", "main.py") into links to that domain (http://soul.md/).
+ * Those links point at unrelated sites, so the name is kept as plain text.
+ */
+function isAutolinkedFileName(text: string, href: string): boolean {
+  if (!/\.(md|py|sh|rs)$/i.test(text.trim())) return false;
+  const target = href.replace(/^https?:\/\//i, "").replace(/\/$/, "").toLowerCase();
+  return target === text.trim().toLowerCase();
 }
