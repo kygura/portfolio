@@ -1,15 +1,16 @@
 ---
 slug: "nothing-behind-the-words"
 title: "Nothing Behind the Words"
-excerpt: "I. Equality comes last Most people who invoke equality have it backwards. It has to be earned, and it only shows up where leverage is spread evenly and people actually feel trust, empathy and some understanding of each o..."
+excerpt: "I. Equality comes last Equality is usually invoked in the wrong order. It has to be earned, and it only shows up where leverage is spread evenly and people actually feel trust, empathy and some understanding of each othe..."
 readTime: 12
+tags: ["nihilism","metaphysics","ontology","metaethics","political realism","comparative philosophy","perennial philosophy"]
 published: true
 notionPageId: "40d143f2-8260-81b3-b1cc-e9df1fa67b7b"
 ---
 
 ## I. Equality comes last
 
-Most people who invoke equality have it backwards. It has to be earned, and it only shows up where leverage is spread evenly and people actually feel trust, empathy and some understanding of each other. Those conditions are rare and they don't hold for long. Equality is the last thing a system like that produces, on the few occasions it produces it at all, and treating it as the starting point gets the order wrong.
+Equality is usually invoked in the wrong order. It has to be earned, and it only shows up where leverage is spread evenly and people actually feel trust, empathy and some understanding of each other. Those conditions are rare and they don't hold for long. Equality is the last thing a system like that produces, on the few occasions it produces it at all, and treating it as the starting point gets the order wrong.
 
 There is no equality before the law where justice can be bought and the best defense lawyers go to the highest bidder. There is no equality among people who are different and unequally placed from birth. The era, the country, the neighborhood, the family with its money and connections: all of it decides a great deal before you've made a single choice. Then there's what no redistribution touches. Your body, your temperament, the appetite you woke up with. Nobody picks those, and every later choice gets made with them.
 
@@ -74,7 +75,7 @@ Those disagreements are real and I don't want them smoothed over. Leibniz has th
 
 ## VII. Nobody owns the object
 
-Someone will read this and hand me Huxley. _The Perennial Philosophy_ sees the same convergence and does what institutions always do with a discovery: writes down the object's name and description and opens a school. The one truth under all religions becomes another religion. I refuse that step for the same reason I refuse the others. All I've claimed is that these cuts line up. To say in positive terms what they line up on, I'd need a position outside every cut, and there isn't one. Nobody stands outside the wall. I'm working with the same tools I'd have to replace to get a better view.
+Huxley's _The Perennial Philosophy_ sees the same convergence and does what institutions always do with a discovery: writes down the object's name and description and opens a school. The one truth under all religions becomes another religion. I refuse that step for the same reason I refuse the others. All I've claimed is that these cuts line up. To say in positive terms what they line up on, I'd need a position outside every cut, and there isn't one. Nobody stands outside the wall. I'm working with the same tools I'd have to replace to get a better view.
 
 So nobody owns the object, the Zen masters, the Kyoto School and me included. What the convergence gives me is a test. When a framework says it alone sees the thing, its authority is what's being sold, and I can stop reading. When people with no reason to agree, separated by centuries and languages, each cut down to the same missing why, I take that as evidence about the world, the way I'd take independent confirmation of anything else. Then I use what they found and get out from under them, as each of them would have told me to.
 

@@ -3,6 +3,7 @@ slug: "the-price-of-progress"
 title: "The Price of Progress"
 excerpt: "The Core Premise Freedom is a currency. Citizens generate it, circulate it, and invest it in the collective project of civilization. Society, in exchange, offers comfort and stability: the conditions for a meaningful lif..."
 readTime: 4
+tags: ["political realism","nihilism","ideology"]
 published: true
 notionPageId: "313143f2-8260-816d-abdc-f1acbfe36d81"
 ---
@@ -15,13 +16,13 @@ But the contract was never signed. You wake up inside it, born into an age that 
 
 Which means the language of betrayal is almost too generous. You can't betray someone who never agreed to the deal. What the system does is exploit people who never had a choice about participating in the first place, which is a harder and more honest indictment.
 
-Comfort is the instrument of capture. It's soft and unremarkable enough that nobody notices it happening. Once citizens get comfortable enough, they stop paying attention. Stop maintaining the thing. And the system, or whoever's captured it, abuses that inattention. The goodwill that built civilization becomes raw material for its own exploitation. It's baked into how comfort and inattention interact, and it happens every time.
+Comfort is the instrument of capture. It's soft and unremarkable enough that nobody notices it happening. Once citizens get comfortable enough, they stop paying attention and stop maintaining the thing, and the system, or whoever's captured it, abuses that inattention. The goodwill that built civilization becomes raw material for its own exploitation. It's baked into how comfort and inattention interact, and it happens every time.
 
 ## Freedom as Currency
 
 When citizens spend their freedom (attention, labor, civic participation), they're investing in a shared project. The implicit promise: it comes back as security and dignity, as room to live a life that means something.
 
-The betrayal happens gradually. The return gets skimmed. Then redirected. Then demanded without any return at all. By the time people notice, the currency's been debased and they're too comfortable or too exhausted to revolt.
+The betrayal happens gradually. The return gets skimmed, then redirected, then demanded without any return at all. By the time people notice, the currency's been debased and they're too comfortable or too exhausted to revolt.
 
 ## The Current Telos: Technology and Wealth
 

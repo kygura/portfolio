@@ -1,8 +1,9 @@
 ---
-slug: "the-soul-as-a-system-prompt"
-title: "The Soul as a System Prompt"
+slug: "the-wrapper-and-the-soul"
+title: "The Wrapper and the Soul"
 excerpt: "The AI industry is running two frauds at once, and they reinforce each other. The first is architectural: middleware wrappers, OpenClaw and Clawdbot chief among them, repackage existing primitives as \"groundbreaking agen..."
 readTime: 5
+tags: ["llms","philosophy of mind","markets","engineering"]
 published: true
 notionPageId: "314143f2-8260-81e8-9bb0-cc785b38de5b"
 ---

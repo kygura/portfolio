@@ -3,6 +3,7 @@ slug: "thaumazein"
 title: "Thaumazein"
 excerpt: "For a long while, I had been in pursuit of freedom, of the greatest life I could imagine for myself, redefining, at every turn, the very terms of victory so that the chase might never end. I sought the liberation promise..."
 readTime: 1
+tags: ["agency","philosophy"]
 published: true
 notionPageId: "343143f2-8260-81ca-9032-cc199f79e00f"
 ---

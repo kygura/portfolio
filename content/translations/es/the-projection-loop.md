@@ -1,9 +1,9 @@
 ---
-slug: "the-language-game"
+slug: "the-projection-loop"
 lang: "es"
 language: "Spanish"
-title: "El juego de lenguaje"
-sourceHash: "510f01562c223dd2"
+title: "El bucle de proyección"
+sourceHash: "3ddea29a0e6c97f9"
 ---
 
 Hay un producto llamado OpenClaw. Técnicamente es un daemon local que hace pasar tus mensajes por un LLM con acceso a bash, un agente de terminal con ínfulas, vestido con ropajes multicanal. Entra un WhatsApp, sale un comando de shell. El envoltorio es el producto. El modelo es de otro.

@@ -1,8 +1,9 @@
 ---
-slug: "corposlop"
-title: "Corposlop"
+slug: "a-mind-you-can-locate"
+title: "A Mind You Can Locate"
 excerpt: "Corposlop: the output of any product, mostly games but not only, that has passed through an executive board whose job is to eliminate risk. No one on that board has taste. Taste implies a point of view, and a point of vi..."
 readTime: 9
+tags: ["cyberpunk","creativity","agency"]
 published: true
 notionPageId: "40d143f2-8260-81f9-86d3-fd19e3a05e0f"
 ---
@@ -17,7 +18,7 @@ The people on that board are playing their own game correctly. In March 2024 JB 
 
 Sony planned 12 live-service games by 2025. [PC Gamer counts eight of them cancelled](https://pcgamer.com/gaming-industry/sony-games-boss-says-company-will-bravely-keep-sending-live-services-over-the-top-despite-cancelling-8-of-the-12-ones-planned-for-2025-and-wiping-out-most-of-destiny-2s-developers/), Concord among them. The number came first, and the games were recruited to fill it.
 
-[Concord](https://en.wikipedia.org/wiki/Concord_(video_game)) launched on August 23, 2024, at $40, in a genre dominated by free-to-play rivals. One of its designers said it had been in development for about eight years. It peaked at around 700 simultaneous players on Steam and sold an estimated 25,000 copies in its first week. The servers went dark on September 6 and Sony refunded everyone. In October Sony closed the studio, and Hermen Hulst [explained](https://videogameschronicle.com/news/playstation-has-closed-concord-developer-firewalk) that "certain aspects of Concord were exceptional, but others did not land with enough players." Read that sentence for a person. It has a target and a shortfall, and I can't find anyone in it who wanted anything.
+[Concord](https://en.wikipedia.org/wiki/Concord_(video_game)) launched on August 23, 2024, at $40, in a genre dominated by free-to-play rivals. One of its designers said it had been in development for about eight years. It peaked at around 700 simultaneous players on Steam and sold an estimated 25,000 copies in its first week. The servers went dark on September 6 and Sony refunded everyone. In October Sony closed the studio, and Hermen Hulst [explained](https://videogameschronicle.com/news/playstation-has-closed-concord-developer-firewalk) that "certain aspects of Concord were exceptional, but others did not land with enough players." The sentence has a target and a shortfall, and nobody in it who wanted anything.
 
 The failure exposes the trick in the median. A validated idea is a crowded trade. By the time the success is visible enough to convince a committee, everyone else reading the same quarterly reports has seen it too, and the money has already been made by whoever took the risk when it looked stupid. The board believes it is buying safety, and it pays full size for the worst entry in the market.
 
@@ -49,10 +50,10 @@ Large companies do ship authored work, and the exception tells you the mechanism
 
 He can do that because he has been [president of FromSoftware since 2014](https://en.wikipedia.org/wiki/Hidetaka_Miyazaki). As of August 2022, Kadokawa owned [69.66% of the company, with Tencent and Sony holding the rest as minorities](https://gematsu.com/2022/08/tencent-and-sony-interactive-entertainment-collectively-acquire-30-34-percent-of-fromsoftware). The person with the taste runs the checkpoints. Good taste has no rights in any boardroom, and no one is coming to protect the author on principle. Taste survives where it holds leverage: a track record, a title, control of the review, or an audience so devoted that overruling it costs more than obeying it.
 
-Having a mind at the top guarantees nothing by itself. Rocksteady had one. Hill scrapped large parts of the script, staff waited weeks or months for him to review their work, and he and Walker left to found Hundred Star Games before the game shipped. A locatable mind can be wrong and can be a bottleneck. It can also lose the argument with its own balance sheet long before it notices. Authorship earns nothing except the possibility of being answerable, and that is the whole of what I'm asking for. When Outer Wilds fails you, you know where to send the complaint.
+Having a mind at the top guarantees nothing by itself. Rocksteady had one. Hill scrapped large parts of the script, staff waited weeks or months for him to review their work, and he and Walker left to found Hundred Star Games before the game shipped. A locatable mind can be wrong and can be a bottleneck. It can also lose the argument with its own balance sheet long before it notices. Authorship earns nothing except the possibility of being answerable, and that is the whole of what I'm asking for.
 
 ## The corp
 
 This is why corposlop reliably has the texture of a cyberpunk megacorp's output: that's what it is. A cyberpunk corp produces product that mimics culture closely enough to extract value from people who wanted the real thing, and that flattening was always the dystopia. The fiction got the mood right and overestimated the malice. Everyone in that building is reducing variance at his own checkpoint, and the absent mind is what adds up.
 
-I don't expect the board to change, and I wouldn't bother asking it to. It answers to quarterly numbers and it will keep choosing an average of all directions, because that's the game it was handed. The rules are visible and so are the exits. Rydby and Armstrong left Rocksteady, and PC Gamer reports they've made an RPG deckbuilder called Secret of Circadia with a Kickstarter asking for $11,404. Set that beside $200 million. I have no idea whether it's good, and it doesn't matter for this argument: at that price there is no spreadsheet between them and the work, and whatever is wrong with it will be theirs. Taste is expensive inside the building because it has to beat everyone's fear there. Outside, it costs what you can afford to lose, and most people who say they want to make something have never checked that number.
+I don't expect the board to change, and I wouldn't bother asking it to. It answers to quarterly numbers and it will keep choosing an average of all directions, because that's the game it was handed. The rules are visible and so are the exits. Rydby and Armstrong left Rocksteady, and PC Gamer reports they've made an RPG deckbuilder called Secret of Circadia with a Kickstarter asking for $11,404. Set that beside $200 million. I have no idea whether it's good, and it doesn't matter for this argument: at that price there is no spreadsheet between them and the work, and whatever is wrong with it will be theirs. Taste is expensive inside the building because it has to beat everyone's fear there. Outside, it costs what you can afford to lose.

@@ -28,7 +28,37 @@
     },
     {
       "source": "/writings/a-philosophy-of-pragmatic-sovereignity",
-      "destination": "/writings/the-last-sovereign-act",
+      "destination": "/writings/the-unsigned-contract",
+      "permanent": true
+    },
+    {
+      "source": "/writings/the-last-sovereign-act",
+      "destination": "/writings/the-unsigned-contract",
+      "permanent": true
+    },
+    {
+      "source": "/writings/the-last-sovereign-act.md",
+      "destination": "/writings/the-unsigned-contract.md",
+      "permanent": true
+    },
+    {
+      "source": "/writings/the-soul-as-a-system-prompt",
+      "destination": "/writings/the-wrapper-and-the-soul",
+      "permanent": true
+    },
+    {
+      "source": "/writings/the-soul-as-a-system-prompt.md",
+      "destination": "/writings/the-wrapper-and-the-soul.md",
+      "permanent": true
+    },
+    {
+      "source": "/writings/the-language-game",
+      "destination": "/writings/the-projection-loop",
+      "permanent": true
+    },
+    {
+      "source": "/writings/the-language-game.md",
+      "destination": "/writings/the-projection-loop.md",
       "permanent": true
     },
     {

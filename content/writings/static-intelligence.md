@@ -2,7 +2,8 @@
 slug: "static-intelligence"
 title: "Static Intelligence"
 excerpt: "The model is an interface. It lacks the dynamic intelligence living things have. An organism moves, wants things, corrects itself when it runs into the world. A language model does none of that on its own. It's a linguis..."
-readTime: 9
+readTime: 8
+tags: ["llms","language","agency","creativity","philosophy of mind","ontology","metaphysics","speculation"]
 published: true
 notionPageId: "40d143f2-8260-81f1-97e5-cc2665e7bdd6"
 ---
@@ -23,7 +24,7 @@ A language model is a compressed map of everything that's been said. Every promp
 
 The map is vast and detailed, but it doesn't move. Training ends and the map is printed. The weights stay as they were while you talk to it. What feels like the model getting to know you over a conversation is your earlier text being sent back in alongside your latest message, and the features sold as memory are stored notes pasted into the same place: a cold boot with a cheat sheet every single time.
 
-Someone has to decide where to look. Between queries there's nothing: no thinking, no waiting, no wanting. A cold archive until the next request lands.
+Someone has to decide where to look. Between queries nothing thinks, waits or wants.
 
 ## Agency Is Borrowed
 
@@ -43,7 +44,7 @@ What hasn't been said, or can't be said well, isn't on the map. Much of what a p
 
 ## Everything Is a Remix
 
-Every output is a recombination of what already exists. No absolute generation. No pure creativity. The model interpolates between points it has seen.
+Every output is a recombination of what already exists, and the model interpolates between points it has seen.
 
 But the space is large enough that interpolation lands in places nobody has visited: code that was never written, combinations nobody articulated, and at that scale the line between remix and novelty blurs.
 
@@ -55,7 +56,7 @@ Judgment is where the two come apart. The map pulls toward the center of what's 
 
 The line that does hold runs between producing something new and having a reason to look for it.
 
-The machine can generate the unprecedented. What it can't do is want to. No hunger, no curiosity, no question that starts from within. The question always comes from outside. So does the direction. The stakes always sit with someone else.
+The machine can generate the unprecedented. What it can't do is want to. It has no hunger or curiosity of its own, and the question, the direction and the stakes all come from someone else.
 
 ## Who Wrote the Hunger
 

@@ -3,6 +3,7 @@ slug: "the-perpetual-i"
 title: "The Perpetual I"
 excerpt: "A free man can escape many things, but he cannot escape who he is. The same way a lamp cannot enlighten itself, you cannot outmaneuver and transcend the limitations of your own design. You are free in relation to a syste..."
 readTime: 2
+tags: ["agency","philosophy of mind","metaphysics"]
 published: true
 notionPageId: "320143f2-8260-818f-956d-f6de97606323"
 ---

@@ -36,7 +36,7 @@
       "name": "Of the State",
       "thesis": "The state recurs whatever is done to tear it down, its terms are set by whoever holds force and leverage, and the freedom it promises has never been a birthright.",
       "slugs": [
-        "the-last-sovereign-act",
+        "the-unsigned-contract",
         "nothing-behind-the-words",
         "on-the-movements-of-the-world",
         "perpetua-libertas",
@@ -64,8 +64,8 @@
       "thesis": "Language models are stateless maps of human text with no inner life, and the industry's claims of agency, memory and selfhood borrow the look of mind without its substance.",
       "slugs": [
         "static-intelligence",
-        "the-language-game",
-        "the-soul-as-a-system-prompt",
+        "the-projection-loop",
+        "the-wrapper-and-the-soul",
         "black-magic",
         "notion-as-a-backend"
       ]
@@ -92,12 +92,12 @@
       "government",
       "liberty"
     ],
-    "the-last-sovereign-act": [
+    "the-unsigned-contract": [
       "government",
       "power",
       "liberty"
     ],
-    "the-language-game": [
+    "the-projection-loop": [
       "language",
       "llms",
       "philosophy of mind"
@@ -137,7 +137,7 @@
       "government",
       "liberty"
     ],
-    "the-soul-as-a-system-prompt": [
+    "the-wrapper-and-the-soul": [
       "llms",
       "engineering",
       "philosophy of mind"
