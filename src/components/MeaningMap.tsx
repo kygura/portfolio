@@ -19,6 +19,8 @@ interface MeaningMapProps {
   clusters: Cluster[];
 }
 
+const TOPICS_SHOWN = 13;
+
 type Focus =
   | { kind: "post"; slug: string }
   | { kind: "topic"; name: string }
@@ -36,6 +38,7 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
   const [hover, setHover] = useState<Focus>(null);
   const [pinned, setPinned] = useState<Focus>(null);
   const focus = hover ?? pinned;
+  const [allTopics, setAllTopics] = useState(false);
 
   // The map is drawn at the real width, so its text never scales down.
   useEffect(() => {
@@ -54,6 +57,11 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
   const nodes = useMemo(() => toMapPosts(posts), [posts]);
   const edges = useMemo(() => buildEdges(nodes), [nodes]);
   const topics = useMemo(() => linkingTopics(nodes), [nodes]);
+  // Only the most shared topics show at first, so the map stays in view while choosing.
+  const shownTopics = allTopics
+    ? topics
+    : topics.filter((topic, index) => index < TOPICS_SHOWN || (pinned?.kind === "topic" && pinned.name === topic.name));
+  const hiddenTopics = topics.length - shownTopics.length;
   const height = useMemo(() => mapHeight(nodes, width), [nodes, width]);
   // The skeleton is what is drawn at rest, and what shapes the layout.
   // Each cluster's index essay, chosen by the clustering, is the hub it is drawn around.
@@ -137,7 +145,7 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
           <>
             <p className="mmap__rail-label" id="mmap-topics">Topics</p>
             <ul className="mmap__chips" aria-labelledby="mmap-topics">
-              {topics.map((topic) => {
+              {shownTopics.map((topic) => {
                 const self = { kind: "topic", name: topic.name } as const;
                 return (
                   <li key={topic.name}>
@@ -157,6 +165,18 @@ const MeaningMap = ({ posts, clusters }: MeaningMapProps) => {
                   </li>
                 );
               })}
+              {(hiddenTopics > 0 || allTopics) && topics.length > TOPICS_SHOWN && (
+                <li>
+                  <button
+                    type="button"
+                    className="mmap__chip mmap__chip--more"
+                    aria-expanded={allTopics}
+                    onClick={() => setAllTopics((open) => !open)}
+                  >
+                    {allTopics ? "Fewer" : `+${hiddenTopics} more`}
+                  </button>
+                </li>
+              )}
             </ul>
           </>
         )}
