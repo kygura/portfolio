@@ -33,6 +33,7 @@ import {
   type PostSummary,
 } from "../content/posts.ts";
 import { getNotionClient, resolveDataSourceId } from "./notion/client.ts";
+import { pagesFingerprint, type BuildStamp } from "./notion/build-stamp.ts";
 import { getOptionalNotionToken } from "./notion/env.ts";
 import { fetchAllBlocks } from "./notion/blocks.ts";
 import { renderBlocksToMarkdown } from "./notion/render.ts";
@@ -92,7 +93,11 @@ const localImageDeps: ImageDeps = {
   },
 };
 
+/** Set by a sync: what /build-stamp.json records for scripts/should-build.ts. */
+let stamp: BuildStamp | null = null;
+
 async function syncFromNotion(): Promise<void> {
+  const syncedAt = new Date().toISOString();
   const client = getNotionClient();
   const dataSourceId = await resolveDataSourceId(client);
 
@@ -119,6 +124,13 @@ async function syncFromNotion(): Promise<void> {
   }
 
   console.log(`[writings] Notion: ${published.length} published of ${pages.length} pages`);
+  stamp = {
+    commit: process.env.VERCEL_GIT_COMMIT_SHA?.trim() || null,
+    pages: pagesFingerprint(
+      pages.map((page) => ({ id: page.id, lastEdited: page.last_edited_time, published: extractPostMetadata(page as never).published })),
+    ),
+    syncedAt,
+  };
 
   await fs.rm(PUBLIC_MEDIA_DIR, { recursive: true, force: true });
   await fs.mkdir(CONTENT_DIR, { recursive: true });
@@ -333,6 +345,9 @@ if (offline) {
 
 const posts = await emit();
 console.log(`[writings] emitted ${posts.length} posts`);
+if (stamp) {
+  await fs.writeFile(path.join(PUBLIC_DIR, "build-stamp.json"), `${JSON.stringify(stamp, null, 2)}\n`, "utf-8");
+}
 
 // ---------------------------------------------------------------------------
 // Mirror: content/writings + content/translations → Vercel Blob

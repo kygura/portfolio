@@ -1,5 +1,6 @@
 {
   "buildCommand": "bun run build",
+  "ignoreCommand": "node --experimental-strip-types scripts/should-build.ts",
   "functions": {
     "api/github/codebase.ts": {
       "maxDuration": 300
