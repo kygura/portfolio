@@ -51,7 +51,7 @@ export const cv: Cv = {
   contact: {
     name: "Nicolás Cerrato Antón",
     headline: "Software Engineer · Agentic Systems · Markets · ES / DE / EN",
-    location: "Málaga, Spain · EU citizen",
+    location: "Las Palmas, Spain · EU citizen",
     email: "nicolascerrato17@gmail.com",
     website: "nca.ink",
     github: "github.com/kygura",
@@ -59,7 +59,7 @@ export const cv: Cv = {
 
   // The PDF carries the formal summary; here it is written as a short, plainer intro.
   summary:
-    "Generalist software engineer who ships products end to end. Native Spanish and German, C2 English and spoken Japanese, and at ease working directly with people in any of them. I build software where LLMs, markets, and on-chain systems meet, and care most about the boundary between what a model proposes and what a system is willing to execute. Trained in Computer Engineering across Spain and Germany; working day to day in TypeScript, Python, and Solidity.",
+    "Generalist software engineer who ships products end to end. Native Spanish and German, C2 English, and at ease working directly with people in any of them. I build software where LLMs, markets, and on-chain systems meet, and care most about the boundary between what a model proposes and what a system is willing to execute. Trained in Computer Engineering across Spain and Germany; working day to day in TypeScript, Python, and Solidity.",
 
   experience: [
     {
@@ -136,7 +136,6 @@ export const cv: Cv = {
     { name: "Spanish", proficiency: "Native" },
     { name: "German", proficiency: "Native / Bilingual" },
     { name: "English", proficiency: "C2 · Cambridge Certificate" },
-    { name: "Japanese", proficiency: "Spoken" },
   ],
 
   pdf: "/CV_NCA.pdf",

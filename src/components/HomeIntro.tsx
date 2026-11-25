@@ -25,7 +25,7 @@ const HomeIntro = () => (
         </h2>
 
         <p className="intro__text">
-          I'm Nicolás. I build software, trade markets and write essays, in Spanish, German, English and some Japanese.
+          I'm Nicolás. I build software, trade markets and write essays, in Spanish, German and English.
           Start with whichever you came for.
         </p>
 
