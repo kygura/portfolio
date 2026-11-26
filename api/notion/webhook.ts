@@ -24,12 +24,12 @@ function getOptionalWebhookVerificationToken(): string | null {
 }
 
 /**
- * When `true`, the webhook rejects events whose signature is missing or invalid.
- * Defaults to `false` so an already-registered subscription keeps delivering
- * without re-running the Notion-side setup.
+ * Events whose signature is missing or invalid are rejected unless
+ * NOTION_WEBHOOK_REQUIRE_SIGNATURE is explicitly "false". Without this, anyone
+ * who knows the URL can queue builds.
  */
 function isWebhookSignatureRequired(): boolean {
-  return process.env.NOTION_WEBHOOK_REQUIRE_SIGNATURE === "true";
+  return process.env.NOTION_WEBHOOK_REQUIRE_SIGNATURE?.trim().toLowerCase() !== "false";
 }
 
 /** Notion database / data-source IDs whose page events should trigger a rebuild. */
@@ -184,9 +184,9 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
-  // Graceful verification: enforce only when a token is configured AND strict
-  // mode is on. Otherwise log and process, so an already-registered webhook
-  // keeps working without re-running the Notion-side setup.
+  // Every event must carry a valid signature. A missing token fails closed:
+  // nothing can be verified, so nothing is accepted. The escape hatch is
+  // NOTION_WEBHOOK_REQUIRE_SIGNATURE=false.
   const verificationToken = getOptionalWebhookVerificationToken();
   const verified = verificationToken
     ? isValidSignature(rawBody, signature, verificationToken)
@@ -194,12 +194,17 @@ export async function POST(request: Request): Promise<Response> {
 
   if (!verified) {
     if (isWebhookSignatureRequired()) {
-      return Response.json({ error: "Invalid Notion signature" }, { status: 401 });
+      if (verificationToken) {
+        console.warn("Notion webhook rejected: signature missing or invalid");
+        return Response.json({ error: "Invalid Notion signature" }, { status: 401 });
+      }
+      console.error(
+        "Notion webhook rejected: no verification token configured (NOTION_WEBHOOK_VERIFICATION_TOKEN / WEBHOOK_SECRET)",
+      );
+      return Response.json({ error: "Webhook verification is not configured" }, { status: 401 });
     }
     console.warn(
-      verificationToken
-        ? "Notion webhook signature missing/invalid — processing anyway. Set NOTION_WEBHOOK_REQUIRE_SIGNATURE=true to enforce."
-        : "Notion webhook signature verification disabled — no verification token configured (WEBHOOK_SECRET / NOTION_WEBHOOK_VERIFICATION_TOKEN).",
+      "Notion webhook signature not verified — processing anyway because NOTION_WEBHOOK_REQUIRE_SIGNATURE=false.",
     );
   }
 

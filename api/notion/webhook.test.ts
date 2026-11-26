@@ -101,15 +101,63 @@ test("strict mode rejects an invalid signature with 401", async () => {
   });
 });
 
-test("lenient mode (default) processes events without a valid signature", async () => {
-  // Unsupported type keeps it hermetic (no deploy hook call), but proves we do NOT 401.
-  const body = JSON.stringify({ type: "comment.created", entity: { id: "page-1" } });
-  const response = await POST(makeRequest(body)); // no signature header
-  const json = (await response.json()) as { ignored?: boolean; reason?: string };
+async function withEnv(
+  vars: Record<string, string | undefined>,
+  fn: () => Promise<void>,
+): Promise<void> {
+  const previous = Object.fromEntries(Object.keys(vars).map((k) => [k, process.env[k]]));
+  for (const [k, v] of Object.entries(vars)) {
+    if (v === undefined) delete process.env[k];
+    else process.env[k] = v;
+  }
+  try {
+    await fn();
+  } finally {
+    for (const [k, v] of Object.entries(previous)) {
+      if (v === undefined) delete process.env[k];
+      else process.env[k] = v;
+    }
+  }
+}
 
-  assert.equal(response.status, 200);
-  assert.equal(json.ignored, true);
-  assert.match(json.reason ?? "", /Unsupported/);
+test("rejects an unsigned event by default (no strict flag set)", async () => {
+  await withDeployHook(HOOK_URL, async (calls) => {
+    const body = JSON.stringify({ type: "page.created", entity: { id: "page-1" } });
+    const response = await POST(makeRequest(body)); // no signature header
+
+    assert.equal(response.status, 401);
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(calls.length, 0);
+  });
+});
+
+test("rejects events when no verification token is configured", async () => {
+  await withEnv(
+    { NOTION_WEBHOOK_VERIFICATION_TOKEN: undefined, WEBHOOK_SECRET: undefined },
+    async () => {
+      await withDeployHook(HOOK_URL, async (calls) => {
+        const body = JSON.stringify({ type: "page.created", entity: { id: "page-1" } });
+        const response = await POST(makeRequest(body, { "x-notion-signature": sign(body) }));
+
+        assert.equal(response.status, 401);
+        await new Promise((resolve) => setImmediate(resolve));
+        assert.equal(calls.length, 0);
+      });
+    },
+  );
+});
+
+test("NOTION_WEBHOOK_REQUIRE_SIGNATURE=false processes unsigned events", async () => {
+  await withEnv({ NOTION_WEBHOOK_REQUIRE_SIGNATURE: "false" }, async () => {
+    // Unsupported type keeps it hermetic (no deploy hook call), but proves we do NOT 401.
+    const body = JSON.stringify({ type: "comment.created", entity: { id: "page-1" } });
+    const response = await POST(makeRequest(body));
+    const json = (await response.json()) as { ignored?: boolean; reason?: string };
+
+    assert.equal(response.status, 200);
+    assert.equal(json.ignored, true);
+    assert.match(json.reason ?? "", /Unsupported/);
+  });
 });
 
 test("ignores unsupported event types with a valid signature", async () => {
