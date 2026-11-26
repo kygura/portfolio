@@ -32,6 +32,7 @@ export const SHOWCASE: readonly string[] = [
   "polytech",
   "hl-cycles",
   "provenance",
+  "relay",
 ];
 
 /** Old bookkeeping topics some repos still carry; they say nothing to a visitor. */
