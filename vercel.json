@@ -12,6 +12,16 @@
   },
   "redirects": [
     {
+      "source": "/software",
+      "destination": "/projects",
+      "permanent": false
+    },
+    {
+      "source": "/software/:name",
+      "destination": "/projects/:name",
+      "permanent": false
+    },
+    {
       "source": "/(.*)",
       "has": [
         {

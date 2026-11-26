@@ -33,6 +33,7 @@ export const SHOWCASE: readonly string[] = [
   "polytech",
   "hl-cycles",
   "provenance",
+  "relay",
 ];
 
 const isShowcased = (name: string, showcase: readonly string[]) =>
